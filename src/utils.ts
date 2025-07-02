@@ -59,6 +59,16 @@ export function getChangelogSectionFromCommitMessage(
   return changelogSection;
 }
 
+function getMarkdownForCommitHash(commitHash: string): string {
+  return `[${commitHash.substring(0, 7)}](https://github.com/${
+    context.repo.owner
+  }/${context.repo.repo}/commit/${commitHash})`;
+}
+
+export function isPRTitleValid(prTitle: string): boolean {
+  return CONVENTIONAL_COMMITS_PATTERN.test(prTitle);
+}
+
 export function getChangelogItems(changelogSection: string): string[] {
   const lines = changelogSection.split('- ');
   const items: string[] = [];
@@ -77,6 +87,25 @@ export function getVersionPrefix(versionSpec: string): string {
   const match = versionSpec.match(/^([\^~><=]+)/);
   return match ? match[1] : '';
 }
+
+export function getChangelogFromMarkdown(
+  markdown: string,
+  rootPackageName?: string
+): Changelog[] {
+  const changelogs: Changelog[] = [];
+
+  const changelogSection = getChangelogSectionFromCommitMessage(markdown);
+  const changelogItems = getChangelogItems(changelogSection);
+  for (const item of changelogItems) {
+    const changelog = createChangelogFromChangelogItem(item, rootPackageName);
+    if (!changelog) {
+      continue;
+    }
+
+    changelogs.push(changelog);
+  }
+    return changelogs;
+  }
 
 export function getChangelogFromCommits(commits: Commit[], rootPackageName?: string): Changelog[] {
   const changelogs: Changelog[] = [];
@@ -112,7 +141,7 @@ export function getChangelogFromCommits(commits: Commit[], rootPackageName?: str
   return changelogs;
 }
 
-function createChangelogFromChangelogItem(item: string, rootPackageName?: string): Changelog|undefined {
+export function createChangelogFromChangelogItem(item: string, rootPackageName?: string): Changelog|undefined {
   
   const commitType = extractCommitType(item);
   const description = extractDescription(item);
@@ -223,6 +252,10 @@ export function extractCommitTypeParts(commitType: string): CommitTypeParts {
 export function getPackageNameWithoutScope(packageName: string): string {
   // Remove the scope if it exists (e.g., @scope/package-name)
   return packageName.startsWith('@') ? packageName.split('/')[1] : packageName;
+}
+
+export function increaseHeadingLevel(message: string): string {
+  return message.replace(/(#+)/g, '$1#');
 }
 
 export function generateMarkdown(
@@ -376,6 +409,8 @@ const heading2Regex =
     const headings = Array.from(
       prBody.matchAll(new RegExp(heading2Regex, 'gm'))
     );
+
+    console.log(`Found ${headings.length} headings in PR body.`);
 
     for (let i = 0; i < headings.length; i++) {
       const heading = headings[i];

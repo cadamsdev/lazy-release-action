@@ -1,5 +1,5 @@
 name: 'Lazy Release Action'
-description: 'The easiest way to version, publish, and create changelogs for your JavaScript/TypeScript projects.'
+description: 'The easiest way to create releases for Node projects.'
 author: 'Chad Adams'
 branding:
   icon: 'image'
@@ -9,6 +9,9 @@ inputs:
   github-token:
     description: "GitHub Token"
     required: true
+  snapshots:
+    description: "Create a snapshot release"
+    required: false
 
 runs:
   using: 'node20'

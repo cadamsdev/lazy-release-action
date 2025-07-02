@@ -1,0 +1,23 @@
+name: release
+
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - main
+
+jobs:
+  release:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Create Release PR or Release
+      uses: ./
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}

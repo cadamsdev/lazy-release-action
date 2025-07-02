@@ -8,18 +8,22 @@ import {
   hasUnstagedChanges,
   setupGitConfig,
 } from './api/git';
-import { DEFAULT_BRANCH, GITHUB_TOKEN } from './constants';
+import { DEFAULT_BRANCH, GITHUB_TOKEN, SNAPSHOTS_ENABLED } from './constants';
 import {
   appendReleaseIdToMarkdown,
   Changelog,
   CONVENTIONAL_COMMITS_PATTERN,
+  createChangelogFromChangelogItem,
   generateChangelogContent,
   generateMarkdown,
   getChangelogFromCommits,
+  getChangelogFromMarkdown,
   getGitHubReleaseName,
   getPackageNameWithoutScope,
   getTagName,
   getVersionPrefix,
+  increaseHeadingLevel,
+  isPRTitleValid,
   parseReleasePRBody,
   RELEASE_ID,
   ReleasePackageInfo,
@@ -38,6 +42,7 @@ import { setOutput } from '@actions/core';
 import { context } from '@actions/github';
 
 const RELEASE_BRANCH = 'lazy-release/main';
+const PR_COMMENT_STATUS_ID = 'b3da20ce-59b6-4bbd-a6e3-6d625f45d008';
 
 function preRun() {
   // print git version
@@ -82,18 +87,153 @@ async function isLastCommitAReleaseCommit(): Promise<boolean> {
 (async () => {
   preRun();
 
-  // check if the release PR has been merged
-  const isRelease = await isLastCommitAReleaseCommit();
-  if (isRelease) {
-    await publish();
+  if (context.payload.pull_request?.merged) {
+    console.log(
+      `Pull request #${context.payload.pull_request.number} has been merged.`
+    );
+
+    // check if the release PR has been merged
+    const isRelease = await isLastCommitAReleaseCommit();
+    if (isRelease) {
+      await publish();
+      return;
+    }
+
+    // the regular PR has been merged, so we need to create a release PR
+    // create or update release PR
+    await createOrUpdateReleasePR();
+  } else if (!context.payload.pull_request?.merged) {
+    console.log(
+      `Pull request #${context.payload.pull_request?.number} is not merged yet.`
+    );
+
+    if (!isPRTitleValid(githubApi.PR_TITLE)) {
+      await createOrUpdatePRStatusComment();
+      throw new Error(`Invalid pull request title: ${githubApi.PR_TITLE}`);
+    }
+
+    await createSnapshot();
+    await createOrUpdatePRStatusComment();
+  }
+})();
+
+async function createSnapshot(): Promise<void> {
+  if (!SNAPSHOTS_ENABLED) {
+    console.log('Snapshots are disabled, skipping snapshot creation.');
     return;
   }
 
-  // the regular PR has been merged, so we need to create a release PR
-  // create or update release PR
-  await createOrUpdateReleasePR();
-})();
+  console.log('Creating snapshot...');
+  // get changes from the pull request
+}
 
+async function createOrUpdatePRStatusComment() {
+  console.log('Creating or updating PR status comment...');
+
+  let markdown = '## 🚀 Lazy Release Action\n';
+  const prBody = context.payload.pull_request?.body;
+  console.log('Pull request body');
+  console.log(prBody);
+
+  let changelogs: Changelog[] = [];
+
+  // get all package infos
+  const packagePaths = getPackagePaths();
+  if (packagePaths.length === 0) {
+    console.log('No package.json files found, skipping...');
+    return;
+  }
+
+  console.log(`Found ${packagePaths.length} package.json files.`);
+
+  const pkgInfos = getPackageInfos(packagePaths);
+  if (pkgInfos.length === 0) {
+    console.log('No packages found, skipping...');
+    return;
+  }
+
+  console.log(`Found ${pkgInfos.length} packages.`);
+
+  const rootPackageName = pkgInfos.find((pkg) => pkg.isRoot)?.name;
+
+  if (prBody) {
+    changelogs = getChangelogFromMarkdown(prBody, rootPackageName);
+  } else if (githubApi.PR_TITLE) {
+    const changelog = createChangelogFromChangelogItem(githubApi.PR_TITLE, rootPackageName);
+    if (changelog) {
+      changelogs.push(changelog);
+    }
+  }
+
+  console.log(`Found ${changelogs.length} changelog entries.`);
+  console.log(changelogs);
+
+  if (changelogs.length) {
+    markdown += '✅ Changelogs found.\n';
+  } else if (changelogs.length === 0) {
+    markdown += '⚠️ No changelogs found.\n';
+  }
+
+  const { changedPackageInfos, indirectPackageInfos } = getChangedPackageInfos(
+    changelogs,
+    pkgInfos
+  );
+
+  if (changedPackageInfos.length) {
+    markdown += `📦 ${changedPackageInfos.length} ${changedPackageInfos.length > 1 ? 'package\'s' : 'package'} will be updated.\n`;
+  } else {
+    markdown += '⚠️ No packages changed.\n';
+  }
+
+  const lastCommitHash = execSync('git rev-parse HEAD').toString().trim();
+  markdown += `Latest commit: ${lastCommitHash}\n\n`;
+
+  if (changedPackageInfos.length) {
+    console.log(`Found ${changedPackageInfos.length} changed packages.`);
+
+    // update changed packages based on the changelogs
+    changedPackageInfos.forEach((pkgInfo) => {
+      updatePackageInfo(pkgInfo, changelogs);
+
+      // update the package.json files with the new versions
+      updatePackageJsonFile(pkgInfo);
+    });
+
+    // update indirect packages based on the changed packages
+    indirectPackageInfos.forEach((pkgInfo) => {
+      bumpIndirectPackageVersion(pkgInfo);
+
+      updateIndirectPackageJsonFile(pkgInfo, pkgInfos);
+    });
+
+    // generate markdown from changelogs
+    const content = generateMarkdown(
+      changedPackageInfos,
+      indirectPackageInfos,
+      changelogs
+    );
+
+    markdown += increaseHeadingLevel(content.trim());
+  }
+
+  markdown += `\n\n<!-- ${PR_COMMENT_STATUS_ID} -->`;
+
+  const prComments = await githubApi.getPRComments();
+  const existingComment = prComments.find((comment) =>
+    comment.body?.includes(PR_COMMENT_STATUS_ID)
+  );
+
+  console.log('markdown');
+  console.log(markdown);
+
+  if (existingComment) {
+    console.log('Updating existing PR status comment with ID');
+    await githubApi.updatePRComment(existingComment.id, markdown);
+  } else {
+    console.log('Creating new PR status comment');
+    await githubApi.createPRComment(markdown);
+  }
+}
 
 async function publish(): Promise<void> {
   console.log('Publishing...');
@@ -146,33 +286,36 @@ async function publish(): Promise<void> {
     return;
   }
 
-  const releasePkgInfos = changedPkgInfos.map((pkgInfo) => {
-    const changelogEntry = changelogEntries.find(
-      (entry) =>
-        entry.heading.packageName === pkgInfo.name ||
-        entry.heading.packageName === getPackageNameWithoutScope(pkgInfo.name) ||
-        (pkgInfo.isRoot && entry.heading.isRoot)
-    );
-  
-    if (!changelogEntry) {
-      console.warn(`No changelog entry found for package ${pkgInfo.name}, skipping.`);
-      return null;
-    }
-  
-    return {
-      pkgInfo,
-      changelogEntry,
-    } as ReleasePackageInfo;
-  }).filter((entry): entry is ReleasePackageInfo => entry !== null);
+  const releasePkgInfos = changedPkgInfos
+    .map((pkgInfo) => {
+      const changelogEntry = changelogEntries.find(
+        (entry) =>
+          entry.heading.packageName === pkgInfo.name ||
+          entry.heading.packageName ===
+            getPackageNameWithoutScope(pkgInfo.name) ||
+          (pkgInfo.isRoot && entry.heading.isRoot)
+      );
+
+      if (!changelogEntry) {
+        console.warn(
+          `No changelog entry found for package ${pkgInfo.name}, skipping.`
+        );
+        return null;
+      }
+
+      return {
+        pkgInfo,
+        changelogEntry,
+      } as ReleasePackageInfo;
+    })
+    .filter((entry): entry is ReleasePackageInfo => entry !== null);
 
   createTags(changedPkgInfos);
   await publishPackages(changedPkgInfos);
   await createGitHubRelease(releasePkgInfos);
 }
 
-async function publishPackages(
-  changedPkgInfos: PackageInfo[]
-): Promise<void> {
+async function publishPackages(changedPkgInfos: PackageInfo[]): Promise<void> {
   console.log('Publishing packages...');
 
   let hasPublished: boolean = false;
@@ -277,7 +420,7 @@ function createTags(packageInfos: PackageInfo[]): void {
 }
 
 async function createGitHubRelease(
-  releasePkgInfos: ReleasePackageInfo[],
+  releasePkgInfos: ReleasePackageInfo[]
 ): Promise<void> {
   console.log('Creating GitHub release...');
 
@@ -774,7 +917,7 @@ function createOrUpdateChangelog(
     const existingChangelogContent = readFileSync(changelogFilePath, 'utf-8');
     console.log(
       `Existing changelog content for ${packageInfo.name}:\n${existingChangelogContent}`
-    );  
+    );
 
     const updatedChangelogContent = updateChangelog(
       existingChangelogContent,
