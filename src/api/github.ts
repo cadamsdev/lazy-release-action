@@ -3,6 +3,7 @@ import { GITHUB_TOKEN, DEFAULT_BRANCH } from '../constants';
 
 export const githubApi = getOctokit(GITHUB_TOKEN);
 export const PR_NUMBER = context.payload.pull_request?.number || 0;
+export const PR_TITLE = context.payload.pull_request?.title || '';
 
 export interface GitHubEventData {
   owner: string;

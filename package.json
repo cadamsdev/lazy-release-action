@@ -1,7 +1,7 @@
 {
-  "name": "lazy-release-action",
+  "name": "lazy-release-action-test",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.2.1",
   "main": "./dist/index.js",
   "scripts": {
     "type-check": "tsc --noEmit",

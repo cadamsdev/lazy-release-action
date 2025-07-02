@@ -28124,6 +28124,7 @@ function doesTagExistOnRemote(tagName) {
 
 // src/constants.ts
 var GITHUB_TOKEN = process.env["INPUT_GITHUB-TOKEN"] || "";
+var SNAPSHOTS_ENABLED = process.env["INPUT_SNAPSHOTS"] ? process.env["INPUT_SNAPSHOTS"] === "true" : false;
 var DEFAULT_BRANCH = process.env.DEFAULT_BRANCH || "main";
 
 // src/utils.ts
@@ -28165,6 +28166,9 @@ function getChangelogSectionFromCommitMessage(commitMessage) {
   const changelogSection = commitMessage.substring(startIndex + section.length, endIndex).trim();
   return changelogSection;
 }
+function isPRTitleValid(prTitle) {
+  return CONVENTIONAL_COMMITS_PATTERN.test(prTitle);
+}
 function getChangelogItems(changelogSection) {
   const lines = changelogSection.split("- ");
   const items = [];
@@ -28179,6 +28183,19 @@ function getChangelogItems(changelogSection) {
 function getVersionPrefix(versionSpec) {
   const match = versionSpec.match(/^([\^~><=]+)/);
   return match ? match[1] : "";
+}
+function getChangelogFromMarkdown(markdown, rootPackageName) {
+  const changelogs = [];
+  const changelogSection = getChangelogSectionFromCommitMessage(markdown);
+  const changelogItems = getChangelogItems(changelogSection);
+  for (const item of changelogItems) {
+    const changelog = createChangelogFromChangelogItem(item, rootPackageName);
+    if (!changelog) {
+      continue;
+    }
+    changelogs.push(changelog);
+  }
+  return changelogs;
 }
 function getChangelogFromCommits(commits, rootPackageName) {
   const changelogs = [];
@@ -28285,6 +28302,9 @@ function extractCommitTypeParts(commitType) {
 function getPackageNameWithoutScope(packageName) {
   return packageName.startsWith("@") ? packageName.split("/")[1] : packageName;
 }
+function increaseHeadingLevel(message) {
+  return message.replace(/(#+)/g, "$1#");
+}
 function generateMarkdown(changedPackageInfos, indirectPackageInfos, changelogs) {
   let markdown = "# \u{1F449} Changelog\n\n";
   changedPackageInfos.forEach((pkg) => {
@@ -28381,6 +28401,7 @@ function parseReleasePRBody(prBody) {
   const headings = Array.from(
     prBody.matchAll(new RegExp(heading2Regex, "gm"))
   );
+  console.log(`Found ${headings.length} headings in PR body.`);
   for (let i = 0; i < headings.length; i++) {
     const heading = headings[i];
     const headingData = parseHeading2(heading[0]);
@@ -28739,6 +28760,7 @@ var import_semver = __toESM(require_semver2());
 var import_github2 = __toESM(require_github());
 var githubApi = (0, import_github2.getOctokit)(GITHUB_TOKEN);
 var PR_NUMBER = import_github2.context.payload.pull_request?.number || 0;
+var PR_TITLE = import_github2.context.payload.pull_request?.title || "";
 function getEventData() {
   const owner = import_github2.context.repo.owner;
   const repo = import_github2.context.repo.repo;
@@ -28802,6 +28824,33 @@ async function createGitHubRelease({
     body
   });
   return data;
+}
+async function getPRComments() {
+  const eventData = getEventData();
+  const { data } = await githubApi.rest.issues.listComments({
+    owner: eventData.owner,
+    repo: eventData.repo,
+    issue_number: eventData.issue_number
+  });
+  return data;
+}
+async function updatePRComment(commentId, markdown) {
+  const eventData = getEventData();
+  await githubApi.rest.issues.updateComment({
+    owner: eventData.owner,
+    repo: eventData.repo,
+    comment_id: commentId,
+    body: markdown
+  });
+}
+async function createPRComment(markdown) {
+  const eventData = getEventData();
+  await githubApi.rest.issues.createComment({
+    owner: eventData.owner,
+    repo: eventData.repo,
+    issue_number: eventData.issue_number,
+    body: markdown
+  });
 }
 
 // src/index.ts
@@ -29098,6 +29147,7 @@ function constructCommand(value, args) {
 var import_core = __toESM(require_core());
 var import_github3 = __toESM(require_github());
 var RELEASE_BRANCH = "lazy-release/main";
+var PR_COMMENT_STATUS_ID = "b3da20ce-59b6-4bbd-a6e3-6d625f45d008";
 function preRun() {
   const version = (0, import_child_process2.execSync)("git --version")?.toString().trim();
   console.log(`git: ${version.replace("git version ", "")}`);
@@ -29129,13 +29179,118 @@ async function isLastCommitAReleaseCommit() {
 }
 (async () => {
   preRun();
-  const isRelease = await isLastCommitAReleaseCommit();
-  if (isRelease) {
-    await publish();
+  if (import_github3.context.payload.pull_request?.merged) {
+    console.log(
+      `Pull request #${import_github3.context.payload.pull_request.number} has been merged.`
+    );
+    const isRelease = await isLastCommitAReleaseCommit();
+    if (isRelease) {
+      await publish();
+      return;
+    }
+    await createOrUpdateReleasePR();
+  } else if (!import_github3.context.payload.pull_request?.merged) {
+    console.log(
+      `Pull request #${import_github3.context.payload.pull_request?.number} is not merged yet.`
+    );
+    if (!isPRTitleValid(PR_TITLE)) {
+      await createOrUpdatePRStatusComment();
+      throw new Error(`Invalid pull request title: ${PR_TITLE}`);
+    }
+    await createSnapshot();
+    await createOrUpdatePRStatusComment();
+  }
+})();
+async function createSnapshot() {
+  if (!SNAPSHOTS_ENABLED) {
+    console.log("Snapshots are disabled, skipping snapshot creation.");
     return;
   }
-  await createOrUpdateReleasePR();
-})();
+  console.log("Creating snapshot...");
+}
+async function createOrUpdatePRStatusComment() {
+  console.log("Creating or updating PR status comment...");
+  let markdown = "## \u{1F680} Lazy Release Action\n";
+  const prBody = import_github3.context.payload.pull_request?.body;
+  console.log("Pull request body");
+  console.log(prBody);
+  let changelogs = [];
+  const packagePaths = getPackagePaths();
+  if (packagePaths.length === 0) {
+    console.log("No package.json files found, skipping...");
+    return;
+  }
+  console.log(`Found ${packagePaths.length} package.json files.`);
+  const pkgInfos = getPackageInfos(packagePaths);
+  if (pkgInfos.length === 0) {
+    console.log("No packages found, skipping...");
+    return;
+  }
+  console.log(`Found ${pkgInfos.length} packages.`);
+  const rootPackageName = pkgInfos.find((pkg) => pkg.isRoot)?.name;
+  if (prBody) {
+    changelogs = getChangelogFromMarkdown(prBody, rootPackageName);
+  } else if (PR_TITLE) {
+    const changelog = createChangelogFromChangelogItem(PR_TITLE, rootPackageName);
+    if (changelog) {
+      changelogs.push(changelog);
+    }
+  }
+  console.log(`Found ${changelogs.length} changelog entries.`);
+  console.log(changelogs);
+  if (changelogs.length) {
+    markdown += "\u2705 Changelogs found.\n";
+  } else if (changelogs.length === 0) {
+    markdown += "\u26A0\uFE0F No changelogs found.\n";
+  }
+  const { changedPackageInfos, indirectPackageInfos } = getChangedPackageInfos(
+    changelogs,
+    pkgInfos
+  );
+  if (changedPackageInfos.length) {
+    markdown += `\u{1F4E6} ${changedPackageInfos.length} ${changedPackageInfos.length > 1 ? "package's" : "package"} will be updated.
+`;
+  } else {
+    markdown += "\u26A0\uFE0F No packages changed.\n";
+  }
+  const lastCommitHash = (0, import_child_process2.execSync)("git rev-parse HEAD").toString().trim();
+  markdown += `Latest commit: ${lastCommitHash}
+
+`;
+  if (changedPackageInfos.length) {
+    console.log(`Found ${changedPackageInfos.length} changed packages.`);
+    changedPackageInfos.forEach((pkgInfo) => {
+      updatePackageInfo(pkgInfo, changelogs);
+      updatePackageJsonFile(pkgInfo);
+    });
+    indirectPackageInfos.forEach((pkgInfo) => {
+      bumpIndirectPackageVersion(pkgInfo);
+      updateIndirectPackageJsonFile(pkgInfo, pkgInfos);
+    });
+    const content = generateMarkdown(
+      changedPackageInfos,
+      indirectPackageInfos,
+      changelogs
+    );
+    markdown += increaseHeadingLevel(content.trim());
+  }
+  markdown += `
+
+<!-- ${PR_COMMENT_STATUS_ID} -->`;
+  const prComments = await getPRComments();
+  const existingComment = prComments.find(
+    (comment) => comment.body?.includes(PR_COMMENT_STATUS_ID)
+  );
+  console.log("markdown");
+  console.log(markdown);
+  if (existingComment) {
+    console.log("Updating existing PR status comment with ID");
+    await updatePRComment(existingComment.id, markdown);
+  } else {
+    console.log("Creating new PR status comment");
+    await createPRComment(markdown);
+  }
+}
 async function publish() {
   console.log("Publishing...");
   const prBody = import_github3.context.payload.pull_request?.body;
@@ -29177,7 +29332,9 @@ async function publish() {
       (entry) => entry.heading.packageName === pkgInfo.name || entry.heading.packageName === getPackageNameWithoutScope(pkgInfo.name) || pkgInfo.isRoot && entry.heading.isRoot
     );
     if (!changelogEntry) {
-      console.warn(`No changelog entry found for package ${pkgInfo.name}, skipping.`);
+      console.warn(
+        `No changelog entry found for package ${pkgInfo.name}, skipping.`
+      );
       return null;
     }
     return {
