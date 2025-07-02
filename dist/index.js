@@ -28125,6 +28125,7 @@ function doesTagExistOnRemote(tagName) {
 // src/constants.ts
 var GITHUB_TOKEN = process.env["INPUT_GITHUB-TOKEN"] || "";
 var SNAPSHOTS_ENABLED = process.env["INPUT_SNAPSHOTS"] ? process.env["INPUT_SNAPSHOTS"] === "true" : false;
+var GITHUB_PACKAGES_ENABLED = process.env["INPUT_GITHUB-PACKAGES"] ? process.env["INPUT_GITHUB-PACKAGES"] === "true" : false;
 var DEFAULT_BRANCH = process.env.DEFAULT_BRANCH || "main";
 
 // src/utils.ts
@@ -29155,7 +29156,8 @@ function preRun() {
   const nodeVersion = (0, import_child_process2.execSync)("node --version")?.toString().trim();
   console.log(`node: ${nodeVersion}`);
   setupGitConfig();
-  if (GITHUB_TOKEN) {
+  if (GITHUB_TOKEN && GITHUB_PACKAGES_ENABLED) {
+    (0, import_child_process2.execSync)(`npm config set registry https://npm.pkg.github.com/`, { stdio: "inherit" });
     (0, import_child_process2.execSync)(
       `npm config set //npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}`,
       {
@@ -29195,21 +29197,65 @@ async function isLastCommitAReleaseCommit() {
       `Pull request #${import_github3.context.payload.pull_request?.number} is not merged yet.`
     );
     if (!isPRTitleValid(PR_TITLE) && PR_TITLE !== RELEASE_PR_TITLE) {
-      await createOrUpdatePRStatusComment();
+      await createOrUpdatePRStatusComment(false);
       throw new Error(`Invalid pull request title: ${PR_TITLE}`);
     }
-    await createSnapshot();
-    await createOrUpdatePRStatusComment();
+    await createOrUpdatePRStatusComment(true);
   }
 })();
-async function createSnapshot() {
+async function createSnapshot(changedPkgInfos) {
   if (!SNAPSHOTS_ENABLED) {
     console.log("Snapshots are disabled, skipping snapshot creation.");
+    return [];
+  }
+  const allPkgInfos = getPackageInfos(getPackagePaths());
+  const snapshotResults = [];
+  for (const pkgInfo of changedPkgInfos) {
+    const snapshotResult = await createPackageSnapshot(pkgInfo, allPkgInfos);
+    if (snapshotResult) {
+      snapshotResults.push(snapshotResult);
+    }
+  }
+  return snapshotResults;
+}
+async function createPackageSnapshot(pkgInfo, allPkgInfos) {
+  console.log(`Creating snapshot for package: ${pkgInfo.name}`);
+  const dirPath = toDirectoryPath(pkgInfo.path);
+  if (!pkgInfo.isRoot && !(0, import_fs.existsSync)(dirPath)) {
+    console.warn(`Directory ${dirPath} does not exist, skipping snapshot.`);
     return;
   }
-  console.log("Creating snapshot...");
+  const pm = await detect();
+  if (!pm) {
+    throw new Error("No package manager detected");
+  }
+  const packageJsonPath = (0, import_path2.join)(dirPath, "package.json");
+  if (!(0, import_fs.existsSync)(packageJsonPath)) {
+    console.warn(`Package.json file not found in ${dirPath}, skipping snapshot.`);
+    return;
+  }
+  const packageJson = JSON.parse((0, import_fs.readFileSync)(packageJsonPath, "utf-8"));
+  if (packageJson.private) {
+    console.warn(`Package ${pkgInfo.name} is private, skipping snapshot.`);
+    return;
+  }
+  if (!packageJson.version) {
+    console.warn(`No version found in package.json for ${pkgInfo.name}, skipping snapshot.`);
+    return;
+  }
+  const newVersion = `${packageJson.version}-snapshot-${(/* @__PURE__ */ new Date()).getTime()}`;
+  pkgInfo.newVersion = newVersion;
+  updateIndirectPackageJsonFile(pkgInfo, allPkgInfos);
+  await updatePackageLockFiles(dirPath);
+  const fullPublishCommand = [pm.agent, "publish", "--tag", "snapshot"].join(" ");
+  (0, import_child_process2.execSync)(fullPublishCommand, { cwd: dirPath ? dirPath : void 0, stdio: "inherit" });
+  console.log(`Snapshot created for package: ${pkgInfo.name}`);
+  return {
+    packageName: pkgInfo.name,
+    newVersion
+  };
 }
-async function createOrUpdatePRStatusComment() {
+async function createOrUpdatePRStatusComment(shouldCreateSnapshot = false) {
   console.log("Creating or updating PR status comment...");
   let markdown = "## \u{1F680} Lazy Release Action\n";
   const prBody = import_github3.context.payload.pull_request?.body;
@@ -29274,6 +29320,34 @@ async function createOrUpdatePRStatusComment() {
       changelogs
     );
     markdown += increaseHeadingLevel(content.trim());
+  }
+  if (shouldCreateSnapshot) {
+    const pm = await detect();
+    if (!pm) {
+      throw new Error("No package manager detected");
+    }
+    const rc = resolveCommand(pm.agent, "install", []);
+    if (!rc) {
+      throw new Error(`Could not resolve command for ${pm.agent}`);
+    }
+    const allChangedPkgs = [...changedPackageInfos, ...indirectPackageInfos];
+    const snapshotResults = await createSnapshot(allChangedPkgs);
+    if (snapshotResults.length) {
+      markdown += `
+
+## \u{1F4F8} Snapshots
+`;
+      snapshotResults.forEach((result, index) => {
+        markdown += `\`\`\`
+`;
+        markdown += `${rc.command} ${rc.args.join(" ")} ${result.packageName}${result.newVersion}
+`;
+        markdown += `\`\`\``;
+        if (index < snapshotResults.length - 1) {
+          markdown += "\n\n";
+        }
+      });
+    }
   }
   markdown += `
 
@@ -29579,14 +29653,14 @@ async function createOrUpdateReleasePR() {
     head: RELEASE_BRANCH
   });
 }
-function updateIndirectPackageJsonFile(pgkInfo, allPackageInfos) {
-  if (!pgkInfo.newVersion) {
+function updateIndirectPackageJsonFile(pkgInfo, allPackageInfos) {
+  if (!pkgInfo.newVersion) {
     return;
   }
-  const packageJsonPath = pgkInfo.path;
+  const packageJsonPath = pkgInfo.path;
   let packageJsonString = (0, import_fs.readFileSync)(packageJsonPath, "utf-8");
   const packageJson = JSON.parse(packageJsonString);
-  packageJson.version = pgkInfo.newVersion;
+  packageJson.version = pkgInfo.newVersion;
   const dependencyFields = [
     "dependencies",
     "devDependencies",
@@ -29604,16 +29678,16 @@ function updateIndirectPackageJsonFile(pgkInfo, allPackageInfos) {
           const prefix = getVersionPrefix(currentVersionSpec);
           const newVersionSpec = prefix + depPackageInfo.newVersion;
           console.log(
-            `Updating dependency ${depName} from ${currentVersionSpec} to ${newVersionSpec} in ${pgkInfo.name}`
+            `Updating dependency ${depName} from ${currentVersionSpec} to ${newVersionSpec} in ${pkgInfo.name}`
           );
           packageJson[field][depName] = newVersionSpec;
         }
       }
     }
   }
-  console.log(`Updating ${pgkInfo.name} to version ${pgkInfo.newVersion}`);
+  console.log(`Updating ${pkgInfo.name} to version ${pkgInfo.newVersion}`);
   allPackageInfos.forEach((otherPkg) => {
-    updateDependentPackages(pgkInfo, otherPkg);
+    updateDependentPackages(pkgInfo, otherPkg);
   });
   (0, import_fs.writeFileSync)(
     packageJsonPath,
@@ -29645,11 +29719,14 @@ function updateDependentPackages(indirectPkgInfo, otherPkg) {
         }
         const currentVersionSpec = otherPackageJson[field][depName];
         const prefix = getVersionPrefix(currentVersionSpec);
-        const newVersionSpec = prefix + indirectPkgInfo.newVersion;
+        let newPackageVersion = prefix + indirectPkgInfo.newVersion;
+        if (indirectPkgInfo.newVersion?.includes("-snapshot")) {
+          newPackageVersion = indirectPkgInfo.newVersion;
+        }
         console.log(
-          `Updating dependency ${depName} from ${currentVersionSpec} to ${newVersionSpec} in ${otherPkg.name}`
+          `Updating dependency ${depName} from ${currentVersionSpec} to ${newPackageVersion} in ${otherPkg.name}`
         );
-        otherPackageJson[field][depName] = newVersionSpec;
+        otherPackageJson[field][depName] = newPackageVersion;
       }
     }
   }
@@ -29685,7 +29762,7 @@ function getPackageInfos(packagePaths) {
   });
   return packageInfos;
 }
-async function updatePackageLockFiles() {
+async function updatePackageLockFiles(dirPath = "") {
   const pm = await detect();
   if (!pm) {
     throw new Error("No package manager detected");
@@ -29697,6 +29774,7 @@ async function updatePackageLockFiles() {
   const fullCommand = [rc.command, ...rc.args || []].join(" ");
   console.log(`Running package manager command: ${fullCommand}`);
   (0, import_child_process2.execSync)(fullCommand, {
+    cwd: dirPath ? dirPath : void 0,
     stdio: "inherit"
   });
 }
