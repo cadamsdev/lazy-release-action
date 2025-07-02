@@ -15,7 +15,11 @@
   "publishConfig": {
     "registry": "https://npm.pkg.github.com/"
   },
-  "author": "",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cadamsdev/lazy-release-action.git"
+  },
+  "author": "Chad Adams",
   "license": "ISC",
   "description": "",
   "devDependencies": {
