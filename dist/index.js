@@ -29223,7 +29223,7 @@ async function createSnapshot(changedPkgInfos) {
 async function createPackageSnapshot(pkgInfo, allPkgInfos) {
   console.log(`Creating snapshot for package: ${pkgInfo.name}`);
   const dirPath = toDirectoryPath(pkgInfo.path);
-  if (!(0, import_fs.existsSync)(dirPath)) {
+  if (!pkgInfo.isRoot && !(0, import_fs.existsSync)(dirPath)) {
     console.warn(`Directory ${dirPath} does not exist, skipping snapshot.`);
     return;
   }

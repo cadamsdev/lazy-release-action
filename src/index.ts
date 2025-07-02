@@ -151,7 +151,7 @@ async function createPackageSnapshot(pkgInfo: PackageInfo, allPkgInfos: PackageI
   console.log(`Creating snapshot for package: ${pkgInfo.name}`);
 
   const dirPath = toDirectoryPath(pkgInfo.path);
-  if (!existsSync(dirPath)) {
+  if (!pkgInfo.isRoot && !existsSync(dirPath)) {
     console.warn(`Directory ${dirPath} does not exist, skipping snapshot.`);
     return;
   }
