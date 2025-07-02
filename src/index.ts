@@ -43,6 +43,7 @@ import { context } from '@actions/github';
 
 const RELEASE_BRANCH = 'lazy-release/main';
 const PR_COMMENT_STATUS_ID = 'b3da20ce-59b6-4bbd-a6e3-6d625f45d008';
+const RELEASE_PR_TITLE = 'Version Packages';
 
 function preRun() {
   // print git version
@@ -107,7 +108,10 @@ async function isLastCommitAReleaseCommit(): Promise<boolean> {
       `Pull request #${context.payload.pull_request?.number} is not merged yet.`
     );
 
-    if (!isPRTitleValid(githubApi.PR_TITLE)) {
+    if (
+      !isPRTitleValid(githubApi.PR_TITLE) &&
+      githubApi.PR_TITLE !== RELEASE_PR_TITLE
+    ) {
       await createOrUpdatePRStatusComment();
       throw new Error(`Invalid pull request title: ${githubApi.PR_TITLE}`);
     }
