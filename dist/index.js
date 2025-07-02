@@ -29216,7 +29216,6 @@ async function createSnapshot(changedPkgInfos) {
       snapshotResults.push(snapshotResult);
     }
   }
-  console.log("Creating snapshot...");
   return snapshotResults;
 }
 async function createPackageSnapshot(pkgInfo, allPkgInfos) {

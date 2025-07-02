@@ -137,8 +137,6 @@ async function createSnapshot(changedPkgInfos: PackageInfo[]): Promise<SnapshotR
       snapshotResults.push(snapshotResult);
     }
   }
-
-  console.log('Creating snapshot...');
   return snapshotResults;
 }
 
