@@ -1,7 +1,7 @@
 ## 0.2.0 (2025-07-02)
 
 ### 🚀 New Features
-- Add support for snapshots ([#4](https://github.com/cadamsdev/lazy-release-action/pull/4))
+- Add support for snapshots ([#7](https://github.com/cadamsdev/lazy-release-action/pull/7))
 
 
 ## 0.1.0 (2025-07-02)
