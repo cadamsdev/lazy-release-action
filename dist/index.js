@@ -29236,6 +29236,10 @@ async function createPackageSnapshot(pkgInfo, allPkgInfos) {
     return;
   }
   const packageJson = JSON.parse((0, import_fs.readFileSync)(packageJsonPath, "utf-8"));
+  if (packageJson.private) {
+    console.warn(`Package ${pkgInfo.name} is private, skipping snapshot.`);
+    return;
+  }
   if (!packageJson.version) {
     console.warn(`No version found in package.json for ${pkgInfo.name}, skipping snapshot.`);
     return;
