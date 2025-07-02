@@ -8,7 +8,7 @@ import {
   hasUnstagedChanges,
   setupGitConfig,
 } from './api/git';
-import { DEFAULT_BRANCH, GITHUB_PACKAGES_ENABLED, GITHUB_TOKEN, SNAPSHOTS_ENABLED } from './constants';
+import { DEFAULT_BRANCH, GITHUB_TOKEN, SNAPSHOTS_ENABLED } from './constants';
 import {
   appendReleaseIdToMarkdown,
   Changelog,
@@ -56,8 +56,7 @@ function preRun() {
 
   setupGitConfig();
 
-  if (GITHUB_TOKEN && GITHUB_PACKAGES_ENABLED) {
-    execSync(`npm config set registry https://npm.pkg.github.com/`, { stdio: 'inherit' });
+  if (GITHUB_TOKEN) {
     execSync(
       `npm config set //npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}`,
       {
@@ -113,89 +112,26 @@ async function isLastCommitAReleaseCommit(): Promise<boolean> {
       !isPRTitleValid(githubApi.PR_TITLE) &&
       githubApi.PR_TITLE !== RELEASE_PR_TITLE
     ) {
-      await createOrUpdatePRStatusComment(false);
+      await createOrUpdatePRStatusComment();
       throw new Error(`Invalid pull request title: ${githubApi.PR_TITLE}`);
     }
-  
-    await createOrUpdatePRStatusComment(true);
+
+    await createSnapshot();
+    await createOrUpdatePRStatusComment();
   }
 })();
 
-async function createSnapshot(changedPkgInfos: PackageInfo[]): Promise<SnapshotResult[]> {
+async function createSnapshot(): Promise<void> {
   if (!SNAPSHOTS_ENABLED) {
     console.log('Snapshots are disabled, skipping snapshot creation.');
-    return [];
+    return;
   }
 
-  const allPkgInfos = getPackageInfos(getPackagePaths());
-
-  const snapshotResults: SnapshotResult[] = [];
-  for (const pkgInfo of changedPkgInfos) {
-    // create a snapshot for each changed package
-    const snapshotResult = await createPackageSnapshot(pkgInfo, allPkgInfos);
-    if (snapshotResult) {
-      snapshotResults.push(snapshotResult);
-    }
-  }
-  return snapshotResults;
+  console.log('Creating snapshot...');
+  // get changes from the pull request
 }
 
-interface SnapshotResult {
-  packageName: string;
-  newVersion: string;
-}
-
-async function createPackageSnapshot(pkgInfo: PackageInfo, allPkgInfos: PackageInfo[]): Promise<SnapshotResult | undefined> {
-  console.log(`Creating snapshot for package: ${pkgInfo.name}`);
-
-  const dirPath = toDirectoryPath(pkgInfo.path);
-  if (!pkgInfo.isRoot && !existsSync(dirPath)) {
-    console.warn(`Directory ${dirPath} does not exist, skipping snapshot.`);
-    return;
-  }
-
-  const pm = await detect();
-  if (!pm) {
-    throw new Error('No package manager detected');
-  }
-
-  // rewrite the package.json version to a snapshot version
-  const packageJsonPath = join(dirPath, 'package.json');
-  if (!existsSync(packageJsonPath)) {
-    console.warn(`Package.json file not found in ${dirPath}, skipping snapshot.`);
-    return;
-  }
-
-  const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
-  if (packageJson.private) {
-    console.warn(`Package ${pkgInfo.name} is private, skipping snapshot.`);
-    return;
-  }
-
-  if (!packageJson.version) {
-    console.warn(`No version found in package.json for ${pkgInfo.name}, skipping snapshot.`);
-    return;
-  }
-
-  const newVersion = `${packageJson.version}-snapshot-${new Date().getTime()}`;
-  pkgInfo.newVersion = newVersion;
-  updateIndirectPackageJsonFile(pkgInfo, allPkgInfos);
-
-  // update the package locks
-  await updatePackageLockFiles(dirPath);
-
-  // publish the package with npm publish --tag snapshot
-  const fullPublishCommand = [pm.agent, 'publish', '--tag', 'snapshot'].join(' ');
-  execSync(fullPublishCommand, { cwd: dirPath ? dirPath : undefined, stdio: 'inherit' });
-  console.log(`Snapshot created for package: ${pkgInfo.name}`);
-
-  return {
-    packageName: pkgInfo.name,
-    newVersion: newVersion,
-  };
-}
-
-async function createOrUpdatePRStatusComment(shouldCreateSnapshot = false) {
+async function createOrUpdatePRStatusComment() {
   console.log('Creating or updating PR status comment...');
 
   let markdown = '## 🚀 Lazy Release Action\n';
@@ -282,35 +218,6 @@ async function createOrUpdatePRStatusComment(shouldCreateSnapshot = false) {
     );
 
     markdown += increaseHeadingLevel(content.trim());
-  }
-
-  if (shouldCreateSnapshot) {
-    const pm = await detect();
-    if (!pm) {
-      throw new Error('No package manager detected');
-    }
-
-    const rc = resolveCommand(pm.agent, 'install', []);
-    if (!rc) {
-      throw new Error(`Could not resolve command for ${pm.agent}`);
-    }
-
-    const allChangedPkgs = [...changedPackageInfos, ...indirectPackageInfos];
-    const snapshotResults = await createSnapshot(allChangedPkgs);
-
-    if (snapshotResults.length) {
-      markdown += `\n\n## 📸 Snapshots\n`;
-
-      snapshotResults.forEach((result, index) => {
-        markdown += `\`\`\`\n`;
-        markdown += `${rc.command} ${rc.args.join(' ')} ${result.packageName}${result.newVersion}\n`;
-        markdown += `\`\`\``;
-
-        if (index < snapshotResults.length - 1) {
-          markdown += '\n\n';
-        } 
-      });
-    }
   }
 
   markdown += `\n\n<!-- ${PR_COMMENT_STATUS_ID} -->`;
@@ -817,19 +724,19 @@ async function createOrUpdateReleasePR() {
 }
 
 function updateIndirectPackageJsonFile(
-  pkgInfo: PackageInfo,
+  pgkInfo: PackageInfo,
   allPackageInfos: PackageInfo[]
 ): void {
-  if (!pkgInfo.newVersion) {
+  if (!pgkInfo.newVersion) {
     return;
   }
 
-  const packageJsonPath = pkgInfo.path;
+  const packageJsonPath = pgkInfo.path;
   let packageJsonString = readFileSync(packageJsonPath, 'utf-8');
   const packageJson = JSON.parse(packageJsonString);
 
   // Update the version in the package.json
-  packageJson.version = pkgInfo.newVersion;
+  packageJson.version = pgkInfo.newVersion;
 
   // Update dependencies that reference other packages in the workspace
   const dependencyFields = [
@@ -852,7 +759,7 @@ function updateIndirectPackageJsonFile(
           const newVersionSpec = prefix + depPackageInfo.newVersion;
 
           console.log(
-            `Updating dependency ${depName} from ${currentVersionSpec} to ${newVersionSpec} in ${pkgInfo.name}`
+            `Updating dependency ${depName} from ${currentVersionSpec} to ${newVersionSpec} in ${pgkInfo.name}`
           );
 
           packageJson[field][depName] = newVersionSpec;
@@ -861,11 +768,11 @@ function updateIndirectPackageJsonFile(
     }
   }
 
-  console.log(`Updating ${pkgInfo.name} to version ${pkgInfo.newVersion}`);
+  console.log(`Updating ${pgkInfo.name} to version ${pgkInfo.newVersion}`);
 
   // go through all the packages, update any package.json files that reference this package
   allPackageInfos.forEach((otherPkg) => {
-    updateDependentPackages(pkgInfo, otherPkg);
+    updateDependentPackages(pgkInfo, otherPkg);
   });
 
   // Write the updated package.json back to the file
@@ -911,16 +818,13 @@ function updateDependentPackages(
 
         const currentVersionSpec = otherPackageJson[field][depName];
         const prefix = getVersionPrefix(currentVersionSpec);
-        let newPackageVersion = prefix + indirectPkgInfo.newVersion;
-        if (indirectPkgInfo.newVersion?.includes('-snapshot')) {
-          newPackageVersion = indirectPkgInfo.newVersion;
-        }
+        const newVersionSpec = prefix + indirectPkgInfo.newVersion;
 
         console.log(
-          `Updating dependency ${depName} from ${currentVersionSpec} to ${newPackageVersion} in ${otherPkg.name}`
+          `Updating dependency ${depName} from ${currentVersionSpec} to ${newVersionSpec} in ${otherPkg.name}`
         );
 
-        otherPackageJson[field][depName] = newPackageVersion;
+        otherPackageJson[field][depName] = newVersionSpec;
       }
     }
   }
@@ -972,7 +876,7 @@ export function getPackageInfos(packagePaths: string[]): PackageInfo[] {
   return packageInfos;
 }
 
-async function updatePackageLockFiles(dirPath = ''): Promise<void> {
+async function updatePackageLockFiles(): Promise<void> {
   const pm = await detect();
 
   if (!pm) {
@@ -989,7 +893,6 @@ async function updatePackageLockFiles(dirPath = ''): Promise<void> {
   console.log(`Running package manager command: ${fullCommand}`);
 
   execSync(fullCommand, {
-    cwd: dirPath ? dirPath : undefined,
     stdio: 'inherit',
   });
 }
