@@ -28125,6 +28125,7 @@ function doesTagExistOnRemote(tagName) {
 // src/constants.ts
 var GITHUB_TOKEN = process.env["INPUT_GITHUB-TOKEN"] || "";
 var SNAPSHOTS_ENABLED = process.env["INPUT_SNAPSHOTS"] ? process.env["INPUT_SNAPSHOTS"] === "true" : false;
+var GITHUB_PACKAGES_ENABLED = process.env["INPUT_GITHUB-PACKAGES"] ? process.env["INPUT_GITHUB-PACKAGES"] === "true" : false;
 var DEFAULT_BRANCH = process.env.DEFAULT_BRANCH || "main";
 
 // src/utils.ts
@@ -29155,7 +29156,8 @@ function preRun() {
   const nodeVersion = (0, import_child_process2.execSync)("node --version")?.toString().trim();
   console.log(`node: ${nodeVersion}`);
   setupGitConfig();
-  if (GITHUB_TOKEN) {
+  if (GITHUB_TOKEN && GITHUB_PACKAGES_ENABLED) {
+    (0, import_child_process2.execSync)(`npm config set registry https://npm.pkg.github.com/`, { stdio: "inherit" });
     (0, import_child_process2.execSync)(
       `npm config set //npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}`,
       {
@@ -29243,7 +29245,7 @@ async function createPackageSnapshot(pkgInfo, allPkgInfos) {
   updateIndirectPackageJsonFile(pkgInfo, allPkgInfos);
   await updatePackageLockFiles(dirPath);
   const fullPublishCommand = [pm.agent, "publish", "--tag", "snapshot"].join(" ");
-  (0, import_child_process2.execSync)(fullPublishCommand, { stdio: "inherit" });
+  (0, import_child_process2.execSync)(fullPublishCommand, { cwd: dirPath ? dirPath : process.cwd(), stdio: "inherit" });
   console.log(`Snapshot created for package: ${pkgInfo.name}`);
   return {
     packageName: pkgInfo.name,

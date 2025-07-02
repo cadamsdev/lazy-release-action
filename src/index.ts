@@ -5,11 +5,10 @@ import {
   commitAndPushChanges,
   createOrCheckoutBranch,
   doesTagExistOnRemote,
-  getLastCommitHash,
   hasUnstagedChanges,
   setupGitConfig,
 } from './api/git';
-import { DEFAULT_BRANCH, GITHUB_TOKEN, SNAPSHOTS_ENABLED } from './constants';
+import { DEFAULT_BRANCH, GITHUB_PACKAGES_ENABLED, GITHUB_TOKEN, SNAPSHOTS_ENABLED } from './constants';
 import {
   appendReleaseIdToMarkdown,
   Changelog,
@@ -57,8 +56,8 @@ function preRun() {
 
   setupGitConfig();
 
-  if (GITHUB_TOKEN) {
-    // execSync(`npm config set registry https://npm.pkg.github.com/`, { stdio: 'inherit' });
+  if (GITHUB_TOKEN && GITHUB_PACKAGES_ENABLED) {
+    execSync(`npm config set registry https://npm.pkg.github.com/`, { stdio: 'inherit' });
     execSync(
       `npm config set //npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}`,
       {
@@ -184,7 +183,7 @@ async function createPackageSnapshot(pkgInfo: PackageInfo, allPkgInfos: PackageI
 
   // publish the package with npm publish --tag snapshot
   const fullPublishCommand = [pm.agent, 'publish', '--tag', 'snapshot'].join(' ');
-  execSync(fullPublishCommand, { stdio: 'inherit' });
+  execSync(fullPublishCommand, { cwd: dirPath ? dirPath : process.cwd(), stdio: 'inherit' });
   console.log(`Snapshot created for package: ${pkgInfo.name}`);
 
   return {
