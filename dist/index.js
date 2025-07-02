@@ -29332,12 +29332,16 @@ async function createOrUpdatePRStatusComment(shouldCreateSnapshot = false) {
 
 ## \u{1F4F8} Snapshots
 `;
-      markdown += `\`\`\``;
-      snapshotResults.forEach((result) => {
-        markdown += `${rc.command} ${result.packageName}${result.newVersion}
+      snapshotResults.forEach((result, index) => {
+        markdown += `\`\`\`
 `;
+        markdown += `${rc.command} ${rc.args.join(" ")} ${result.packageName}${result.newVersion}
+`;
+        markdown += `\`\`\``;
+        if (index < snapshotResults.length - 1) {
+          markdown += "\n\n";
+        }
       });
-      markdown += `\`\`\``;
     }
   }
   markdown += `

@@ -297,13 +297,16 @@ async function createOrUpdatePRStatusComment(shouldCreateSnapshot = false) {
 
     if (snapshotResults.length) {
       markdown += `\n\n## 📸 Snapshots\n`;
-      markdown += `\`\`\``;
 
-      snapshotResults.forEach((result) => {
-        markdown += `${rc.command} ${result.packageName}${result.newVersion}\n`;
+      snapshotResults.forEach((result, index) => {
+        markdown += `\`\`\`\n`;
+        markdown += `${rc.command} ${rc.args.join(' ')} ${result.packageName}${result.newVersion}\n`;
+        markdown += `\`\`\``;
+
+        if (index < snapshotResults.length - 1) {
+          markdown += '\n\n';
+        } 
       });
-
-      markdown += `\`\`\``;
     }
   }
 
