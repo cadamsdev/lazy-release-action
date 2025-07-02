@@ -297,7 +297,7 @@ async function createOrUpdatePRStatusComment(shouldCreateSnapshot = false) {
     const snapshotResults = await createSnapshot(allChangedPkgs);
 
     if (snapshotResults.length) {
-      markdown += `### 📸 Snapshots\n`;
+      markdown += `\n\n## 📸 Snapshots\n`;
       markdown += `\`\`\``;
 
       snapshotResults.forEach((result) => {

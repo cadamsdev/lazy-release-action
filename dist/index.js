@@ -29332,7 +29332,9 @@ async function createOrUpdatePRStatusComment(shouldCreateSnapshot = false) {
     const allChangedPkgs = [...changedPackageInfos, ...indirectPackageInfos];
     const snapshotResults = await createSnapshot(allChangedPkgs);
     if (snapshotResults.length) {
-      markdown += `### \u{1F4F8} Snapshots
+      markdown += `
+
+## \u{1F4F8} Snapshots
 `;
       markdown += `\`\`\``;
       snapshotResults.forEach((result) => {
