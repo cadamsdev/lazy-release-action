@@ -29767,7 +29767,7 @@ async function updatePackageLockFiles(dir = "") {
   const fullCommand = [rc.command, ...rc.args || []].join(" ");
   console.log(`Running package manager command: ${fullCommand}`);
   (0, import_child_process2.execSync)(fullCommand, {
-    cwd: dir,
+    cwd: dir ? dir : process.cwd(),
     stdio: "inherit"
   });
 }

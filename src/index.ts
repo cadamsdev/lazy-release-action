@@ -984,7 +984,7 @@ async function updatePackageLockFiles(dir = ''): Promise<void> {
   console.log(`Running package manager command: ${fullCommand}`);
 
   execSync(fullCommand, {
-    cwd: dir,
+    cwd: dir ? dir : process.cwd(),
     stdio: 'inherit',
   });
 }
