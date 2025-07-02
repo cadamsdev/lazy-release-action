@@ -42,7 +42,7 @@ jobs:
       run: npm ci
 
     - name: Create Release PR or Release
-      uses: cadamsdev/lazy-release-action@c84ff14137be3375cb79e9f8f6a81099a05e0e0c # v1.0.0
+      uses: cadamsdev/lazy-release-action@1d39de4bc90775fe01ee2f29f70dc7362eacf0fa # v0.1.0
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
 ```
@@ -85,7 +85,7 @@ jobs:
         run: npm run build
 
       - name: Create Release PR or Release
-        uses: cadamsdev/lazy-release-action@c84ff14137be3375cb79e9f8f6a81099a05e0e0c # v1.0.0
+        uses: cadamsdev/lazy-release-action@1d39de4bc90775fe01ee2f29f70dc7362eacf0fa # v0.1.0
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           snapshots: true
