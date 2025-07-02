@@ -29156,8 +29156,7 @@ function preRun() {
   const nodeVersion = (0, import_child_process2.execSync)("node --version")?.toString().trim();
   console.log(`node: ${nodeVersion}`);
   setupGitConfig();
-  if (GITHUB_TOKEN && GITHUB_PACKAGES_ENABLED) {
-    (0, import_child_process2.execSync)(`npm config set registry https://npm.pkg.github.com/`, { stdio: "inherit" });
+  if (GITHUB_TOKEN) {
     (0, import_child_process2.execSync)(
       `npm config set //npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}`,
       {
