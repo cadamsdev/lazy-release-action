@@ -1,0 +1,15 @@
+name: 'Lazy Release Action'
+description: 'The easiest way to version, publish, and create changelogs for your JavaScript/TypeScript projects.'
+author: 'Chad Adams'
+branding:
+  icon: 'image'
+  color: 'white'
+
+inputs:
+  github-token:
+    description: "GitHub Token"
+    required: true
+
+runs:
+  using: 'node20'
+  main: './dist/index.js'
