@@ -13,6 +13,9 @@
     "version:major": "npm run publish && npm version major && git push --follow-tags",
     "publish": "npm run build && git add . && git commit -m 'chore: updated dist'"
   },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com/"
+  },
   "author": "",
   "license": "ISC",
   "description": "",
