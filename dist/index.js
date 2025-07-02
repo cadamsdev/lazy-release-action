@@ -29762,7 +29762,7 @@ function getPackageInfos(packagePaths) {
   });
   return packageInfos;
 }
-async function updatePackageLockFiles(dir = "") {
+async function updatePackageLockFiles(dirPath = "") {
   const pm = await detect();
   if (!pm) {
     throw new Error("No package manager detected");
@@ -29774,7 +29774,7 @@ async function updatePackageLockFiles(dir = "") {
   const fullCommand = [rc.command, ...rc.args || []].join(" ");
   console.log(`Running package manager command: ${fullCommand}`);
   (0, import_child_process2.execSync)(fullCommand, {
-    cwd: dir ? dir : process.cwd(),
+    cwd: dirPath ? dirPath : void 0,
     stdio: "inherit"
   });
 }

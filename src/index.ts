@@ -972,7 +972,7 @@ export function getPackageInfos(packagePaths: string[]): PackageInfo[] {
   return packageInfos;
 }
 
-async function updatePackageLockFiles(dir = ''): Promise<void> {
+async function updatePackageLockFiles(dirPath = ''): Promise<void> {
   const pm = await detect();
 
   if (!pm) {
@@ -989,7 +989,7 @@ async function updatePackageLockFiles(dir = ''): Promise<void> {
   console.log(`Running package manager command: ${fullCommand}`);
 
   execSync(fullCommand, {
-    cwd: dir ? dir : process.cwd(),
+    cwd: dirPath ? dirPath : undefined,
     stdio: 'inherit',
   });
 }
