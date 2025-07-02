@@ -7,10 +7,7 @@
     "type-check": "tsc --noEmit",
     "start": "tsx src/index.ts",
     "build": "npm run type-check && esbuild src/index.ts --bundle --platform=node --outfile=dist/index.js",
-    "test": "vitest",
-    "version:patch": "npm run publish && npm version patch && git push --follow-tags",
-    "version:minor": "npm run publish && npm version minor && git push --follow-tags",
-    "version:major": "npm run publish && npm version major && git push --follow-tags"
+    "test": "vitest"
   },
   "publishConfig": {
     "registry": "https://npm.pkg.github.com/"
