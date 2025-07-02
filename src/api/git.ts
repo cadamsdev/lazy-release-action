@@ -13,10 +13,6 @@ export function setupGitConfig() {
     { stdio: 'inherit' };
 }
 
-export function getLastCommitHash(): string {
-  return execSync(`git rev-parse HEAD`).toString().trim();
-}
-
 export function checkoutBranch(branchName: string) {
   execSync(`git fetch origin ${branchName}`, { stdio: 'inherit' });
   execSync(`git checkout ${branchName}`, { stdio: 'inherit' });
