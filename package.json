@@ -10,8 +10,7 @@
     "test": "vitest",
     "version:patch": "npm run publish && npm version patch && git push --follow-tags",
     "version:minor": "npm run publish && npm version minor && git push --follow-tags",
-    "version:major": "npm run publish && npm version major && git push --follow-tags",
-    "publish": "npm run build && git add . && git commit -m 'chore: updated dist'"
+    "version:major": "npm run publish && npm version major && git push --follow-tags"
   },
   "publishConfig": {
     "registry": "https://npm.pkg.github.com/"
