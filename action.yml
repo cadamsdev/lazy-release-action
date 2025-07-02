@@ -12,6 +12,9 @@ inputs:
   snapshots:
     description: "Create a snapshot release"
     required: false
+  github-packages:
+    description: "Publish to GitHub Packages"
+    required: false
 
 runs:
   using: 'node20'
