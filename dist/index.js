@@ -28078,6 +28078,9 @@ function setupGitConfig() {
   );
   (0, import_child_process.execSync)("git config --global --add safe.directory /github/workspace"), { stdio: "inherit" };
 }
+function getLastCommitHash(short = false) {
+  return (0, import_child_process.execSync)(`git rev-parse ${short ? "--short" : ""} HEAD`).toString().trim();
+}
 function checkoutBranch(branchName) {
   (0, import_child_process.execSync)(`git fetch origin ${branchName}`, { stdio: "inherit" });
   (0, import_child_process.execSync)(`git checkout ${branchName}`, { stdio: "inherit" });
@@ -29195,21 +29198,63 @@ async function isLastCommitAReleaseCommit() {
       `Pull request #${import_github3.context.payload.pull_request?.number} is not merged yet.`
     );
     if (!isPRTitleValid(PR_TITLE) && PR_TITLE !== RELEASE_PR_TITLE) {
-      await createOrUpdatePRStatusComment();
+      await createOrUpdatePRStatusComment(false);
       throw new Error(`Invalid pull request title: ${PR_TITLE}`);
     }
-    await createSnapshot();
-    await createOrUpdatePRStatusComment();
+    await createOrUpdatePRStatusComment(true);
   }
 })();
-async function createSnapshot() {
+async function createSnapshot(changedPkgInfos) {
   if (!SNAPSHOTS_ENABLED) {
     console.log("Snapshots are disabled, skipping snapshot creation.");
-    return;
+    return [];
+  }
+  const allPkgInfos = getPackageInfos(getPackagePaths());
+  const snapshotResults = [];
+  for (const pkgInfo of changedPkgInfos) {
+    const snapshotResult = await createPackageSnapshot(pkgInfo, allPkgInfos);
+    if (snapshotResult) {
+      snapshotResults.push(snapshotResult);
+    }
   }
   console.log("Creating snapshot...");
+  return snapshotResults;
 }
-async function createOrUpdatePRStatusComment() {
+async function createPackageSnapshot(pkgInfo, allPkgInfos) {
+  console.log(`Creating snapshot for package: ${pkgInfo.name}`);
+  const dirPath = toDirectoryPath(pkgInfo.path);
+  if (!(0, import_fs.existsSync)(dirPath)) {
+    console.warn(`Directory ${dirPath} does not exist, skipping snapshot.`);
+    return;
+  }
+  const pm = await detect();
+  if (!pm) {
+    throw new Error("No package manager detected");
+  }
+  const packageJsonPath = (0, import_path2.join)(dirPath, "package.json");
+  if (!(0, import_fs.existsSync)(packageJsonPath)) {
+    console.warn(`Package.json file not found in ${dirPath}, skipping snapshot.`);
+    return;
+  }
+  const packageJson = JSON.parse((0, import_fs.readFileSync)(packageJsonPath, "utf-8"));
+  if (!packageJson.version) {
+    console.warn(`No version found in package.json for ${pkgInfo.name}, skipping snapshot.`);
+    return;
+  }
+  const lastCommitHash = getLastCommitHash(true);
+  const newVersion = `${packageJson.version}-snapshot-${lastCommitHash}`;
+  pkgInfo.newVersion = newVersion;
+  updateIndirectPackageJsonFile(pkgInfo, allPkgInfos);
+  await updatePackageLockFiles(dirPath);
+  const fullPublishCommand = [pm.agent, "publish", "--tag", "snapshot"].join(" ");
+  (0, import_child_process2.execSync)(fullPublishCommand, { cwd: dirPath, stdio: "inherit" });
+  console.log(`Snapshot created for package: ${pkgInfo.name}`);
+  return {
+    packageName: pkgInfo.name,
+    newVersion
+  };
+}
+async function createOrUpdatePRStatusComment(shouldCreateSnapshot = false) {
   console.log("Creating or updating PR status comment...");
   let markdown = "## \u{1F680} Lazy Release Action\n";
   const prBody = import_github3.context.payload.pull_request?.body;
@@ -29274,6 +29319,28 @@ async function createOrUpdatePRStatusComment() {
       changelogs
     );
     markdown += increaseHeadingLevel(content.trim());
+  }
+  if (shouldCreateSnapshot) {
+    const pm = await detect();
+    if (!pm) {
+      throw new Error("No package manager detected");
+    }
+    const rc = resolveCommand(pm.agent, "install", []);
+    if (!rc) {
+      throw new Error(`Could not resolve command for ${pm.agent}`);
+    }
+    const allChangedPkgs = [...changedPackageInfos, ...indirectPackageInfos];
+    const snapshotResults = await createSnapshot(allChangedPkgs);
+    if (snapshotResults.length) {
+      markdown += `### \u{1F4F8} Snapshots
+`;
+      markdown += `\`\`\``;
+      snapshotResults.forEach((result) => {
+        markdown += `${rc.command} ${result.packageName}${result.newVersion}
+`;
+      });
+      markdown += `\`\`\``;
+    }
   }
   markdown += `
 
@@ -29579,14 +29646,14 @@ async function createOrUpdateReleasePR() {
     head: RELEASE_BRANCH
   });
 }
-function updateIndirectPackageJsonFile(pgkInfo, allPackageInfos) {
-  if (!pgkInfo.newVersion) {
+function updateIndirectPackageJsonFile(pkgInfo, allPackageInfos) {
+  if (!pkgInfo.newVersion) {
     return;
   }
-  const packageJsonPath = pgkInfo.path;
+  const packageJsonPath = pkgInfo.path;
   let packageJsonString = (0, import_fs.readFileSync)(packageJsonPath, "utf-8");
   const packageJson = JSON.parse(packageJsonString);
-  packageJson.version = pgkInfo.newVersion;
+  packageJson.version = pkgInfo.newVersion;
   const dependencyFields = [
     "dependencies",
     "devDependencies",
@@ -29604,16 +29671,16 @@ function updateIndirectPackageJsonFile(pgkInfo, allPackageInfos) {
           const prefix = getVersionPrefix(currentVersionSpec);
           const newVersionSpec = prefix + depPackageInfo.newVersion;
           console.log(
-            `Updating dependency ${depName} from ${currentVersionSpec} to ${newVersionSpec} in ${pgkInfo.name}`
+            `Updating dependency ${depName} from ${currentVersionSpec} to ${newVersionSpec} in ${pkgInfo.name}`
           );
           packageJson[field][depName] = newVersionSpec;
         }
       }
     }
   }
-  console.log(`Updating ${pgkInfo.name} to version ${pgkInfo.newVersion}`);
+  console.log(`Updating ${pkgInfo.name} to version ${pkgInfo.newVersion}`);
   allPackageInfos.forEach((otherPkg) => {
-    updateDependentPackages(pgkInfo, otherPkg);
+    updateDependentPackages(pkgInfo, otherPkg);
   });
   (0, import_fs.writeFileSync)(
     packageJsonPath,
@@ -29645,11 +29712,14 @@ function updateDependentPackages(indirectPkgInfo, otherPkg) {
         }
         const currentVersionSpec = otherPackageJson[field][depName];
         const prefix = getVersionPrefix(currentVersionSpec);
-        const newVersionSpec = prefix + indirectPkgInfo.newVersion;
+        let newPackageVersion = prefix + indirectPkgInfo.newVersion;
+        if (indirectPkgInfo.newVersion?.includes("-snapshot")) {
+          newPackageVersion = indirectPkgInfo.newVersion;
+        }
         console.log(
-          `Updating dependency ${depName} from ${currentVersionSpec} to ${newVersionSpec} in ${otherPkg.name}`
+          `Updating dependency ${depName} from ${currentVersionSpec} to ${newPackageVersion} in ${otherPkg.name}`
         );
-        otherPackageJson[field][depName] = newVersionSpec;
+        otherPackageJson[field][depName] = newPackageVersion;
       }
     }
   }
@@ -29685,7 +29755,7 @@ function getPackageInfos(packagePaths) {
   });
   return packageInfos;
 }
-async function updatePackageLockFiles() {
+async function updatePackageLockFiles(dir = "") {
   const pm = await detect();
   if (!pm) {
     throw new Error("No package manager detected");
@@ -29697,6 +29767,7 @@ async function updatePackageLockFiles() {
   const fullCommand = [rc.command, ...rc.args || []].join(" ");
   console.log(`Running package manager command: ${fullCommand}`);
   (0, import_child_process2.execSync)(fullCommand, {
+    cwd: dir,
     stdio: "inherit"
   });
 }
