@@ -184,7 +184,7 @@ async function createPackageSnapshot(pkgInfo: PackageInfo, allPkgInfos: PackageI
 
   // publish the package with npm publish --tag snapshot
   const fullPublishCommand = [pm.agent, 'publish', '--tag', 'snapshot'].join(' ');
-  execSync(fullPublishCommand, { cwd: dirPath ? dirPath : process.cwd(), stdio: 'inherit' });
+  execSync(fullPublishCommand, { stdio: 'inherit' });
   console.log(`Snapshot created for package: ${pkgInfo.name}`);
 
   return {

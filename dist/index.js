@@ -29243,7 +29243,7 @@ async function createPackageSnapshot(pkgInfo, allPkgInfos) {
   updateIndirectPackageJsonFile(pkgInfo, allPkgInfos);
   await updatePackageLockFiles(dirPath);
   const fullPublishCommand = [pm.agent, "publish", "--tag", "snapshot"].join(" ");
-  (0, import_child_process2.execSync)(fullPublishCommand, { cwd: dirPath ? dirPath : process.cwd(), stdio: "inherit" });
+  (0, import_child_process2.execSync)(fullPublishCommand, { stdio: "inherit" });
   console.log(`Snapshot created for package: ${pkgInfo.name}`);
   return {
     packageName: pkgInfo.name,
