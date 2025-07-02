@@ -28078,9 +28078,6 @@ function setupGitConfig() {
   );
   (0, import_child_process.execSync)("git config --global --add safe.directory /github/workspace"), { stdio: "inherit" };
 }
-function getLastCommitHash(short = false) {
-  return (0, import_child_process.execSync)(`git rev-parse ${short ? "--short" : ""} HEAD`).toString().trim();
-}
 function checkoutBranch(branchName) {
   (0, import_child_process.execSync)(`git fetch origin ${branchName}`, { stdio: "inherit" });
   (0, import_child_process.execSync)(`git checkout ${branchName}`, { stdio: "inherit" });
@@ -29241,8 +29238,7 @@ async function createPackageSnapshot(pkgInfo, allPkgInfos) {
     console.warn(`No version found in package.json for ${pkgInfo.name}, skipping snapshot.`);
     return;
   }
-  const lastCommitHash = getLastCommitHash(true);
-  const newVersion = `${packageJson.version}-snapshot-${lastCommitHash}`;
+  const newVersion = `${packageJson.version}-snapshot-${(/* @__PURE__ */ new Date()).getTime()}`;
   pkgInfo.newVersion = newVersion;
   updateIndirectPackageJsonFile(pkgInfo, allPkgInfos);
   await updatePackageLockFiles(dirPath);

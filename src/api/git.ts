@@ -13,8 +13,8 @@ export function setupGitConfig() {
     { stdio: 'inherit' };
 }
 
-export function getLastCommitHash(short = false): string {
-  return execSync(`git rev-parse ${short ? '--short' : ''} HEAD`).toString().trim();
+export function getLastCommitHash(): string {
+  return execSync(`git rev-parse HEAD`).toString().trim();
 }
 
 export function checkoutBranch(branchName: string) {

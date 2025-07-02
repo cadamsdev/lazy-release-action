@@ -174,8 +174,7 @@ async function createPackageSnapshot(pkgInfo: PackageInfo, allPkgInfos: PackageI
     return;
   }
 
-  const lastCommitHash = getLastCommitHash(true);
-  const newVersion = `${packageJson.version}-snapshot-${lastCommitHash}`;
+  const newVersion = `${packageJson.version}-snapshot-${new Date().getTime()}`;
   pkgInfo.newVersion = newVersion;
   updateIndirectPackageJsonFile(pkgInfo, allPkgInfos);
 
