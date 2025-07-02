@@ -29148,6 +29148,7 @@ var import_core = __toESM(require_core());
 var import_github3 = __toESM(require_github());
 var RELEASE_BRANCH = "lazy-release/main";
 var PR_COMMENT_STATUS_ID = "b3da20ce-59b6-4bbd-a6e3-6d625f45d008";
+var RELEASE_PR_TITLE = "Version Packages";
 function preRun() {
   const version = (0, import_child_process2.execSync)("git --version")?.toString().trim();
   console.log(`git: ${version.replace("git version ", "")}`);
@@ -29193,7 +29194,7 @@ async function isLastCommitAReleaseCommit() {
     console.log(
       `Pull request #${import_github3.context.payload.pull_request?.number} is not merged yet.`
     );
-    if (!isPRTitleValid(PR_TITLE)) {
+    if (!isPRTitleValid(PR_TITLE) && PR_TITLE !== RELEASE_PR_TITLE) {
       await createOrUpdatePRStatusComment();
       throw new Error(`Invalid pull request title: ${PR_TITLE}`);
     }
