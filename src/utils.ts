@@ -64,12 +64,6 @@ export function getChangelogSectionFromCommitMessage(
   return changelogSection;
 }
 
-function getMarkdownForCommitHash(commitHash: string): string {
-  return `[${commitHash.substring(0, 7)}](https://github.com/${
-    context.repo.owner
-  }/${context.repo.repo}/commit/${commitHash})`;
-}
-
 export function isPRTitleValid(prTitle: string): boolean {
   return CONVENTIONAL_COMMITS_PATTERN.test(prTitle);
 }
