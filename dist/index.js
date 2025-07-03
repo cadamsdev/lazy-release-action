@@ -29167,7 +29167,6 @@ function preRun() {
       }
     );
   }
-  checkoutBranch(DEFAULT_BRANCH);
 }
 async function isLastCommitAReleaseCommit() {
   let lastCommit = "";
@@ -29185,6 +29184,7 @@ async function isLastCommitAReleaseCommit() {
 (async () => {
   preRun();
   if (import_github3.context.payload.pull_request?.merged) {
+    checkoutBranch(DEFAULT_BRANCH);
     console.log(
       `Pull request #${import_github3.context.payload.pull_request.number} has been merged.`
     );

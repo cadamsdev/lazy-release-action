@@ -65,9 +65,6 @@ function preRun() {
       }
     );
   }
-
-  // checkout git branch
-  checkoutBranch(DEFAULT_BRANCH);
 }
 
 async function isLastCommitAReleaseCommit(): Promise<boolean> {
@@ -90,6 +87,9 @@ async function isLastCommitAReleaseCommit(): Promise<boolean> {
   preRun();
 
   if (context.payload.pull_request?.merged) {
+    // checkout git branch
+    checkoutBranch(DEFAULT_BRANCH);
+
     console.log(
       `Pull request #${context.payload.pull_request.number} has been merged.`
     );
