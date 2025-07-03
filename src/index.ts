@@ -8,7 +8,7 @@ import {
   hasUnstagedChanges,
   setupGitConfig,
 } from './api/git';
-import { DEFAULT_BRANCH, GITHUB_PACKAGES_ENABLED, GITHUB_TOKEN, SNAPSHOTS_ENABLED } from './constants';
+import { DEFAULT_BRANCH, GITHUB_TOKEN, SNAPSHOTS_ENABLED } from './constants';
 import {
   appendReleaseIdToMarkdown,
   Changelog,

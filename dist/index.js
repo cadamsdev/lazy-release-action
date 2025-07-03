@@ -28125,7 +28125,6 @@ function doesTagExistOnRemote(tagName) {
 // src/constants.ts
 var GITHUB_TOKEN = process.env["INPUT_GITHUB-TOKEN"] || "";
 var SNAPSHOTS_ENABLED = process.env["INPUT_SNAPSHOTS"] ? process.env["INPUT_SNAPSHOTS"] === "true" : false;
-var GITHUB_PACKAGES_ENABLED = process.env["INPUT_GITHUB-PACKAGES"] ? process.env["INPUT_GITHUB-PACKAGES"] === "true" : false;
 var DEFAULT_BRANCH = process.env.DEFAULT_BRANCH || "main";
 
 // src/utils.ts
