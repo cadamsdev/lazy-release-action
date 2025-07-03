@@ -1198,8 +1198,6 @@ function findPackageJsonFiles(dir: string, relativePath: string = '', packagePat
         continue;
       }
 
-      console.log(`Searching in directory: ${item}`);
-
       const stat = statSync(fullPath);
 
       if (stat.isDirectory()) {
@@ -1223,8 +1221,9 @@ export function getPackagePaths(): string[] {
 
   console.log('getPackagePaths', packagePaths);
 
-  const packagePaths2 = findPackageJsonFiles(process.cwd(), '', []);
-  console.log('packagePaths2', packagePaths2);
+  const pkgPaths2: string[] = [];
+  findPackageJsonFiles(process.cwd(), '', pkgPaths2);
+  console.log('packagePaths2', pkgPaths2);
 
   return packagePaths;
 }

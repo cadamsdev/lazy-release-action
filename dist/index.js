@@ -29916,7 +29916,6 @@ function findPackageJsonFiles(dir, relativePath = "", packagePaths) {
       if (item === "node_modules" || item === "dist" || item.startsWith(".")) {
         continue;
       }
-      console.log(`Searching in directory: ${item}`);
       const stat = (0, import_fs.statSync)(fullPath);
       if (stat.isDirectory()) {
         findPackageJsonFiles(fullPath, itemRelativePath, packagePaths);
@@ -29933,8 +29932,9 @@ function getPackagePaths() {
     ignore: ["**/node_modules/**", "**/dist/**"]
   });
   console.log("getPackagePaths", packagePaths);
-  const packagePaths2 = findPackageJsonFiles(process.cwd(), "", []);
-  console.log("packagePaths2", packagePaths2);
+  const pkgPaths2 = [];
+  findPackageJsonFiles(process.cwd(), "", pkgPaths2);
+  console.log("packagePaths2", pkgPaths2);
   return packagePaths;
 }
 function getPackageInfo(packagePath) {
