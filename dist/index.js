@@ -29908,19 +29908,35 @@ function getNewVersion(currentVersion, semverBump) {
   }
   return newVersion;
 }
+function findPackageJsonFiles(dir, relativePath = "") {
+  const packagePaths = [];
+  try {
+    const items = (0, import_fs.readdirSync)(dir);
+    for (const item of items) {
+      const fullPath = (0, import_path2.join)(dir, item);
+      const itemRelativePath = relativePath ? (0, import_path2.join)(relativePath, item) : item;
+      if (item === "node_modules" || item === "dist") {
+        continue;
+      }
+      const stat = (0, import_fs.statSync)(fullPath);
+      if (stat.isDirectory()) {
+        findPackageJsonFiles(fullPath, itemRelativePath);
+      } else if (item === "package.json") {
+        packagePaths.push(itemRelativePath);
+      }
+    }
+  } catch (error) {
+    console.warn(`Error reading directory ${dir}:`, error);
+  }
+  return packagePaths;
+}
 function getPackagePaths() {
   const packagePaths = globSync("**/package.json", {
     ignore: ["**/node_modules/**", "**/dist/**"]
   });
   console.log("getPackagePaths", packagePaths);
-  const existingPaths = packagePaths.filter((path3) => {
-    const exists = (0, import_fs.existsSync)(path3);
-    if (!exists) {
-      console.log(`Path doesn't exist: ${path3}`);
-    }
-    return exists;
-  });
-  console.log("Existing paths:", existingPaths);
+  const packagePaths2 = findPackageJsonFiles(process.cwd());
+  console.log("packagePaths2", packagePaths2);
   return packagePaths;
 }
 function getPackageInfo(packagePath) {

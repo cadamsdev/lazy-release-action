@@ -33,7 +33,7 @@ import {
   updateChangelog,
 } from './utils';
 import { globSync } from 'tinyglobby';
-import { existsSync, readFileSync, writeFileSync } from 'fs';
+import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from 'fs';
 import { inc } from 'semver';
 import * as githubApi from './api/github';
 import { join } from 'path';
@@ -1185,6 +1185,37 @@ export function getNewVersion(
   return newVersion;
 }
 
+function findPackageJsonFiles(dir: string, relativePath: string = ''): string[] {
+  const packagePaths: string[] = [];
+  try {
+    const items = readdirSync(dir);
+
+    for (const item of items) {
+      const fullPath = join(dir, item);
+      const itemRelativePath = relativePath ? join(relativePath, item) : item;
+
+      // Skip node_modules and dist directories
+      if (item === 'node_modules' || item === 'dist') {
+        continue;
+      }
+
+      const stat = statSync(fullPath);
+
+      if (stat.isDirectory()) {
+        // Recursively search subdirectories
+        findPackageJsonFiles(fullPath, itemRelativePath);
+      } else if (item === 'package.json') {
+        // Found a package.json file
+        packagePaths.push(itemRelativePath);
+      }
+    }
+  } catch (error) {
+    console.warn(`Error reading directory ${dir}:`, error);
+  }
+
+  return packagePaths;
+}
+
 export function getPackagePaths(): string[] {
   const packagePaths = globSync('**/package.json', {
     ignore: ['**/node_modules/**', '**/dist/**'],
@@ -1192,15 +1223,8 @@ export function getPackagePaths(): string[] {
 
   console.log('getPackagePaths', packagePaths);
 
-  const existingPaths = packagePaths.filter((path) => {
-    const exists = existsSync(path);
-    if (!exists) {
-      console.log(`Path doesn't exist: ${path}`);
-    }
-    return exists;
-  });
-
-  console.log('Existing paths:', existingPaths);
+  const packagePaths2 = findPackageJsonFiles(process.cwd());
+  console.log('packagePaths2', packagePaths2);
 
   return packagePaths;
 }
