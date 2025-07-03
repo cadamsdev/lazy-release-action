@@ -270,6 +270,7 @@ export function generateMarkdown(
     const packageChangelogs = changelogs.filter(
       (changelog) =>
         changelog.packages.includes(pkgNameWithoutScope) ||
+        changelog.packages.includes(getDirectoryNameFromPath(pkg.path)) ||
         (pkg.isRoot && changelog.packages.length === 0)
     );
 

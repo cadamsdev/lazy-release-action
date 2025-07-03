@@ -28314,7 +28314,7 @@ function generateMarkdown(changedPackageInfos, indirectPackageInfos, changelogs)
   changedPackageInfos.forEach((pkg) => {
     const pkgNameWithoutScope = getPackageNameWithoutScope(pkg.name);
     const packageChangelogs = changelogs.filter(
-      (changelog) => changelog.packages.includes(pkgNameWithoutScope) || pkg.isRoot && changelog.packages.length === 0
+      (changelog) => changelog.packages.includes(pkgNameWithoutScope) || changelog.packages.includes(getDirectoryNameFromPath(pkg.path)) || pkg.isRoot && changelog.packages.length === 0
     );
     if (packageChangelogs.length === 0) {
       return;
