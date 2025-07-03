@@ -1186,32 +1186,9 @@ export function getNewVersion(
 }
 
 export function getPackagePaths(): string[] {
-  // const packagePaths = globSync('**/package.json', {
-  //   ignore: ['**/node_modules/**', '**/dist/**'],
-  // });
-
-  const output = execFileSync(
-    'find',
-    [
-      '.',
-      '-name',
-      'package.json',
-      '-not',
-      '-path',
-      '*/node_modules/*',
-      '-not',
-      '-path',
-      '*/dist/*',
-    ],
-    { encoding: 'utf8' }
-  );
-
-  const packagePaths = output
-    .trim()
-    .split('\n')
-    .filter((path) => path.length > 0)
-    .map((path) => path.replace('./', '').trim());
-
+  const packagePaths = globSync('**/package.json', {
+    ignore: ['**/node_modules/**', '**/dist/**'],
+  });
 
   console.log('getPackagePaths', packagePaths);
   return packagePaths;
