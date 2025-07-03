@@ -246,8 +246,11 @@ async function createOrUpdatePRStatusComment(shouldCreateSnapshot = false) {
     pkgInfos
   );
 
-  if (changedPackageInfos.length) {
-    markdown += `📦 ${changedPackageInfos.length} ${changedPackageInfos.length > 1 ? 'package\'s' : 'package'} will be updated.\n`;
+  const pkgUpdateCount = changedPackageInfos.length + indirectPackageInfos.length;
+  if (pkgUpdateCount) {
+    markdown += `📦 ${pkgUpdateCount} ${
+      pkgUpdateCount ? "package's" : 'package'
+    } will be updated.\n`;
   } else {
     markdown += '⚠️ No packages changed.\n';
   }
