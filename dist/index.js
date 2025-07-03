@@ -29873,13 +29873,14 @@ function getChangedPackageInfos(changelogs, allPkgInfos) {
     changelogs,
     rootPackageName
   );
+  console.log("directlyChangedPackages:", directlyChangedPackages);
   console.log("allPkgInfos", allPkgInfos);
   const directlyChangedPackageInfos = allPkgInfos.filter(
     (pkg) => directlyChangedPackages.includes(getPackageNameWithoutScope(pkg.name)) || directlyChangedPackages.includes(getDirectoryNameFromPath(pkg.path))
   );
   console.log("directlyChangedPackageInfos:", directlyChangedPackageInfos);
   const indirectlyChangedPackageInfos = allPkgInfos.filter((pkg) => {
-    if (directlyChangedPackages.includes(getPackageNameWithoutScope(pkg.name)) || directlyChangedPackages.includes(getDirectoryNameFromPath(pkg.path))) {
+    if (directlyChangedPackages.includes(getPackageNameWithoutScope(pkg.name))) {
       return false;
     }
     return pkg.dependencies.some(

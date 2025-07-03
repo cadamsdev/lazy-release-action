@@ -1057,6 +1057,7 @@ export function getChangedPackageInfos(
     rootPackageName
   );
 
+  console.log('directlyChangedPackages:', directlyChangedPackages);
   console.log('allPkgInfos', allPkgInfos);
 
   // Find packages that are directly changed
@@ -1071,8 +1072,7 @@ export function getChangedPackageInfos(
   const indirectlyChangedPackageInfos = allPkgInfos.filter((pkg) => {
     // Skip if already directly changed
     if (
-      directlyChangedPackages.includes(getPackageNameWithoutScope(pkg.name)) ||
-      directlyChangedPackages.includes(getDirectoryNameFromPath(pkg.path))
+      directlyChangedPackages.includes(getPackageNameWithoutScope(pkg.name))
     ) {
       return false;
     }
