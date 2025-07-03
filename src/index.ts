@@ -1190,6 +1190,8 @@ export function getPackagePaths(): string[] {
     ignore: ['**/node_modules/**', '**/dist/**'],
   });
 
+  console.log('getPackagePaths', packagePaths);
+
   return packagePaths;
 }
 

@@ -29912,6 +29912,7 @@ function getPackagePaths() {
   const packagePaths = globSync("**/package.json", {
     ignore: ["**/node_modules/**", "**/dist/**"]
   });
+  console.log("getPackagePaths", packagePaths);
   return packagePaths;
 }
 function getPackageInfo(packagePath) {
