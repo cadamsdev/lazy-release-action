@@ -29907,34 +29907,11 @@ function getNewVersion(currentVersion, semverBump) {
   }
   return newVersion;
 }
-function findPackageJsonFiles(dir, relativePath = "", packagePaths) {
-  try {
-    const items = (0, import_fs.readdirSync)(dir);
-    for (const item of items) {
-      const fullPath = (0, import_path2.join)(dir, item);
-      const itemRelativePath = relativePath ? (0, import_path2.join)(relativePath, item) : item;
-      if (item === "node_modules" || item === "dist" || item.startsWith(".")) {
-        continue;
-      }
-      const stat = (0, import_fs.statSync)(fullPath);
-      if (stat.isDirectory()) {
-        findPackageJsonFiles(fullPath, itemRelativePath, packagePaths);
-      } else if (item === "package.json") {
-        packagePaths.push(itemRelativePath);
-      }
-    }
-  } catch (error) {
-    console.warn(`Error reading directory ${dir}:`, error);
-  }
-}
 function getPackagePaths() {
   const packagePaths = globSync("**/package.json", {
     ignore: ["**/node_modules/**", "**/dist/**"]
   });
   console.log("getPackagePaths", packagePaths);
-  const pkgPaths2 = [];
-  findPackageJsonFiles(process.cwd(), "", pkgPaths2);
-  console.log("packagePaths2", pkgPaths2);
   return packagePaths;
 }
 function getPackageInfo(packagePath) {
