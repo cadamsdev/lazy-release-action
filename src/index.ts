@@ -18,6 +18,7 @@ import {
   generateMarkdown,
   getChangelogFromCommits,
   getChangelogFromMarkdown,
+  getDirectoryNameFromPath,
   getGitHubReleaseName,
   getPackageNameWithoutScope,
   getTagName,
@@ -1131,7 +1132,8 @@ export function getChangedPackageInfos(
 
   // Find packages that are directly changed
   const directlyChangedPackageInfos = allPkgInfos.filter((pkg) =>
-    directlyChangedPackages.includes(getPackageNameWithoutScope(pkg.name))
+    directlyChangedPackages.includes(getPackageNameWithoutScope(pkg.name)) ||
+    directlyChangedPackages.includes(getDirectoryNameFromPath(pkg.path))
   );
 
   console.log('directlyChangedPackageInfos:', directlyChangedPackageInfos);
@@ -1140,14 +1142,16 @@ export function getChangedPackageInfos(
   const indirectlyChangedPackageInfos = allPkgInfos.filter((pkg) => {
     // Skip if already directly changed
     if (
-      directlyChangedPackages.includes(getPackageNameWithoutScope(pkg.name))
+      directlyChangedPackages.includes(getPackageNameWithoutScope(pkg.name)) ||
+      directlyChangedPackages.includes(getDirectoryNameFromPath(pkg.path))
     ) {
       return false;
     }
 
     // Check if any of its dependencies are in the directly changed packages
     return pkg.dependencies.some((dep) =>
-      directlyChangedPackages.includes(getPackageNameWithoutScope(dep))
+      directlyChangedPackages.includes(getPackageNameWithoutScope(dep)) ||
+      directlyChangedPackages.includes(getDirectoryNameFromPath(dep))
     );
   });
 

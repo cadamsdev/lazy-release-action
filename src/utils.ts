@@ -31,6 +31,11 @@ export const CONVENTIONAL_COMMITS_PATTERN =
 export const COMMIT_TYPE_PATTERN =
   /^(feat|fix|perf|chore|docs|style|test|build|ci|revert)(\(([^)]+)\))?(!)?$/;
 
+export function getDirectoryNameFromPath(filePath: string): string {
+  const parts = filePath.split('/');
+  return parts[parts.length - 2];
+}
+
 export function getChangelogSectionFromCommitMessage(
   commitMessage: string
 ): string {

@@ -28147,6 +28147,10 @@ var TYPE_TO_CHANGELOG_TYPE = {
 };
 var CONVENTIONAL_COMMITS_PATTERN = /^(feat|fix|perf|chore|docs|style|test|build|ci|revert)(!)?(\(([a-z-0-9]+)(,\s*[a-z-0-9]+)*\))?(!)?: .+/;
 var COMMIT_TYPE_PATTERN = /^(feat|fix|perf|chore|docs|style|test|build|ci|revert)(\(([^)]+)\))?(!)?$/;
+function getDirectoryNameFromPath(filePath) {
+  const parts = filePath.split("/");
+  return parts[parts.length - 2];
+}
 function getChangelogSectionFromCommitMessage(commitMessage) {
   const section = "## Changelog\n";
   const startIndex = commitMessage.indexOf(section);
@@ -29871,15 +29875,15 @@ function getChangedPackageInfos(changelogs, allPkgInfos) {
     rootPackageName
   );
   const directlyChangedPackageInfos = allPkgInfos.filter(
-    (pkg) => directlyChangedPackages.includes(getPackageNameWithoutScope(pkg.name))
+    (pkg) => directlyChangedPackages.includes(getPackageNameWithoutScope(pkg.name)) || directlyChangedPackages.includes(getDirectoryNameFromPath(pkg.path))
   );
   console.log("directlyChangedPackageInfos:", directlyChangedPackageInfos);
   const indirectlyChangedPackageInfos = allPkgInfos.filter((pkg) => {
-    if (directlyChangedPackages.includes(getPackageNameWithoutScope(pkg.name))) {
+    if (directlyChangedPackages.includes(getPackageNameWithoutScope(pkg.name)) || directlyChangedPackages.includes(getDirectoryNameFromPath(pkg.path))) {
       return false;
     }
     return pkg.dependencies.some(
-      (dep) => directlyChangedPackages.includes(getPackageNameWithoutScope(dep))
+      (dep) => directlyChangedPackages.includes(getPackageNameWithoutScope(dep)) || directlyChangedPackages.includes(getDirectoryNameFromPath(dep))
     );
   });
   console.log("indirectlyChangedPackageInfos:", indirectlyChangedPackageInfos);

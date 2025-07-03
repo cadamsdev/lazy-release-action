@@ -11,6 +11,7 @@ import {
   getChangelogFromCommits,
   getChangelogItems,
   getChangelogSectionFromCommitMessage,
+  getDirectoryNameFromPath,
   getPackageNameWithoutScope,
   getPullRequestUrl,
   getTagName,
@@ -591,5 +592,10 @@ describe('generateMarkdown', () => {
 - Fixed a bug`;
 
     expect(markdown).toEqual(expectedMarkdown);
+  });
+
+  it('should get directory name from a file path', () => {
+    const filePath = 'src/packages/components/package.json';
+    expect(getDirectoryNameFromPath(filePath)).toEqual('components');
   });
 });
