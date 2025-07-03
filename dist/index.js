@@ -29868,24 +29868,26 @@ function getChangedPackages(changelogs, rootPackageName) {
   return Array.from(changedPackages);
 }
 function getChangedPackageInfos(changelogs, allPkgInfos) {
+  console.log("allPkgInfos", allPkgInfos);
   const rootPackageName = allPkgInfos.find((pkg) => pkg.isRoot)?.name;
-  const directlyChangedPackages = getChangedPackages(
+  console.log("rootPackageName:", rootPackageName);
+  const directlyChangedPkgNames = getChangedPackages(
     changelogs,
     rootPackageName
   );
-  console.log("directlyChangedPackages:", directlyChangedPackages);
-  console.log("allPkgInfos", allPkgInfos);
+  console.log("directlyChangedPkgNames:", directlyChangedPkgNames);
   const directlyChangedPackageInfos = allPkgInfos.filter(
-    (pkg) => directlyChangedPackages.includes(getPackageNameWithoutScope(pkg.name)) || directlyChangedPackages.includes(getDirectoryNameFromPath(pkg.path))
+    (pkg) => directlyChangedPkgNames.includes(getPackageNameWithoutScope(pkg.name)) || directlyChangedPkgNames.includes(getDirectoryNameFromPath(pkg.path))
   );
   console.log("directlyChangedPackageInfos:", directlyChangedPackageInfos);
   const indirectlyChangedPackageInfos = allPkgInfos.filter((pkg) => {
-    if (directlyChangedPackages.includes(getPackageNameWithoutScope(pkg.name))) {
+    const found = directlyChangedPackageInfos.find((changedPkg) => changedPkg.name === pkg.name);
+    if (found) {
       return false;
     }
-    return pkg.dependencies.some(
-      (dep) => directlyChangedPackages.includes(getPackageNameWithoutScope(dep)) || directlyChangedPackages.includes(getDirectoryNameFromPath(dep))
-    );
+    return pkg.dependencies.some((depName) => directlyChangedPackageInfos.some(
+      (changedPkg) => changedPkg.name === depName
+    ));
   });
   console.log("indirectlyChangedPackageInfos:", indirectlyChangedPackageInfos);
   return {

@@ -41,6 +41,7 @@ import { detect } from 'package-manager-detector/detect';
 import { resolveCommand } from 'package-manager-detector/commands';
 import { setOutput } from '@actions/core';
 import { context } from '@actions/github';
+import { dir } from 'console';
 
 const RELEASE_BRANCH = 'lazy-release/main';
 const PR_COMMENT_STATUS_ID = 'b3da20ce-59b6-4bbd-a6e3-6d625f45d008';
@@ -1051,41 +1052,40 @@ export function getChangedPackageInfos(
   changelogs: Changelog[],
   allPkgInfos: PackageInfo[]
 ): { changedPackageInfos: PackageInfo[]; indirectPackageInfos: PackageInfo[] } {
+  console.log('allPkgInfos', allPkgInfos);
+
   const rootPackageName = allPkgInfos.find((pkg) => pkg.isRoot)?.name;
-  const directlyChangedPackages = getChangedPackages(
+  console.log('rootPackageName:', rootPackageName);
+
+  const directlyChangedPkgNames = getChangedPackages(
     changelogs,
     rootPackageName
   );
-
-  console.log('directlyChangedPackages:', directlyChangedPackages);
-  console.log('allPkgInfos', allPkgInfos);
+  console.log('directlyChangedPkgNames:', directlyChangedPkgNames);
 
   // Find packages that are directly changed
   const directlyChangedPackageInfos = allPkgInfos.filter((pkg) =>
-    directlyChangedPackages.includes(getPackageNameWithoutScope(pkg.name)) ||
-    directlyChangedPackages.includes(getDirectoryNameFromPath(pkg.path))
+    directlyChangedPkgNames.includes(getPackageNameWithoutScope(pkg.name)) ||
+    directlyChangedPkgNames.includes(getDirectoryNameFromPath(pkg.path))
   );
-
   console.log('directlyChangedPackageInfos:', directlyChangedPackageInfos);
 
   // Find packages that have dependencies on changed packages
   const indirectlyChangedPackageInfos = allPkgInfos.filter((pkg) => {
-    // Skip if already directly changed
-    if (
-      directlyChangedPackages.includes(getPackageNameWithoutScope(pkg.name))
-    ) {
+    const found = directlyChangedPackageInfos.find((changedPkg) => changedPkg.name === pkg.name);
+
+    if (found) {
+      // If the package itself is directly changed, skip it
       return false;
     }
 
     // Check if any of its dependencies are in the directly changed packages
-    return pkg.dependencies.some((dep) =>
-      directlyChangedPackages.includes(getPackageNameWithoutScope(dep)) ||
-      directlyChangedPackages.includes(getDirectoryNameFromPath(dep))
-    );
+    return pkg.dependencies.some((depName) => directlyChangedPackageInfos.some(
+      (changedPkg) => changedPkg.name === depName
+    ));
   });
 
   console.log('indirectlyChangedPackageInfos:', indirectlyChangedPackageInfos);
-
   return {
     changedPackageInfos: directlyChangedPackageInfos,
     indirectPackageInfos: indirectlyChangedPackageInfos,
