@@ -29874,6 +29874,7 @@ function getChangedPackageInfos(changelogs, allPkgInfos) {
     changelogs,
     rootPackageName
   );
+  console.log("allPkgInfos", allPkgInfos);
   const directlyChangedPackageInfos = allPkgInfos.filter(
     (pkg) => directlyChangedPackages.includes(getPackageNameWithoutScope(pkg.name)) || directlyChangedPackages.includes(getDirectoryNameFromPath(pkg.path))
   );

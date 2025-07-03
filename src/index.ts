@@ -1130,6 +1130,8 @@ export function getChangedPackageInfos(
     rootPackageName
   );
 
+  console.log('allPkgInfos', allPkgInfos);
+
   // Find packages that are directly changed
   const directlyChangedPackageInfos = allPkgInfos.filter((pkg) =>
     directlyChangedPackages.includes(getPackageNameWithoutScope(pkg.name)) ||
