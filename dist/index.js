@@ -29913,6 +29913,14 @@ function getPackagePaths() {
     ignore: ["**/node_modules/**", "**/dist/**"]
   });
   console.log("getPackagePaths", packagePaths);
+  const existingPaths = packagePaths.filter((path3) => {
+    const exists = (0, import_fs.existsSync)(path3);
+    if (!exists) {
+      console.log(`Path doesn't exist: ${path3}`);
+    }
+    return exists;
+  });
+  console.log("Existing paths:", existingPaths);
   return packagePaths;
 }
 function getPackageInfo(packagePath) {

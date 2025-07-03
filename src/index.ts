@@ -1192,6 +1192,16 @@ export function getPackagePaths(): string[] {
 
   console.log('getPackagePaths', packagePaths);
 
+  const existingPaths = packagePaths.filter((path) => {
+    const exists = existsSync(path);
+    if (!exists) {
+      console.log(`Path doesn't exist: ${path}`);
+    }
+    return exists;
+  });
+
+  console.log('Existing paths:', existingPaths);
+
   return packagePaths;
 }
 
