@@ -29293,8 +29293,9 @@ async function createOrUpdatePRStatusComment(shouldCreateSnapshot = false) {
     changelogs,
     pkgInfos
   );
-  if (changedPackageInfos.length) {
-    markdown += `\u{1F4E6} ${changedPackageInfos.length} ${changedPackageInfos.length > 1 ? "package's" : "package"} will be updated.
+  const pkgUpdateCount = changedPackageInfos.length + indirectPackageInfos.length;
+  if (pkgUpdateCount) {
+    markdown += `\u{1F4E6} ${pkgUpdateCount} ${pkgUpdateCount ? "package's" : "package"} will be updated.
 `;
   } else {
     markdown += "\u26A0\uFE0F No packages changed.\n";
