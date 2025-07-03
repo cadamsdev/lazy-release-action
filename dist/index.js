@@ -28125,7 +28125,6 @@ function doesTagExistOnRemote(tagName) {
 // src/constants.ts
 var GITHUB_TOKEN = process.env["INPUT_GITHUB-TOKEN"] || "";
 var SNAPSHOTS_ENABLED = process.env["INPUT_SNAPSHOTS"] ? process.env["INPUT_SNAPSHOTS"] === "true" : false;
-var GITHUB_PACKAGES_ENABLED = process.env["INPUT_GITHUB-PACKAGES"] ? process.env["INPUT_GITHUB-PACKAGES"] === "true" : false;
 var DEFAULT_BRANCH = process.env.DEFAULT_BRANCH || "main";
 
 // src/utils.ts
@@ -28147,6 +28146,10 @@ var TYPE_TO_CHANGELOG_TYPE = {
 };
 var CONVENTIONAL_COMMITS_PATTERN = /^(feat|fix|perf|chore|docs|style|test|build|ci|revert)(!)?(\(([a-z-0-9]+)(,\s*[a-z-0-9]+)*\))?(!)?: .+/;
 var COMMIT_TYPE_PATTERN = /^(feat|fix|perf|chore|docs|style|test|build|ci|revert)(\(([^)]+)\))?(!)?$/;
+function getDirectoryNameFromPath(filePath) {
+  const parts = filePath.split("/");
+  return parts[parts.length - 2];
+}
 function getChangelogSectionFromCommitMessage(commitMessage) {
   const section = "## Changelog\n";
   const startIndex = commitMessage.indexOf(section);
@@ -28311,7 +28314,7 @@ function generateMarkdown(changedPackageInfos, indirectPackageInfos, changelogs)
   changedPackageInfos.forEach((pkg) => {
     const pkgNameWithoutScope = getPackageNameWithoutScope(pkg.name);
     const packageChangelogs = changelogs.filter(
-      (changelog) => changelog.packages.includes(pkgNameWithoutScope) || pkg.isRoot && changelog.packages.length === 0
+      (changelog) => changelog.packages.includes(pkgNameWithoutScope) || changelog.packages.includes(getDirectoryNameFromPath(pkg.path)) || pkg.isRoot && changelog.packages.length === 0
     );
     if (packageChangelogs.length === 0) {
       return;
@@ -29164,7 +29167,6 @@ function preRun() {
       }
     );
   }
-  checkoutBranch(DEFAULT_BRANCH);
 }
 async function isLastCommitAReleaseCommit() {
   let lastCommit = "";
@@ -29182,6 +29184,7 @@ async function isLastCommitAReleaseCommit() {
 (async () => {
   preRun();
   if (import_github3.context.payload.pull_request?.merged) {
+    checkoutBranch(DEFAULT_BRANCH);
     console.log(
       `Pull request #${import_github3.context.payload.pull_request.number} has been merged.`
     );
@@ -29865,22 +29868,26 @@ function getChangedPackages(changelogs, rootPackageName) {
   return Array.from(changedPackages);
 }
 function getChangedPackageInfos(changelogs, allPkgInfos) {
+  console.log("allPkgInfos", allPkgInfos);
   const rootPackageName = allPkgInfos.find((pkg) => pkg.isRoot)?.name;
-  const directlyChangedPackages = getChangedPackages(
+  console.log("rootPackageName:", rootPackageName);
+  const directlyChangedPkgNames = getChangedPackages(
     changelogs,
     rootPackageName
   );
+  console.log("directlyChangedPkgNames:", directlyChangedPkgNames);
   const directlyChangedPackageInfos = allPkgInfos.filter(
-    (pkg) => directlyChangedPackages.includes(getPackageNameWithoutScope(pkg.name))
+    (pkg) => directlyChangedPkgNames.includes(getPackageNameWithoutScope(pkg.name)) || directlyChangedPkgNames.includes(getDirectoryNameFromPath(pkg.path))
   );
   console.log("directlyChangedPackageInfos:", directlyChangedPackageInfos);
   const indirectlyChangedPackageInfos = allPkgInfos.filter((pkg) => {
-    if (directlyChangedPackages.includes(getPackageNameWithoutScope(pkg.name))) {
+    const found = directlyChangedPackageInfos.find((changedPkg) => changedPkg.name === pkg.name);
+    if (found) {
       return false;
     }
-    return pkg.dependencies.some(
-      (dep) => directlyChangedPackages.includes(getPackageNameWithoutScope(dep))
-    );
+    return pkg.dependencies.some((depName) => directlyChangedPackageInfos.some(
+      (changedPkg) => changedPkg.name === depName
+    ));
   });
   console.log("indirectlyChangedPackageInfos:", indirectlyChangedPackageInfos);
   return {
@@ -29907,6 +29914,7 @@ function getPackagePaths() {
   const packagePaths = globSync("**/package.json", {
     ignore: ["**/node_modules/**", "**/dist/**"]
   });
+  console.log("getPackagePaths", packagePaths);
   return packagePaths;
 }
 function getPackageInfo(packagePath) {

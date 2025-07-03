@@ -31,6 +31,11 @@ export const CONVENTIONAL_COMMITS_PATTERN =
 export const COMMIT_TYPE_PATTERN =
   /^(feat|fix|perf|chore|docs|style|test|build|ci|revert)(\(([^)]+)\))?(!)?$/;
 
+export function getDirectoryNameFromPath(filePath: string): string {
+  const parts = filePath.split('/');
+  return parts[parts.length - 2];
+}
+
 export function getChangelogSectionFromCommitMessage(
   commitMessage: string
 ): string {
@@ -57,12 +62,6 @@ export function getChangelogSectionFromCommitMessage(
     .substring(startIndex + section.length, endIndex)
     .trim();
   return changelogSection;
-}
-
-function getMarkdownForCommitHash(commitHash: string): string {
-  return `[${commitHash.substring(0, 7)}](https://github.com/${
-    context.repo.owner
-  }/${context.repo.repo}/commit/${commitHash})`;
 }
 
 export function isPRTitleValid(prTitle: string): boolean {
@@ -271,6 +270,7 @@ export function generateMarkdown(
     const packageChangelogs = changelogs.filter(
       (changelog) =>
         changelog.packages.includes(pkgNameWithoutScope) ||
+        changelog.packages.includes(getDirectoryNameFromPath(pkg.path)) ||
         (pkg.isRoot && changelog.packages.length === 0)
     );
 

@@ -3,6 +3,7 @@ import {
   appendReleaseIdToMarkdown,
   Changelog,
   CONVENTIONAL_COMMITS_PATTERN,
+  createChangelogFromChangelogItem,
   extractCommitType,
   extractCommitTypeParts,
   extractDescription,
@@ -11,6 +12,7 @@ import {
   getChangelogFromCommits,
   getChangelogItems,
   getChangelogSectionFromCommitMessage,
+  getDirectoryNameFromPath,
   getPackageNameWithoutScope,
   getPullRequestUrl,
   getTagName,
@@ -592,4 +594,22 @@ describe('generateMarkdown', () => {
 
     expect(markdown).toEqual(expectedMarkdown);
   });
+
+  it('should get directory name from a file path', () => {
+    const filePath = 'src/packages/components/package.json';
+    expect(getDirectoryNameFromPath(filePath)).toEqual('components');
+  });
+
+  it('should create changelog from PR title', () => {
+    const prTitle = 'feat(components): test using directory name';
+    const changelog = createChangelogFromChangelogItem(prTitle);
+    const expectedChangelog: Changelog = {
+      type: 'feat',
+      description: 'Test using directory name',
+      semverBump: 'minor',
+      isBreakingChange: false,
+      packages: ['components'],
+    };
+    expect(changelog).toEqual(expectedChangelog);
+  }); 
 });

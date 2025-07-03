@@ -8,7 +8,7 @@ import {
   hasUnstagedChanges,
   setupGitConfig,
 } from './api/git';
-import { DEFAULT_BRANCH, GITHUB_PACKAGES_ENABLED, GITHUB_TOKEN, SNAPSHOTS_ENABLED } from './constants';
+import { DEFAULT_BRANCH, GITHUB_TOKEN, SNAPSHOTS_ENABLED } from './constants';
 import {
   appendReleaseIdToMarkdown,
   Changelog,
@@ -18,6 +18,7 @@ import {
   generateMarkdown,
   getChangelogFromCommits,
   getChangelogFromMarkdown,
+  getDirectoryNameFromPath,
   getGitHubReleaseName,
   getPackageNameWithoutScope,
   getTagName,
@@ -40,6 +41,7 @@ import { detect } from 'package-manager-detector/detect';
 import { resolveCommand } from 'package-manager-detector/commands';
 import { setOutput } from '@actions/core';
 import { context } from '@actions/github';
+import { dir } from 'console';
 
 const RELEASE_BRANCH = 'lazy-release/main';
 const PR_COMMENT_STATUS_ID = 'b3da20ce-59b6-4bbd-a6e3-6d625f45d008';
@@ -64,9 +66,6 @@ function preRun() {
       }
     );
   }
-
-  // checkout git branch
-  checkoutBranch(DEFAULT_BRANCH);
 }
 
 async function isLastCommitAReleaseCommit(): Promise<boolean> {
@@ -89,6 +88,9 @@ async function isLastCommitAReleaseCommit(): Promise<boolean> {
   preRun();
 
   if (context.payload.pull_request?.merged) {
+    // checkout git branch
+    checkoutBranch(DEFAULT_BRANCH);
+
     console.log(
       `Pull request #${context.payload.pull_request.number} has been merged.`
     );
@@ -670,79 +672,6 @@ async function getRecentCommits(
   return filteredCommits;
 }
 
-async function getLastReleaseCommitHash(
-  ignoreLatest: boolean = false
-): Promise<string> {
-  console.log('Getting last release commit hash...');
-  let lastCommitHash = '';
-  let releaseCommits: string[] = [];
-
-  // Get more commits than we need to check for revert patterns
-  const limit = ignoreLatest ? '5' : '3'; // Increased limit to have enough commits to analyze
-  await exec(
-    'git',
-    ['log', '--format=%H:%s%n<COMMIT_SEPARATOR>', '-n', limit],
-    {
-      listeners: {
-        stdout: (data: Buffer) => {
-          const lines = data.toString().trim().split('\n').filter(Boolean);
-          lines.forEach((line) => {});
-        },
-      },
-      silent: true,
-    }
-  );
-
-  if (releaseCommits.length === 0) {
-    throw new Error('No release commit found');
-  }
-
-  // Check each release commit to see if the next commit is a revert
-  for (let i = 0; i < releaseCommits.length; i++) {
-    const currentHash = releaseCommits[i];
-
-    // Skip this commit if it's followed by a revert
-    let isRevertedCommit = false;
-
-    // Check if the next commit after this one is a revert
-    await exec(
-      'git',
-      ['log', `${currentHash}^..${currentHash}^1`, '--format=%s'],
-      {
-        listeners: {
-          stdout: (data: Buffer) => {
-            const commitMessage = data.toString().trim();
-            if (commitMessage.startsWith('Revert "')) {
-              console.log(
-                `Commit ${currentHash} is reverted by the next commit, skipping...`
-              );
-              isRevertedCommit = true;
-            }
-          },
-        },
-        silent: true,
-      }
-    );
-
-    if (!isRevertedCommit) {
-      // If ignoring latest valid release commit and we have another one, use the next one
-      if (ignoreLatest && i === 0 && releaseCommits.length > 1) {
-        continue;
-      }
-
-      lastCommitHash = currentHash;
-      break;
-    }
-  }
-
-  if (!lastCommitHash) {
-    throw new Error('No valid release commit found (all were reverted)');
-  }
-
-  console.log(`Last release commit hash: ${lastCommitHash}`);
-  return lastCommitHash;
-}
-
 async function createOrUpdateReleasePR() {
   console.log('Create or update release PR...');
 
@@ -1123,36 +1052,40 @@ export function getChangedPackageInfos(
   changelogs: Changelog[],
   allPkgInfos: PackageInfo[]
 ): { changedPackageInfos: PackageInfo[]; indirectPackageInfos: PackageInfo[] } {
+  console.log('allPkgInfos', allPkgInfos);
+
   const rootPackageName = allPkgInfos.find((pkg) => pkg.isRoot)?.name;
-  const directlyChangedPackages = getChangedPackages(
+  console.log('rootPackageName:', rootPackageName);
+
+  const directlyChangedPkgNames = getChangedPackages(
     changelogs,
     rootPackageName
   );
+  console.log('directlyChangedPkgNames:', directlyChangedPkgNames);
 
   // Find packages that are directly changed
   const directlyChangedPackageInfos = allPkgInfos.filter((pkg) =>
-    directlyChangedPackages.includes(getPackageNameWithoutScope(pkg.name))
+    directlyChangedPkgNames.includes(getPackageNameWithoutScope(pkg.name)) ||
+    directlyChangedPkgNames.includes(getDirectoryNameFromPath(pkg.path))
   );
-
   console.log('directlyChangedPackageInfos:', directlyChangedPackageInfos);
 
   // Find packages that have dependencies on changed packages
   const indirectlyChangedPackageInfos = allPkgInfos.filter((pkg) => {
-    // Skip if already directly changed
-    if (
-      directlyChangedPackages.includes(getPackageNameWithoutScope(pkg.name))
-    ) {
+    const found = directlyChangedPackageInfos.find((changedPkg) => changedPkg.name === pkg.name);
+
+    if (found) {
+      // If the package itself is directly changed, skip it
       return false;
     }
 
     // Check if any of its dependencies are in the directly changed packages
-    return pkg.dependencies.some((dep) =>
-      directlyChangedPackages.includes(getPackageNameWithoutScope(dep))
-    );
+    return pkg.dependencies.some((depName) => directlyChangedPackageInfos.some(
+      (changedPkg) => changedPkg.name === depName
+    ));
   });
 
   console.log('indirectlyChangedPackageInfos:', indirectlyChangedPackageInfos);
-
   return {
     changedPackageInfos: directlyChangedPackageInfos,
     indirectPackageInfos: indirectlyChangedPackageInfos,
@@ -1184,6 +1117,7 @@ export function getPackagePaths(): string[] {
     ignore: ['**/node_modules/**', '**/dist/**'],
   });
 
+  console.log('getPackagePaths', packagePaths);
   return packagePaths;
 }
 
