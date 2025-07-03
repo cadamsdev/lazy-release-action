@@ -1185,8 +1185,7 @@ export function getNewVersion(
   return newVersion;
 }
 
-function findPackageJsonFiles(dir: string, relativePath: string = ''): string[] {
-  const packagePaths: string[] = [];
+function findPackageJsonFiles(dir: string, relativePath: string = '', packagePaths: string[]): void {
   try {
     const items = readdirSync(dir);
 
@@ -1195,15 +1194,17 @@ function findPackageJsonFiles(dir: string, relativePath: string = ''): string[] 
       const itemRelativePath = relativePath ? join(relativePath, item) : item;
 
       // Skip node_modules and dist directories
-      if (item === 'node_modules' || item === 'dist') {
+      if (item === 'node_modules' || item === 'dist' || item.startsWith('.')) {
         continue;
       }
+
+      console.log(`Searching in directory: ${item}`);
 
       const stat = statSync(fullPath);
 
       if (stat.isDirectory()) {
         // Recursively search subdirectories
-        findPackageJsonFiles(fullPath, itemRelativePath);
+        findPackageJsonFiles(fullPath, itemRelativePath, packagePaths);
       } else if (item === 'package.json') {
         // Found a package.json file
         packagePaths.push(itemRelativePath);
@@ -1212,9 +1213,8 @@ function findPackageJsonFiles(dir: string, relativePath: string = ''): string[] 
   } catch (error) {
     console.warn(`Error reading directory ${dir}:`, error);
   }
-
-  return packagePaths;
 }
+
 
 export function getPackagePaths(): string[] {
   const packagePaths = globSync('**/package.json', {
@@ -1223,7 +1223,7 @@ export function getPackagePaths(): string[] {
 
   console.log('getPackagePaths', packagePaths);
 
-  const packagePaths2 = findPackageJsonFiles(process.cwd());
+  const packagePaths2 = findPackageJsonFiles(process.cwd(), '', []);
   console.log('packagePaths2', packagePaths2);
 
   return packagePaths;
