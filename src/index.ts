@@ -14,12 +14,15 @@ import {
   Changelog,
   CONVENTIONAL_COMMITS_PATTERN,
   createChangelogFromChangelogItem,
+  findFixedGroup,
   generateChangelogContent,
   generateMarkdown,
   getChangelogFromCommits,
   getChangelogFromMarkdown,
   getDirectoryNameFromPath,
+  getFixedGroups,
   getGitHubReleaseName,
+  getHighestSemverBump,
   getPackageNameWithoutScope,
   getTagName,
   getVersionPrefix,
@@ -690,6 +693,12 @@ async function createOrUpdateReleasePR() {
   // get changelog from commits
   const changelogs = getChangelogFromCommits(commits, rootPackageName);
 
+  // Log fixed groups configuration
+  const fixedGroups = getFixedGroups();
+  if (fixedGroups.length > 0) {
+    console.log('Fixed groups configuration:', fixedGroups);
+  }
+
   const { changedPackageInfos, indirectPackageInfos } = getChangedPackageInfos(
     changelogs,
     packageInfos
@@ -997,26 +1006,68 @@ export function updatePackageInfo(
   changelogs: Changelog[]
 ): void {
   const packageNameWithoutScope = getPackageNameWithoutScope(packageInfo.name);
+  const fixedGroups = getFixedGroups();
+  const fixedGroup = findFixedGroup(packageNameWithoutScope, fixedGroups);
 
   let semver = 'patch' as SemverBump;
 
-  for (const changelog of changelogs) {
-    const isRelevant =
-      (changelog.packages.length > 0 &&
-        changelog.packages.some(
-          (pkgName) => pkgName === packageNameWithoutScope || pkgName === getDirectoryNameFromPath(packageInfo.path)
-        )) ||
-      (packageInfo.isRoot && changelog.packages.length === 0);
+  if (fixedGroup) {
+    // For fixed packages, collect all semver bumps from all group members
+    const groupSemverBumps: SemverBump[] = [];
 
-    if (!isRelevant) {
-      continue;
+    for (const groupMemberName of fixedGroup) {
+      for (const changelog of changelogs) {
+        const isRelevant =
+          (changelog.packages.length > 0 &&
+            changelog.packages.some(
+              (pkgName) => pkgName === groupMemberName
+            )) ||
+          (packageInfo.isRoot && changelog.packages.length === 0);
+
+        if (isRelevant) {
+          if (changelog.isBreakingChange) {
+            groupSemverBumps.push('major');
+          } else if (changelog.semverBump === 'minor') {
+            groupSemverBumps.push('minor');
+          } else {
+            groupSemverBumps.push('patch');
+          }
+        }
+      }
     }
 
-    if (changelog.isBreakingChange) {
-      semver = 'major';
-      break; // Breaking changes take precedence
-    } else if (changelog.semverBump === 'minor' && semver !== 'major') {
-      semver = 'minor';
+    // Use the highest semver bump from the group
+    if (groupSemverBumps.length > 0) {
+      semver = getHighestSemverBump(groupSemverBumps);
+    }
+
+    console.log(
+      `Fixed package ${packageNameWithoutScope} will use ${semver} bump (group bumps: ${groupSemverBumps.join(
+        ', '
+      )})`
+    );
+  } else {
+    // Original logic for non-fixed packages
+    for (const changelog of changelogs) {
+      const isRelevant =
+        (changelog.packages.length > 0 &&
+          changelog.packages.some(
+            (pkgName) =>
+              pkgName === packageNameWithoutScope ||
+              pkgName === getDirectoryNameFromPath(packageInfo.path)
+          )) ||
+        (packageInfo.isRoot && changelog.packages.length === 0);
+
+      if (!isRelevant) {
+        continue;
+      }
+
+      if (changelog.isBreakingChange) {
+        semver = 'major';
+        break; // Breaking changes take precedence
+      } else if (changelog.semverBump === 'minor' && semver !== 'major') {
+        semver = 'minor';
+      }
     }
   }
 
@@ -1063,30 +1114,76 @@ export function getChangedPackageInfos(
   console.log('directlyChangedPkgNames:', directlyChangedPkgNames);
 
   // Find packages that are directly changed
-  const directlyChangedPackageInfos = allPkgInfos.filter((pkg) =>
-    directlyChangedPkgNames.includes(getPackageNameWithoutScope(pkg.name)) ||
-    directlyChangedPkgNames.includes(getDirectoryNameFromPath(pkg.path))
+  const directlyChangedPackageInfos = allPkgInfos.filter(
+    (pkg) =>
+      directlyChangedPkgNames.includes(getPackageNameWithoutScope(pkg.name)) ||
+      directlyChangedPkgNames.includes(getDirectoryNameFromPath(pkg.path))
   );
   console.log('directlyChangedPackageInfos:', directlyChangedPackageInfos);
 
-  // Find packages that have dependencies on changed packages
+  // Get fixed groups configuration
+  const fixedGroups = getFixedGroups();
+  console.log('fixedGroups:', fixedGroups);
+
+  // Expand directly changed packages to include fixed group members
+  const expandedChangedPackageInfos = [...directlyChangedPackageInfos];
+  const processedGroups = new Set<string>();
+
+  for (const changedPkg of directlyChangedPackageInfos) {
+    const pkgNameWithoutScope = getPackageNameWithoutScope(changedPkg.name);
+    const fixedGroup = findFixedGroup(pkgNameWithoutScope, fixedGroups);
+
+    if (fixedGroup && !processedGroups.has(fixedGroup.join(','))) {
+      console.log(`Found fixed group for ${pkgNameWithoutScope}:`, fixedGroup);
+      processedGroups.add(fixedGroup.join(','));
+
+      // Add all other packages in the fixed group
+      for (const groupMemberName of fixedGroup) {
+        const groupMemberPkg = allPkgInfos.find(
+          (pkg) =>
+            getPackageNameWithoutScope(pkg.name) === groupMemberName ||
+            getDirectoryNameFromPath(pkg.path) === groupMemberName
+        );
+
+        if (
+          groupMemberPkg &&
+          !expandedChangedPackageInfos.find(
+            (p) => p.name === groupMemberPkg.name
+          )
+        ) {
+          console.log(
+            `Adding fixed group member ${groupMemberName} to changed packages`
+          );
+          expandedChangedPackageInfos.push(groupMemberPkg);
+        }
+      }
+    }
+  }
+
+  // Find packages that have dependencies on changed packages (excluding fixed group members)
   const indirectlyChangedPackageInfos = allPkgInfos.filter((pkg) => {
-    const found = directlyChangedPackageInfos.find((changedPkg) => changedPkg.name === pkg.name);
+    const found = expandedChangedPackageInfos.find(
+      (changedPkg) => changedPkg.name === pkg.name
+    );
 
     if (found) {
-      // If the package itself is directly changed, skip it
+      // If the package itself is directly changed or in a fixed group, skip it
       return false;
     }
 
-    // Check if any of its dependencies are in the directly changed packages
-    return pkg.dependencies.some((depName) => directlyChangedPackageInfos.some(
-      (changedPkg) => changedPkg.name === depName
-    ));
+    // Check if any of its dependencies are in the changed packages
+    return pkg.dependencies.some((depName) =>
+      expandedChangedPackageInfos.some(
+        (changedPkg) => changedPkg.name === depName
+      )
+    );
   });
 
+  console.log('expandedChangedPackageInfos:', expandedChangedPackageInfos);
   console.log('indirectlyChangedPackageInfos:', indirectlyChangedPackageInfos);
+
   return {
-    changedPackageInfos: directlyChangedPackageInfos,
+    changedPackageInfos: expandedChangedPackageInfos,
     indirectPackageInfos: indirectlyChangedPackageInfos,
   };
 }

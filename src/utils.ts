@@ -1,5 +1,7 @@
 import { context } from "@actions/github";
 import { Commit, PackageInfo } from ".";
+import { join } from "path";
+import { existsSync, readFileSync } from "fs";
 
 const DATE_NOW = new Date();
 
@@ -30,6 +32,49 @@ export const CONVENTIONAL_COMMITS_PATTERN =
 
 export const COMMIT_TYPE_PATTERN =
   /^(feat|fix|perf|chore|docs|style|test|build|ci|revert)(\(([^)]+)\))?(!)?$/;
+
+export interface LazyReleaseConfig {
+  fixed?: string[][];
+}
+
+export function getConfig(): LazyReleaseConfig {
+  const configPath = join(process.cwd(), 'lazy-release.json');
+
+  if (!existsSync(configPath)) {
+    return {};
+  }
+
+  try {
+    const configContent = readFileSync(configPath, 'utf-8');
+    return JSON.parse(configContent) as LazyReleaseConfig;
+  } catch (error) {
+    console.warn('Error reading lazy-release.json config:', error);
+    return {};
+  }
+}
+
+export function getFixedGroups(): string[][] {
+  const config = getConfig();
+  return config.fixed || [];
+}
+
+export function findFixedGroup(
+  packageName: string,
+  fixedGroups: string[][]
+): string[] | null {
+  for (const group of fixedGroups) {
+    if (group.includes(packageName)) {
+      return group;
+    }
+  }
+  return null;
+}
+
+export function getHighestSemverBump(bumps: ('major' | 'minor' | 'patch')[]): 'major' | 'minor' | 'patch' {
+  if (bumps.includes('major')) return 'major';
+  if (bumps.includes('minor')) return 'minor';
+  return 'patch';
+}
 
 export function getDirectoryNameFromPath(filePath: string): string {
   const parts = filePath.split('/');

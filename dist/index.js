@@ -28167,6 +28167,8 @@ function doesTagExistOnRemote(tagName) {
 
 // src/utils.ts
 var import_github = __toESM(require_github());
+var import_path = require("path");
+var import_fs = require("fs");
 var DATE_NOW = /* @__PURE__ */ new Date();
 var RELEASE_ID = "ebe18c5c-b9c6-4fca-8b11-90bf80ad229e";
 var TYPE_TO_CHANGELOG_TYPE = {
@@ -28184,6 +28186,36 @@ var TYPE_TO_CHANGELOG_TYPE = {
 };
 var CONVENTIONAL_COMMITS_PATTERN = /^(feat|fix|perf|chore|docs|style|test|build|ci|revert)(!)?(\(([a-z-0-9]+)(,\s*[a-z-0-9]+)*\))?(!)?: .+/;
 var COMMIT_TYPE_PATTERN = /^(feat|fix|perf|chore|docs|style|test|build|ci|revert)(\(([^)]+)\))?(!)?$/;
+function getConfig() {
+  const configPath = (0, import_path.join)(process.cwd(), "lazy-release.json");
+  if (!(0, import_fs.existsSync)(configPath)) {
+    return {};
+  }
+  try {
+    const configContent = (0, import_fs.readFileSync)(configPath, "utf-8");
+    return JSON.parse(configContent);
+  } catch (error) {
+    console.warn("Error reading lazy-release.json config:", error);
+    return {};
+  }
+}
+function getFixedGroups() {
+  const config = getConfig();
+  return config.fixed || [];
+}
+function findFixedGroup(packageName, fixedGroups) {
+  for (const group of fixedGroups) {
+    if (group.includes(packageName)) {
+      return group;
+    }
+  }
+  return null;
+}
+function getHighestSemverBump(bumps) {
+  if (bumps.includes("major")) return "major";
+  if (bumps.includes("minor")) return "minor";
+  return "patch";
+}
 function getDirectoryNameFromPath(filePath) {
   const parts = filePath.split("/");
   return parts[parts.length - 2];
@@ -28579,7 +28611,7 @@ function toDirectoryPath(filePath) {
 }
 
 // node_modules/tinyglobby/dist/index.mjs
-var import_path = __toESM(require("path"), 1);
+var import_path2 = __toESM(require("path"), 1);
 var import_fdir = __toESM(require_dist(), 1);
 var import_picomatch = __toESM(require_picomatch2(), 1);
 var ONLY_PARENT_DIRECTORIES = /^(\/?\.\.)+$/;
@@ -28645,8 +28677,8 @@ function normalizePattern(pattern, expandDirectories, cwd, props, isIgnore) {
   if (pattern.endsWith("/")) result = pattern.slice(0, -1);
   if (!result.endsWith("*") && expandDirectories) result += "/**";
   const escapedCwd = escapePath(cwd);
-  if (import_path.default.isAbsolute(result.replace(ESCAPING_BACKSLASHES, ""))) result = import_path.posix.relative(escapedCwd, result);
-  else result = import_path.posix.normalize(result);
+  if (import_path2.default.isAbsolute(result.replace(ESCAPING_BACKSLASHES, ""))) result = import_path2.posix.relative(escapedCwd, result);
+  else result = import_path2.posix.normalize(result);
   const parentDirectoryMatch = PARENT_DIRECTORY.exec(result);
   const parts = splitPattern(result);
   if (parentDirectoryMatch === null || parentDirectoryMatch === void 0 ? void 0 : parentDirectoryMatch[0]) {
@@ -28657,7 +28689,7 @@ function normalizePattern(pattern, expandDirectories, cwd, props, isIgnore) {
       result = result.slice(0, (n - i - 1) * 3) + result.slice((n - i) * 3 + parts[i + n].length + 1) || ".";
       i++;
     }
-    const potentialRoot = import_path.posix.join(cwd, parentDirectoryMatch[0].slice(i * 3));
+    const potentialRoot = import_path2.posix.join(cwd, parentDirectoryMatch[0].slice(i * 3));
     if (!potentialRoot.startsWith(".") && props.root.length > potentialRoot.length) {
       props.root = potentialRoot;
       props.depthOffset = -n + i;
@@ -28679,7 +28711,7 @@ function normalizePattern(pattern, expandDirectories, cwd, props, isIgnore) {
     }
     props.depthOffset = newCommonPath.length;
     props.commonPath = newCommonPath;
-    props.root = newCommonPath.length > 0 ? import_path.default.posix.join(cwd, ...newCommonPath) : cwd;
+    props.root = newCommonPath.length > 0 ? import_path2.default.posix.join(cwd, ...newCommonPath) : cwd;
   }
   return result;
 }
@@ -28704,7 +28736,7 @@ function processPatterns({ patterns, ignore = [], expandDirectories = true }, cw
   };
 }
 function getRelativePath(path$1, cwd, root) {
-  return import_path.posix.relative(cwd, `${root}/${path$1}`) || ".";
+  return import_path2.posix.relative(cwd, `${root}/${path$1}`) || ".";
 }
 function processPath(path$1, cwd, root, isDirectory, absolute) {
   const relativePath = absolute ? path$1.slice(root === "/" ? 1 : root.length + 1) || "." : path$1;
@@ -28791,12 +28823,12 @@ function globSync(patternsOrOptions, options) {
     ...options,
     patterns: patternsOrOptions
   } : patternsOrOptions;
-  const cwd = opts.cwd ? import_path.default.resolve(opts.cwd).replace(BACKSLASHES, "/") : process.cwd().replace(BACKSLASHES, "/");
+  const cwd = opts.cwd ? import_path2.default.resolve(opts.cwd).replace(BACKSLASHES, "/") : process.cwd().replace(BACKSLASHES, "/");
   return crawl(opts, cwd, true);
 }
 
 // src/index.ts
-var import_fs = require("fs");
+var import_fs2 = require("fs");
 var import_semver = __toESM(require_semver2());
 
 // src/api/github.ts
@@ -28897,7 +28929,7 @@ async function createPRComment(markdown) {
 }
 
 // src/index.ts
-var import_path2 = require("path");
+var import_path3 = require("path");
 
 // node_modules/package-manager-detector/dist/detect.mjs
 var import_promises = __toESM(require("node:fs/promises"), 1);
@@ -29262,7 +29294,7 @@ async function createSnapshot(changedPkgInfos) {
 async function createPackageSnapshot(pkgInfo, allPkgInfos) {
   console.log(`Creating snapshot for package: ${pkgInfo.name}`);
   const dirPath = toDirectoryPath(pkgInfo.path);
-  if (!pkgInfo.isRoot && !(0, import_fs.existsSync)(dirPath)) {
+  if (!pkgInfo.isRoot && !(0, import_fs2.existsSync)(dirPath)) {
     console.warn(`Directory ${dirPath} does not exist, skipping snapshot.`);
     return;
   }
@@ -29270,12 +29302,12 @@ async function createPackageSnapshot(pkgInfo, allPkgInfos) {
   if (!pm) {
     throw new Error("No package manager detected");
   }
-  const packageJsonPath = (0, import_path2.join)(dirPath, "package.json");
-  if (!(0, import_fs.existsSync)(packageJsonPath)) {
+  const packageJsonPath = (0, import_path3.join)(dirPath, "package.json");
+  if (!(0, import_fs2.existsSync)(packageJsonPath)) {
     console.warn(`Package.json file not found in ${dirPath}, skipping snapshot.`);
     return;
   }
-  const packageJson = JSON.parse((0, import_fs.readFileSync)(packageJsonPath, "utf-8"));
+  const packageJson = JSON.parse((0, import_fs2.readFileSync)(packageJsonPath, "utf-8"));
   if (packageJson.private) {
     console.warn(`Package ${pkgInfo.name} is private, skipping snapshot.`);
     return;
@@ -29660,6 +29692,10 @@ async function createOrUpdateReleasePR() {
   const packageInfos = getPackageInfos(packagePaths);
   const rootPackageName = packageInfos.find((pkg) => pkg.isRoot)?.name;
   const changelogs = getChangelogFromCommits(commits, rootPackageName);
+  const fixedGroups = getFixedGroups();
+  if (fixedGroups.length > 0) {
+    console.log("Fixed groups configuration:", fixedGroups);
+  }
   const { changedPackageInfos, indirectPackageInfos } = getChangedPackageInfos(
     changelogs,
     packageInfos
@@ -29700,7 +29736,7 @@ function updateIndirectPackageJsonFile(pkgInfo, allPackageInfos) {
     return;
   }
   const packageJsonPath = pkgInfo.path;
-  let packageJsonString = (0, import_fs.readFileSync)(packageJsonPath, "utf-8");
+  let packageJsonString = (0, import_fs2.readFileSync)(packageJsonPath, "utf-8");
   const packageJson = JSON.parse(packageJsonString);
   packageJson.version = pkgInfo.newVersion;
   const dependencyFields = [
@@ -29731,7 +29767,7 @@ function updateIndirectPackageJsonFile(pkgInfo, allPackageInfos) {
   allPackageInfos.forEach((otherPkg) => {
     updateDependentPackages(pkgInfo, otherPkg);
   });
-  (0, import_fs.writeFileSync)(
+  (0, import_fs2.writeFileSync)(
     packageJsonPath,
     JSON.stringify(packageJson, null, 2) + "\n",
     "utf-8"
@@ -29745,7 +29781,7 @@ function updateDependentPackages(indirectPkgInfo, otherPkg) {
     `Updating dependent package ${otherPkg.name} for indirect package ${indirectPkgInfo.name}`
   );
   const otherPackageJsonPath = otherPkg.path;
-  let otherPackageJsonString = (0, import_fs.readFileSync)(otherPackageJsonPath, "utf-8");
+  let otherPackageJsonString = (0, import_fs2.readFileSync)(otherPackageJsonPath, "utf-8");
   const otherPackageJson = JSON.parse(otherPackageJsonString);
   const dependencyFields = [
     "dependencies",
@@ -29772,7 +29808,7 @@ function updateDependentPackages(indirectPkgInfo, otherPkg) {
       }
     }
   }
-  (0, import_fs.writeFileSync)(
+  (0, import_fs2.writeFileSync)(
     otherPackageJsonPath,
     JSON.stringify(otherPackageJson, null, 2) + "\n",
     "utf-8"
@@ -29786,7 +29822,7 @@ function getPackageInfos(packagePaths) {
     (packagePath) => getPackageInfo(packagePath)
   );
   packageInfos.forEach((pkgInfo) => {
-    const packageJsonString = (0, import_fs.readFileSync)(pkgInfo.path, "utf-8");
+    const packageJsonString = (0, import_fs2.readFileSync)(pkgInfo.path, "utf-8");
     const packageJson = JSON.parse(packageJsonString);
     const allDeps = /* @__PURE__ */ new Set();
     const dependencyFields = [
@@ -29825,14 +29861,14 @@ function createOrUpdateChangelog(packageInfo, changelogs) {
   console.log(
     `Creating or updating changelog for package: ${packageInfo.name} at ${dirPath}`
   );
-  const changelogFilePath = (0, import_path2.join)(dirPath, "CHANGELOG.md");
+  const changelogFilePath = (0, import_path3.join)(dirPath, "CHANGELOG.md");
   const changelogContent = generateChangelogContent(packageInfo, changelogs);
   console.log(
     `Generated changelog content for ${packageInfo.name}:
 ${changelogContent}`
   );
-  if ((0, import_fs.existsSync)(changelogFilePath)) {
-    const existingChangelogContent = (0, import_fs.readFileSync)(changelogFilePath, "utf-8");
+  if ((0, import_fs2.existsSync)(changelogFilePath)) {
+    const existingChangelogContent = (0, import_fs2.readFileSync)(changelogFilePath, "utf-8");
     console.log(
       `Existing changelog content for ${packageInfo.name}:
 ${existingChangelogContent}`
@@ -29845,12 +29881,12 @@ ${existingChangelogContent}`
     console.log(`Updating changelog file at ${changelogFilePath}`);
     console.log(`Updated changelog content:
 ${updatedChangelogContent}`);
-    (0, import_fs.writeFileSync)(changelogFilePath, updatedChangelogContent, "utf-8");
+    (0, import_fs2.writeFileSync)(changelogFilePath, updatedChangelogContent, "utf-8");
   } else {
     console.log(
       `Changelog file does not exist at ${changelogFilePath}, creating new one.`
     );
-    (0, import_fs.writeFileSync)(changelogFilePath, changelogContent, "utf-8");
+    (0, import_fs2.writeFileSync)(changelogFilePath, changelogContent, "utf-8");
   }
 }
 function updatePackageJsonFile(packageInfo) {
@@ -29858,13 +29894,13 @@ function updatePackageJsonFile(packageInfo) {
     return;
   }
   const packageJsonPath = packageInfo.path;
-  let packageJsonString = (0, import_fs.readFileSync)(packageJsonPath, "utf-8");
+  let packageJsonString = (0, import_fs2.readFileSync)(packageJsonPath, "utf-8");
   const packageJson = JSON.parse(packageJsonString);
   packageJson.version = packageInfo.newVersion;
   console.log(
     `Updating ${packageInfo.name} to version ${packageInfo.newVersion}`
   );
-  (0, import_fs.writeFileSync)(
+  (0, import_fs2.writeFileSync)(
     packageJsonPath,
     JSON.stringify(packageJson, null, 2) + "\n",
     "utf-8"
@@ -29872,19 +29908,49 @@ function updatePackageJsonFile(packageInfo) {
 }
 function updatePackageInfo(packageInfo, changelogs) {
   const packageNameWithoutScope = getPackageNameWithoutScope(packageInfo.name);
+  const fixedGroups = getFixedGroups();
+  const fixedGroup = findFixedGroup(packageNameWithoutScope, fixedGroups);
   let semver = "patch";
-  for (const changelog of changelogs) {
-    const isRelevant = changelog.packages.length > 0 && changelog.packages.some(
-      (pkgName) => pkgName === packageNameWithoutScope || pkgName === getDirectoryNameFromPath(packageInfo.path)
-    ) || packageInfo.isRoot && changelog.packages.length === 0;
-    if (!isRelevant) {
-      continue;
+  if (fixedGroup) {
+    const groupSemverBumps = [];
+    for (const groupMemberName of fixedGroup) {
+      for (const changelog of changelogs) {
+        const isRelevant = changelog.packages.length > 0 && changelog.packages.some(
+          (pkgName) => pkgName === groupMemberName
+        ) || packageInfo.isRoot && changelog.packages.length === 0;
+        if (isRelevant) {
+          if (changelog.isBreakingChange) {
+            groupSemverBumps.push("major");
+          } else if (changelog.semverBump === "minor") {
+            groupSemverBumps.push("minor");
+          } else {
+            groupSemverBumps.push("patch");
+          }
+        }
+      }
     }
-    if (changelog.isBreakingChange) {
-      semver = "major";
-      break;
-    } else if (changelog.semverBump === "minor" && semver !== "major") {
-      semver = "minor";
+    if (groupSemverBumps.length > 0) {
+      semver = getHighestSemverBump(groupSemverBumps);
+    }
+    console.log(
+      `Fixed package ${packageNameWithoutScope} will use ${semver} bump (group bumps: ${groupSemverBumps.join(
+        ", "
+      )})`
+    );
+  } else {
+    for (const changelog of changelogs) {
+      const isRelevant = changelog.packages.length > 0 && changelog.packages.some(
+        (pkgName) => pkgName === packageNameWithoutScope || pkgName === getDirectoryNameFromPath(packageInfo.path)
+      ) || packageInfo.isRoot && changelog.packages.length === 0;
+      if (!isRelevant) {
+        continue;
+      }
+      if (changelog.isBreakingChange) {
+        semver = "major";
+        break;
+      } else if (changelog.semverBump === "minor" && semver !== "major") {
+        semver = "minor";
+      }
     }
   }
   packageInfo.newVersion = getNewVersion(packageInfo.version, semver);
@@ -29919,18 +29985,48 @@ function getChangedPackageInfos(changelogs, allPkgInfos) {
     (pkg) => directlyChangedPkgNames.includes(getPackageNameWithoutScope(pkg.name)) || directlyChangedPkgNames.includes(getDirectoryNameFromPath(pkg.path))
   );
   console.log("directlyChangedPackageInfos:", directlyChangedPackageInfos);
+  const fixedGroups = getFixedGroups();
+  console.log("fixedGroups:", fixedGroups);
+  const expandedChangedPackageInfos = [...directlyChangedPackageInfos];
+  const processedGroups = /* @__PURE__ */ new Set();
+  for (const changedPkg of directlyChangedPackageInfos) {
+    const pkgNameWithoutScope = getPackageNameWithoutScope(changedPkg.name);
+    const fixedGroup = findFixedGroup(pkgNameWithoutScope, fixedGroups);
+    if (fixedGroup && !processedGroups.has(fixedGroup.join(","))) {
+      console.log(`Found fixed group for ${pkgNameWithoutScope}:`, fixedGroup);
+      processedGroups.add(fixedGroup.join(","));
+      for (const groupMemberName of fixedGroup) {
+        const groupMemberPkg = allPkgInfos.find(
+          (pkg) => getPackageNameWithoutScope(pkg.name) === groupMemberName || getDirectoryNameFromPath(pkg.path) === groupMemberName
+        );
+        if (groupMemberPkg && !expandedChangedPackageInfos.find(
+          (p) => p.name === groupMemberPkg.name
+        )) {
+          console.log(
+            `Adding fixed group member ${groupMemberName} to changed packages`
+          );
+          expandedChangedPackageInfos.push(groupMemberPkg);
+        }
+      }
+    }
+  }
   const indirectlyChangedPackageInfos = allPkgInfos.filter((pkg) => {
-    const found = directlyChangedPackageInfos.find((changedPkg) => changedPkg.name === pkg.name);
+    const found = expandedChangedPackageInfos.find(
+      (changedPkg) => changedPkg.name === pkg.name
+    );
     if (found) {
       return false;
     }
-    return pkg.dependencies.some((depName) => directlyChangedPackageInfos.some(
-      (changedPkg) => changedPkg.name === depName
-    ));
+    return pkg.dependencies.some(
+      (depName) => expandedChangedPackageInfos.some(
+        (changedPkg) => changedPkg.name === depName
+      )
+    );
   });
+  console.log("expandedChangedPackageInfos:", expandedChangedPackageInfos);
   console.log("indirectlyChangedPackageInfos:", indirectlyChangedPackageInfos);
   return {
-    changedPackageInfos: directlyChangedPackageInfos,
+    changedPackageInfos: expandedChangedPackageInfos,
     indirectPackageInfos: indirectlyChangedPackageInfos
   };
 }
@@ -29957,7 +30053,7 @@ function getPackagePaths() {
   return packagePaths;
 }
 function getPackageInfo(packagePath) {
-  const packageJsonString = (0, import_fs.readFileSync)(packagePath, "utf-8");
+  const packageJsonString = (0, import_fs2.readFileSync)(packagePath, "utf-8");
   const packageJson = JSON.parse(packageJsonString);
   const packageInfo = {
     name: packageJson.name,
