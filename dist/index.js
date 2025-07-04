@@ -28120,6 +28120,10 @@ function createOrCheckoutBranch(branchName) {
   } catch (error) {
     console.log(`Branch ${branchName} does not exist, creating it.`);
     (0, import_child_process.execFileSync)("git", ["checkout", "-b", branchName], { stdio: "inherit" });
+    (0, import_child_process.execFileSync)("git", ["push", "-u", "origin", branchName], {
+      stdio: "inherit"
+    });
+    console.log(`Created and pushed new branch ${branchName}`);
   }
 }
 function commitAndPushChanges() {

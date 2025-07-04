@@ -54,6 +54,12 @@ export function createOrCheckoutBranch(branchName: string) {
   } catch (error) {
     console.log(`Branch ${branchName} does not exist, creating it.`);
     execFileSync('git', ['checkout', '-b', branchName], { stdio: 'inherit' });
+
+    // Push the new branch to remote
+    execFileSync('git', ['push', '-u', 'origin', branchName], {
+      stdio: 'inherit',
+    });
+    console.log(`Created and pushed new branch ${branchName}`);
   }
 }
 
