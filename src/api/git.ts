@@ -1,6 +1,7 @@
 import { execFileSync, execSync } from 'child_process';
 import { DEFAULT_BRANCH } from '../constants';
 import { getPackagePaths } from '..';
+import { toDirectoryPath } from '../utils';
 
 export function setupGitConfig() {
   console.log('Setting up git config');
@@ -67,12 +68,41 @@ export function createOrCheckoutBranch(branchName: string) {
 
     // checkout package.json and CHANGELOG.md files from default branch
     packagePaths.forEach((packagePath) => {
-      execFileSync('git', ['checkout', `origin/${DEFAULT_BRANCH}`, `${packagePath}/package.json`], {
-        stdio: 'inherit',
-      });
-      execFileSync('git', ['checkout', `origin/${DEFAULT_BRANCH}`, `${packagePath}/CHANGELOG.md`], {
-        stdio: 'inherit',
-      });
+      const pkgJsonPath = `${toDirectoryPath(packagePath)}/package.json`;
+      const changelogPath = `${toDirectoryPath(packagePath)}/CHANGELOG.md`;
+      try {
+        execFileSync(
+          'git',
+          [
+            'checkout',
+            `origin/${DEFAULT_BRANCH}`,
+            pkgJsonPath,
+          ],
+          {
+            stdio: 'inherit',
+          }
+        );
+      } catch (error) {
+        console.warn(
+          `Failed to checkout package.json for ${pkgJsonPath}: ${error}`
+        );
+      }
+
+      try {
+        execFileSync(
+          'git',
+          [
+            'checkout',
+            `origin/${DEFAULT_BRANCH}`,
+            changelogPath,
+          ],
+          {
+            stdio: 'inherit',
+          }
+        );
+      } catch (error) {
+        console.warn(`Failed to checkout CHANGELOG.md for ${changelogPath}: ${error}`);
+      }
     });
 }
 

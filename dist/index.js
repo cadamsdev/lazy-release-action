@@ -28073,100 +28073,6 @@ var GITHUB_TOKEN = process.env["INPUT_GITHUB-TOKEN"] || "";
 var SNAPSHOTS_ENABLED = process.env["INPUT_SNAPSHOTS"] ? process.env["INPUT_SNAPSHOTS"] === "true" : false;
 var DEFAULT_BRANCH = process.env.DEFAULT_BRANCH || "main";
 
-// src/api/git.ts
-function setupGitConfig() {
-  console.log("Setting up git config");
-  (0, import_child_process.execFileSync)("git", ["config", "--global", "user.name", "github-actions[bot]"], {
-    stdio: "inherit"
-  });
-  (0, import_child_process.execFileSync)(
-    "git",
-    ["config", "--global", "user.email", "41898282+github-actions[bot]@users.noreply.github.com"],
-    { stdio: "inherit" }
-  );
-  (0, import_child_process.execFileSync)("git", ["config", "--global", "--add", "safe.directory", "/github/workspace"], {
-    stdio: "inherit"
-  });
-}
-function checkoutBranch(branchName) {
-  (0, import_child_process.execFileSync)("git", ["fetch", "origin", branchName], { stdio: "inherit" });
-  (0, import_child_process.execFileSync)("git", ["checkout", branchName], { stdio: "inherit" });
-}
-function createOrCheckoutBranch(branchName) {
-  try {
-    (0, import_child_process.execFileSync)("git", ["checkout", branchName], { stdio: "inherit" });
-    console.log(`Switched to branch ${branchName}`);
-    try {
-      (0, import_child_process.execFileSync)("git", ["merge", `origin/${DEFAULT_BRANCH}`], {
-        stdio: "inherit"
-      });
-      console.log(`Merged main into ${branchName}`);
-    } catch (mergeError) {
-      console.log(
-        `Merge conflicts detected, resolving by taking theirs strategy`
-      );
-      (0, import_child_process.execFileSync)("git", ["merge", "--abort"], { stdio: "inherit" });
-      (0, import_child_process.execFileSync)(
-        "git",
-        ["merge", "-X", "theirs", `origin/${DEFAULT_BRANCH}`],
-        {
-          stdio: "inherit"
-        }
-      );
-      console.log(`Resolved merge conflicts by taking theirs strategy`);
-    }
-    (0, import_child_process.execFileSync)("git", ["push", "origin", branchName], { stdio: "inherit" });
-    console.log(`Pushed updated ${branchName} to remote`);
-  } catch (error) {
-    console.log(`Branch ${branchName} does not exist, creating it.`);
-    (0, import_child_process.execFileSync)("git", ["checkout", "-b", branchName], { stdio: "inherit" });
-    (0, import_child_process.execFileSync)("git", ["push", "-u", "origin", branchName], {
-      stdio: "inherit"
-    });
-    console.log(`Created and pushed new branch ${branchName}`);
-  }
-  const packagePaths = getPackagePaths();
-  packagePaths.forEach((packagePath) => {
-    (0, import_child_process.execFileSync)("git", ["checkout", `origin/${DEFAULT_BRANCH}`, `${packagePath}/package.json`], {
-      stdio: "inherit"
-    });
-    (0, import_child_process.execFileSync)("git", ["checkout", `origin/${DEFAULT_BRANCH}`, `${packagePath}/CHANGELOG.md`], {
-      stdio: "inherit"
-    });
-  });
-}
-function commitAndPushChanges() {
-  (0, import_child_process.execFileSync)("git", ["add", "."], { stdio: "inherit" });
-  (0, import_child_process.execFileSync)("git", ["commit", "-m", "chore: update release branch"], { stdio: "inherit" });
-  (0, import_child_process.execFileSync)("git", ["push", "origin", "HEAD"], { stdio: "inherit" });
-}
-function hasUnstagedChanges() {
-  try {
-    const statusOutput = (0, import_child_process.execSync)("git status --porcelain", {
-      encoding: "utf-8"
-    });
-    return statusOutput.trim().length > 0;
-  } catch (error) {
-    console.error("Error checking git status:", error);
-    return false;
-  }
-}
-function doesTagExistOnRemote(tagName) {
-  try {
-    (0, import_child_process.execSync)("git fetch --tags", { stdio: "pipe" });
-    const result = (0, import_child_process.execSync)(
-      `git ls-remote --tags origin refs/tags/${tagName}`,
-      {
-        stdio: "pipe",
-        encoding: "utf-8"
-      }
-    );
-    return result.trim().length > 0;
-  } catch (error) {
-    return false;
-  }
-}
-
 // src/utils.ts
 var import_github = __toESM(require_github());
 var DATE_NOW = /* @__PURE__ */ new Date();
@@ -28577,6 +28483,128 @@ function replaceChangelogSection(newVersion, newChangelogContent, existingChange
 function toDirectoryPath(filePath) {
   const lastSlashIndex = filePath.lastIndexOf("/");
   return lastSlashIndex !== -1 ? filePath.substring(0, lastSlashIndex) : "";
+}
+
+// src/api/git.ts
+function setupGitConfig() {
+  console.log("Setting up git config");
+  (0, import_child_process.execFileSync)("git", ["config", "--global", "user.name", "github-actions[bot]"], {
+    stdio: "inherit"
+  });
+  (0, import_child_process.execFileSync)(
+    "git",
+    ["config", "--global", "user.email", "41898282+github-actions[bot]@users.noreply.github.com"],
+    { stdio: "inherit" }
+  );
+  (0, import_child_process.execFileSync)("git", ["config", "--global", "--add", "safe.directory", "/github/workspace"], {
+    stdio: "inherit"
+  });
+}
+function checkoutBranch(branchName) {
+  (0, import_child_process.execFileSync)("git", ["fetch", "origin", branchName], { stdio: "inherit" });
+  (0, import_child_process.execFileSync)("git", ["checkout", branchName], { stdio: "inherit" });
+}
+function createOrCheckoutBranch(branchName) {
+  try {
+    (0, import_child_process.execFileSync)("git", ["checkout", branchName], { stdio: "inherit" });
+    console.log(`Switched to branch ${branchName}`);
+    try {
+      (0, import_child_process.execFileSync)("git", ["merge", `origin/${DEFAULT_BRANCH}`], {
+        stdio: "inherit"
+      });
+      console.log(`Merged main into ${branchName}`);
+    } catch (mergeError) {
+      console.log(
+        `Merge conflicts detected, resolving by taking theirs strategy`
+      );
+      (0, import_child_process.execFileSync)("git", ["merge", "--abort"], { stdio: "inherit" });
+      (0, import_child_process.execFileSync)(
+        "git",
+        ["merge", "-X", "theirs", `origin/${DEFAULT_BRANCH}`],
+        {
+          stdio: "inherit"
+        }
+      );
+      console.log(`Resolved merge conflicts by taking theirs strategy`);
+    }
+    (0, import_child_process.execFileSync)("git", ["push", "origin", branchName], { stdio: "inherit" });
+    console.log(`Pushed updated ${branchName} to remote`);
+  } catch (error) {
+    console.log(`Branch ${branchName} does not exist, creating it.`);
+    (0, import_child_process.execFileSync)("git", ["checkout", "-b", branchName], { stdio: "inherit" });
+    (0, import_child_process.execFileSync)("git", ["push", "-u", "origin", branchName], {
+      stdio: "inherit"
+    });
+    console.log(`Created and pushed new branch ${branchName}`);
+  }
+  const packagePaths = getPackagePaths();
+  packagePaths.forEach((packagePath) => {
+    const pkgJsonPath = `${toDirectoryPath(packagePath)}/package.json`;
+    const changelogPath = `${toDirectoryPath(packagePath)}/CHANGELOG.md`;
+    try {
+      (0, import_child_process.execFileSync)(
+        "git",
+        [
+          "checkout",
+          `origin/${DEFAULT_BRANCH}`,
+          pkgJsonPath
+        ],
+        {
+          stdio: "inherit"
+        }
+      );
+    } catch (error) {
+      console.warn(
+        `Failed to checkout package.json for ${pkgJsonPath}: ${error}`
+      );
+    }
+    try {
+      (0, import_child_process.execFileSync)(
+        "git",
+        [
+          "checkout",
+          `origin/${DEFAULT_BRANCH}`,
+          changelogPath
+        ],
+        {
+          stdio: "inherit"
+        }
+      );
+    } catch (error) {
+      console.warn(`Failed to checkout CHANGELOG.md for ${changelogPath}: ${error}`);
+    }
+  });
+}
+function commitAndPushChanges() {
+  (0, import_child_process.execFileSync)("git", ["add", "."], { stdio: "inherit" });
+  (0, import_child_process.execFileSync)("git", ["commit", "-m", "chore: update release branch"], { stdio: "inherit" });
+  (0, import_child_process.execFileSync)("git", ["push", "origin", "HEAD"], { stdio: "inherit" });
+}
+function hasUnstagedChanges() {
+  try {
+    const statusOutput = (0, import_child_process.execSync)("git status --porcelain", {
+      encoding: "utf-8"
+    });
+    return statusOutput.trim().length > 0;
+  } catch (error) {
+    console.error("Error checking git status:", error);
+    return false;
+  }
+}
+function doesTagExistOnRemote(tagName) {
+  try {
+    (0, import_child_process.execSync)("git fetch --tags", { stdio: "pipe" });
+    const result = (0, import_child_process.execSync)(
+      `git ls-remote --tags origin refs/tags/${tagName}`,
+      {
+        stdio: "pipe",
+        encoding: "utf-8"
+      }
+    );
+    return result.trim().length > 0;
+  } catch (error) {
+    return false;
+  }
 }
 
 // node_modules/tinyglobby/dist/index.mjs
