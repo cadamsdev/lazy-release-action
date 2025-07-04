@@ -137,6 +137,7 @@ export function getChangelogFromCommits(commits: Commit[], rootPackageName?: str
     }
   }
 
+  console.log(`Found ${changelogs.length} changelogs from commits.`, changelogs);
   return changelogs;
 }
 

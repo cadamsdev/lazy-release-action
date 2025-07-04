@@ -28265,6 +28265,7 @@ function getChangelogFromCommits(commits, rootPackageName) {
       }
     }
   }
+  console.log(`Found ${changelogs.length} changelogs from commits.`, changelogs);
   return changelogs;
 }
 function createChangelogFromChangelogItem(item, rootPackageName) {
