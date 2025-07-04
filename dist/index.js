@@ -28509,7 +28509,7 @@ function createOrCheckoutBranch(branchName) {
     (0, import_child_process.execFileSync)("git", ["checkout", branchName], { stdio: "inherit" });
     console.log(`Switched to branch ${branchName}`);
     (0, import_child_process.execFileSync)("git", ["fetch", "origin"], { stdio: "inherit" });
-    (0, import_child_process.execFileSync)("git", ["reset", "--hard", "origin/main"], { stdio: "inherit" });
+    (0, import_child_process.execFileSync)("git", ["reset", "--hard", `origin/${DEFAULT_BRANCH}`], { stdio: "inherit" });
     (0, import_child_process.execFileSync)("git", ["push", "--force"], { stdio: "inherit" });
     console.log(`Pushed updated ${branchName} to remote`);
   } catch (error) {

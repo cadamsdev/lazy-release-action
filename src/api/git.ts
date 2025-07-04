@@ -29,7 +29,7 @@ export function createOrCheckoutBranch(branchName: string) {
     console.log(`Switched to branch ${branchName}`);
 
     execFileSync('git', ['fetch', 'origin'], { stdio: 'inherit' });
-    execFileSync('git', ['reset', '--hard', 'origin/main'], { stdio: 'inherit' });
+    execFileSync('git', ['reset', '--hard', `origin/${DEFAULT_BRANCH}`], { stdio: 'inherit' });
 
     execFileSync('git', ['push', '--force'], { stdio: 'inherit' });
     console.log(`Pushed updated ${branchName} to remote`);
