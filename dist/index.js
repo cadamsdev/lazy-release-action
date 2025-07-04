@@ -29646,6 +29646,7 @@ async function getRecentCommits(ignoreLastest = false) {
 }
 async function createOrUpdateReleasePR() {
   console.log("Create or update release PR...");
+  await createOrCheckoutBranch(RELEASE_BRANCH);
   const commits = await getRecentCommits();
   const packagePaths = getPackagePaths();
   const packageInfos = getPackageInfos(packagePaths);
@@ -29659,7 +29660,6 @@ async function createOrUpdateReleasePR() {
     console.log("No packages changed, skipping release PR creation.");
     return;
   }
-  await createOrCheckoutBranch(RELEASE_BRANCH);
   changedPackageInfos.forEach((pkgInfo) => {
     updatePackageInfo(pkgInfo, changelogs);
     updatePackageJsonFile(pkgInfo);

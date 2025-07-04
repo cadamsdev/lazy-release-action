@@ -674,6 +674,9 @@ async function getRecentCommits(
 async function createOrUpdateReleasePR() {
   console.log('Create or update release PR...');
 
+  // checkout release branch
+  await createOrCheckoutBranch(RELEASE_BRANCH);
+
   const commits = await getRecentCommits();
 
   // get list of packages
@@ -696,9 +699,6 @@ async function createOrUpdateReleasePR() {
     console.log('No packages changed, skipping release PR creation.');
     return;
   }
-
-  // checkout release branch
-  await createOrCheckoutBranch(RELEASE_BRANCH);
 
   // update changed packages based on the changelogs
   changedPackageInfos.forEach((pkgInfo) => {
