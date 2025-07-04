@@ -993,7 +993,7 @@ var require_exec = __commonJS({
     exports2.getExecOutput = exports2.exec = void 0;
     var string_decoder_1 = require("string_decoder");
     var tr = __importStar(require_toolrunner());
-    function exec2(commandLine, args, options) {
+    function exec3(commandLine, args, options) {
       return __awaiter(this, void 0, void 0, function* () {
         const commandArgs = tr.argStringToArray(commandLine);
         if (commandArgs.length === 0) {
@@ -1005,7 +1005,7 @@ var require_exec = __commonJS({
         return runner.exec();
       });
     }
-    exports2.exec = exec2;
+    exports2.exec = exec3;
     function getExecOutput(commandLine, args, options) {
       var _a, _b;
       return __awaiter(this, void 0, void 0, function* () {
@@ -1028,7 +1028,7 @@ var require_exec = __commonJS({
           }
         };
         const listeners = Object.assign(Object.assign({}, options === null || options === void 0 ? void 0 : options.listeners), { stdout: stdOutListener, stderr: stdErrListener });
-        const exitCode = yield exec2(commandLine, args, Object.assign(Object.assign({}, options), { listeners }));
+        const exitCode = yield exec3(commandLine, args, Object.assign(Object.assign({}, options), { listeners }));
         stdout += stdoutDecoder.end();
         stderr += stderrDecoder.end();
         return {
@@ -27765,12 +27765,12 @@ var require_platform = __commonJS({
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.getDetails = exports2.isLinux = exports2.isMacOS = exports2.isWindows = exports2.arch = exports2.platform = void 0;
     var os_1 = __importDefault(require("os"));
-    var exec2 = __importStar(require_exec());
+    var exec3 = __importStar(require_exec());
     var getWindowsInfo = () => __awaiter(void 0, void 0, void 0, function* () {
-      const { stdout: version } = yield exec2.getExecOutput('powershell -command "(Get-CimInstance -ClassName Win32_OperatingSystem).Version"', void 0, {
+      const { stdout: version } = yield exec3.getExecOutput('powershell -command "(Get-CimInstance -ClassName Win32_OperatingSystem).Version"', void 0, {
         silent: true
       });
-      const { stdout: name } = yield exec2.getExecOutput('powershell -command "(Get-CimInstance -ClassName Win32_OperatingSystem).Caption"', void 0, {
+      const { stdout: name } = yield exec3.getExecOutput('powershell -command "(Get-CimInstance -ClassName Win32_OperatingSystem).Caption"', void 0, {
         silent: true
       });
       return {
@@ -27780,7 +27780,7 @@ var require_platform = __commonJS({
     });
     var getMacOsInfo = () => __awaiter(void 0, void 0, void 0, function* () {
       var _a, _b, _c, _d;
-      const { stdout } = yield exec2.getExecOutput("sw_vers", void 0, {
+      const { stdout } = yield exec3.getExecOutput("sw_vers", void 0, {
         silent: true
       });
       const version = (_b = (_a = stdout.match(/ProductVersion:\s*(.+)/)) === null || _a === void 0 ? void 0 : _a[1]) !== null && _b !== void 0 ? _b : "";
@@ -27791,7 +27791,7 @@ var require_platform = __commonJS({
       };
     });
     var getLinuxInfo = () => __awaiter(void 0, void 0, void 0, function* () {
-      const { stdout } = yield exec2.getExecOutput("lsb_release", ["-i", "-r", "-s"], {
+      const { stdout } = yield exec3.getExecOutput("lsb_release", ["-i", "-r", "-s"], {
         silent: true
       });
       const [name, version] = stdout.trim().split("\n");
@@ -28067,33 +28067,76 @@ var import_child_process2 = require("child_process");
 
 // src/api/git.ts
 var import_child_process = require("child_process");
+
+// src/constants.ts
+var GITHUB_TOKEN = process.env["INPUT_GITHUB-TOKEN"] || "";
+var SNAPSHOTS_ENABLED = process.env["INPUT_SNAPSHOTS"] ? process.env["INPUT_SNAPSHOTS"] === "true" : false;
+var DEFAULT_BRANCH = process.env.DEFAULT_BRANCH || "main";
+
+// src/api/git.ts
 function setupGitConfig() {
   console.log("Setting up git config");
-  (0, import_child_process.execSync)("git config --global user.name github-actions[bot]", {
+  (0, import_child_process.execFileSync)("git", ["config", "--global", "user.name", "github-actions[bot]"], {
     stdio: "inherit"
   });
-  (0, import_child_process.execSync)(
-    "git config --global user.email 41898282+github-actions[bot]@users.noreply.github.com",
+  (0, import_child_process.execFileSync)(
+    "git",
+    ["config", "--global", "user.email", "41898282+github-actions[bot]@users.noreply.github.com"],
     { stdio: "inherit" }
   );
-  (0, import_child_process.execSync)("git config --global --add safe.directory /github/workspace"), { stdio: "inherit" };
+  (0, import_child_process.execFileSync)("git", ["config", "--global", "--add", "safe.directory", "/github/workspace"], {
+    stdio: "inherit"
+  });
 }
 function checkoutBranch(branchName) {
-  (0, import_child_process.execSync)(`git fetch origin ${branchName}`, { stdio: "inherit" });
-  (0, import_child_process.execSync)(`git checkout ${branchName}`, { stdio: "inherit" });
+  (0, import_child_process.execFileSync)("git", ["fetch", "origin", branchName], { stdio: "inherit" });
+  (0, import_child_process.execFileSync)("git", ["checkout", branchName], { stdio: "inherit" });
 }
 function createOrCheckoutBranch(branchName) {
   try {
-    (0, import_child_process.execSync)(`git checkout ${branchName}`, { stdio: "inherit" });
+    (0, import_child_process.execFileSync)("git", ["checkout", branchName], { stdio: "inherit" });
+    console.log(`Switched to branch ${branchName}`);
+    try {
+      (0, import_child_process.execFileSync)("git", ["merge", `origin/${DEFAULT_BRANCH}`], {
+        stdio: "inherit"
+      });
+      console.log(`Merged ${DEFAULT_BRANCH} into ${branchName}`);
+    } catch (mergeError) {
+      console.log(
+        `Merge conflicts detected, resolving by taking theirs strategy`
+      );
+      (0, import_child_process.execFileSync)("git", ["merge", "--abort"], { stdio: "inherit" });
+      (0, import_child_process.execFileSync)(
+        "git",
+        ["merge", "-X", "theirs", `origin/${DEFAULT_BRANCH}`],
+        {
+          stdio: "inherit"
+        }
+      );
+      console.log(`Resolved merge conflicts by taking theirs strategy`);
+    }
+    (0, import_child_process.execFileSync)("git", ["push", "origin", branchName], { stdio: "inherit" });
+    console.log(`Pushed updated ${branchName} to remote`);
+    (0, import_child_process.execFileSync)("git", ["checkout", `origin/${DEFAULT_BRANCH}`, "--", "."], {
+      stdio: "inherit"
+    });
+    (0, import_child_process.execFileSync)("git", ["add", "."], { stdio: "inherit" });
+    (0, import_child_process.execFileSync)("git", ["commit", "-m", `sync ${branchName} with ${DEFAULT_BRANCH}`], { stdio: "inherit" });
+    (0, import_child_process.execFileSync)("git", ["push", "origin", branchName], { stdio: "inherit" });
+    console.log(`Committed and pushed changes to ${branchName}`);
   } catch (error) {
     console.log(`Branch ${branchName} does not exist, creating it.`);
-    (0, import_child_process.execSync)(`git checkout -b ${branchName}`, { stdio: "inherit" });
+    (0, import_child_process.execFileSync)("git", ["checkout", "-b", branchName], { stdio: "inherit" });
+    (0, import_child_process.execFileSync)("git", ["push", "-u", "origin", branchName], {
+      stdio: "inherit"
+    });
+    console.log(`Created and pushed new branch ${branchName}`);
   }
 }
 function commitAndPushChanges() {
-  (0, import_child_process.execSync)("git add .", { stdio: "inherit" });
-  (0, import_child_process.execSync)('git commit -m "chore: update release branch"', { stdio: "inherit" });
-  (0, import_child_process.execSync)("git push origin HEAD", { stdio: "inherit" });
+  (0, import_child_process.execFileSync)("git", ["add", "."], { stdio: "inherit" });
+  (0, import_child_process.execFileSync)("git", ["commit", "-m", "update release branch"], { stdio: "inherit" });
+  (0, import_child_process.execFileSync)("git", ["push", "origin", "HEAD"], { stdio: "inherit" });
 }
 function hasUnstagedChanges() {
   try {
@@ -28121,11 +28164,6 @@ function doesTagExistOnRemote(tagName) {
     return false;
   }
 }
-
-// src/constants.ts
-var GITHUB_TOKEN = process.env["INPUT_GITHUB-TOKEN"] || "";
-var SNAPSHOTS_ENABLED = process.env["INPUT_SNAPSHOTS"] ? process.env["INPUT_SNAPSHOTS"] === "true" : false;
-var DEFAULT_BRANCH = process.env.DEFAULT_BRANCH || "main";
 
 // src/utils.ts
 var import_github = __toESM(require_github());
@@ -28227,6 +28265,7 @@ function getChangelogFromCommits(commits, rootPackageName) {
       }
     }
   }
+  console.log(`Found ${changelogs.length} changelogs from commits.`, changelogs);
   return changelogs;
 }
 function createChangelogFromChangelogItem(item, rootPackageName) {
@@ -28466,7 +28505,7 @@ function getChangelogDate(date) {
 function generateChangelogContent(pkgInfo, changelogs, date = DATE_NOW) {
   const pkgNameWithoutScope = getPackageNameWithoutScope(pkgInfo.name);
   const packageChangelogs = changelogs.filter(
-    (changelog) => changelog.packages.includes(pkgNameWithoutScope) || pkgInfo.isRoot && changelog.packages.length === 0
+    (changelog) => changelog.packages.includes(pkgNameWithoutScope) || changelog.packages.includes(getDirectoryNameFromPath(pkgInfo.path)) || pkgInfo.isRoot && changelog.packages.length === 0
   );
   let markdown = `## ${pkgInfo.newVersion} (${getChangelogDate(date)})
 
@@ -29153,6 +29192,30 @@ var import_github3 = __toESM(require_github());
 var RELEASE_BRANCH = "lazy-release/main";
 var PR_COMMENT_STATUS_ID = "b3da20ce-59b6-4bbd-a6e3-6d625f45d008";
 var RELEASE_PR_TITLE = "Version Packages";
+(async () => {
+  preRun();
+  if (import_github3.context.payload.pull_request?.merged) {
+    checkoutBranch(DEFAULT_BRANCH);
+    console.log(
+      `Pull request #${import_github3.context.payload.pull_request.number} has been merged.`
+    );
+    const isRelease = await isLastCommitAReleaseCommit();
+    if (isRelease) {
+      await publish();
+      return;
+    }
+    await createOrUpdateReleasePR();
+  } else if (!import_github3.context.payload.pull_request?.merged) {
+    console.log(
+      `Pull request #${import_github3.context.payload.pull_request?.number} is not merged yet.`
+    );
+    if (!isPRTitleValid(PR_TITLE) && PR_TITLE !== RELEASE_PR_TITLE) {
+      await createOrUpdatePRStatusComment(false);
+      throw new Error(`Invalid pull request title: ${PR_TITLE}`);
+    }
+    await createOrUpdatePRStatusComment(true);
+  }
+})();
 function preRun() {
   const version = (0, import_child_process2.execSync)("git --version")?.toString().trim();
   console.log(`git: ${version.replace("git version ", "")}`);
@@ -29181,30 +29244,6 @@ async function isLastCommitAReleaseCommit() {
   console.log(`lastCommit=${lastCommit}`);
   return lastCommit.includes(RELEASE_ID);
 }
-(async () => {
-  preRun();
-  if (import_github3.context.payload.pull_request?.merged) {
-    checkoutBranch(DEFAULT_BRANCH);
-    console.log(
-      `Pull request #${import_github3.context.payload.pull_request.number} has been merged.`
-    );
-    const isRelease = await isLastCommitAReleaseCommit();
-    if (isRelease) {
-      await publish();
-      return;
-    }
-    await createOrUpdateReleasePR();
-  } else if (!import_github3.context.payload.pull_request?.merged) {
-    console.log(
-      `Pull request #${import_github3.context.payload.pull_request?.number} is not merged yet.`
-    );
-    if (!isPRTitleValid(PR_TITLE) && PR_TITLE !== RELEASE_PR_TITLE) {
-      await createOrUpdatePRStatusComment(false);
-      throw new Error(`Invalid pull request title: ${PR_TITLE}`);
-    }
-    await createOrUpdatePRStatusComment(true);
-  }
-})();
 async function createSnapshot(changedPkgInfos) {
   if (!SNAPSHOTS_ENABLED) {
     console.log("Snapshots are disabled, skipping snapshot creation.");
@@ -29615,6 +29654,7 @@ async function getRecentCommits(ignoreLastest = false) {
 }
 async function createOrUpdateReleasePR() {
   console.log("Create or update release PR...");
+  await createOrCheckoutBranch(RELEASE_BRANCH);
   const commits = await getRecentCommits();
   const packagePaths = getPackagePaths();
   const packageInfos = getPackageInfos(packagePaths);
@@ -29628,7 +29668,6 @@ async function createOrUpdateReleasePR() {
     console.log("No packages changed, skipping release PR creation.");
     return;
   }
-  await createOrCheckoutBranch(RELEASE_BRANCH);
   changedPackageInfos.forEach((pkgInfo) => {
     updatePackageInfo(pkgInfo, changelogs);
     updatePackageJsonFile(pkgInfo);
@@ -29836,7 +29875,7 @@ function updatePackageInfo(packageInfo, changelogs) {
   let semver = "patch";
   for (const changelog of changelogs) {
     const isRelevant = changelog.packages.length > 0 && changelog.packages.some(
-      (pkgName) => pkgName === packageNameWithoutScope
+      (pkgName) => pkgName === packageNameWithoutScope || pkgName === getDirectoryNameFromPath(packageInfo.path)
     ) || packageInfo.isRoot && changelog.packages.length === 0;
     if (!isRelevant) {
       continue;

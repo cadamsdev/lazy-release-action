@@ -595,6 +595,71 @@ describe('generateMarkdown', () => {
     expect(markdown).toEqual(expectedMarkdown);
   });
 
+  it('should generate changelog markdown using directory name', () => {
+    const pkgInfo: PackageInfo = {
+      name: '@cadamsdev/atlas-components',
+      version: '0.0.6',
+      newVersion: '0.1.0',
+      path: 'packages/components/package.json',
+      isRoot: false,
+      isPrivate: false,
+      dependencies: [],
+    };
+
+    const changelogs: Changelog[] = [
+      {
+        type: 'chore',
+        description:
+          'Test 28 ([#47](https://github.com/cadamsdev/ds-web-2/pull/47))',
+        packages: ['components'],
+        isBreakingChange: false,
+        semverBump: 'patch',
+      },
+      {
+        type: 'chore',
+        description:
+          'Test 27 ([#46](https://github.com/cadamsdev/ds-web-2/pull/46))',
+        packages: ['components'],
+        isBreakingChange: false,
+        semverBump: 'patch',
+      },
+      {
+        type: 'chore',
+        description:
+          'Test 26 ([#44](https://github.com/cadamsdev/ds-web-2/pull/44))',
+        packages: ['components'],
+        isBreakingChange: false,
+        semverBump: 'patch',
+      },
+      {
+        type: 'feat',
+        description:
+          'Test 25 ([#42](https://github.com/cadamsdev/ds-web-2/pull/42))',
+        packages: ['components'],
+        isBreakingChange: false,
+        semverBump: 'minor',
+      },
+    ];
+
+    const markdown = generateChangelogContent(
+      pkgInfo,
+      changelogs,
+      new Date('2025-07-04')
+    );
+
+    const expectedMarkdown = `## 0.1.0 (2025-07-04)
+
+### 🚀 New Features
+- Test 25 ([#42](https://github.com/cadamsdev/ds-web-2/pull/42))
+
+### 🏠 Chores
+- Test 28 ([#47](https://github.com/cadamsdev/ds-web-2/pull/47))
+- Test 27 ([#46](https://github.com/cadamsdev/ds-web-2/pull/46))
+- Test 26 ([#44](https://github.com/cadamsdev/ds-web-2/pull/44))`;
+
+    expect(markdown).toEqual(expectedMarkdown);
+  });
+
   it('should get directory name from a file path', () => {
     const filePath = 'src/packages/components/package.json';
     expect(getDirectoryNameFromPath(filePath)).toEqual('components');

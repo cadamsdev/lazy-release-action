@@ -137,6 +137,7 @@ export function getChangelogFromCommits(commits: Commit[], rootPackageName?: str
     }
   }
 
+  console.log(`Found ${changelogs.length} changelogs from commits.`, changelogs);
   return changelogs;
 }
 
@@ -498,6 +499,7 @@ export function generateChangelogContent(pkgInfo: PackageInfo, changelogs: Chang
   const packageChangelogs = changelogs.filter(
     (changelog) =>
       changelog.packages.includes(pkgNameWithoutScope) ||
+      changelog.packages.includes(getDirectoryNameFromPath(pkgInfo.path)) ||
       (pkgInfo.isRoot && changelog.packages.length === 0)
   );
 

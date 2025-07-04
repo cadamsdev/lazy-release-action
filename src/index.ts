@@ -41,48 +41,10 @@ import { detect } from 'package-manager-detector/detect';
 import { resolveCommand } from 'package-manager-detector/commands';
 import { setOutput } from '@actions/core';
 import { context } from '@actions/github';
-import { dir } from 'console';
 
 const RELEASE_BRANCH = 'lazy-release/main';
 const PR_COMMENT_STATUS_ID = 'b3da20ce-59b6-4bbd-a6e3-6d625f45d008';
 const RELEASE_PR_TITLE = 'Version Packages';
-
-function preRun() {
-  // print git version
-  const version = execSync('git --version')?.toString().trim();
-  console.log(`git: ${version.replace('git version ', '')}`);
-
-  // print node version
-  const nodeVersion = execSync('node --version')?.toString().trim();
-  console.log(`node: ${nodeVersion}`);
-
-  setupGitConfig();
-
-  if (GITHUB_TOKEN) {
-    execSync(
-      `npm config set //npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}`,
-      {
-        stdio: 'inherit',
-      }
-    );
-  }
-}
-
-async function isLastCommitAReleaseCommit(): Promise<boolean> {
-  // check if last commit has the release id in the message
-  let lastCommit = '';
-  await exec('git', ['log', '-1', '--pretty=format:%B'], {
-    listeners: {
-      stdout: (data: Buffer) => {
-        lastCommit = data.toString().trim();
-      },
-    },
-    silent: true,
-  });
-
-  console.log(`lastCommit=${lastCommit}`);
-  return lastCommit.includes(RELEASE_ID);
-}
 
 (async () => {
   preRun();
@@ -121,6 +83,43 @@ async function isLastCommitAReleaseCommit(): Promise<boolean> {
     await createOrUpdatePRStatusComment(true);
   }
 })();
+
+function preRun() {
+  // print git version
+  const version = execSync('git --version')?.toString().trim();
+  console.log(`git: ${version.replace('git version ', '')}`);
+
+  // print node version
+  const nodeVersion = execSync('node --version')?.toString().trim();
+  console.log(`node: ${nodeVersion}`);
+
+  setupGitConfig();
+
+  if (GITHUB_TOKEN) {
+    execSync(
+      `npm config set //npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}`,
+      {
+        stdio: 'inherit',
+      }
+    );
+  }
+}
+
+async function isLastCommitAReleaseCommit(): Promise<boolean> {
+  // check if last commit has the release id in the message
+  let lastCommit = '';
+  await exec('git', ['log', '-1', '--pretty=format:%B'], {
+    listeners: {
+      stdout: (data: Buffer) => {
+        lastCommit = data.toString().trim();
+      },
+    },
+    silent: true,
+  });
+
+  console.log(`lastCommit=${lastCommit}`);
+  return lastCommit.includes(RELEASE_ID);
+}
 
 async function createSnapshot(changedPkgInfos: PackageInfo[]): Promise<SnapshotResult[]> {
   if (!SNAPSHOTS_ENABLED) {
@@ -675,6 +674,9 @@ async function getRecentCommits(
 async function createOrUpdateReleasePR() {
   console.log('Create or update release PR...');
 
+  // checkout release branch
+  await createOrCheckoutBranch(RELEASE_BRANCH);
+
   const commits = await getRecentCommits();
 
   // get list of packages
@@ -697,9 +699,6 @@ async function createOrUpdateReleasePR() {
     console.log('No packages changed, skipping release PR creation.');
     return;
   }
-
-  // checkout release branch
-  await createOrCheckoutBranch(RELEASE_BRANCH);
 
   // update changed packages based on the changelogs
   changedPackageInfos.forEach((pkgInfo) => {
@@ -1005,7 +1004,7 @@ export function updatePackageInfo(
     const isRelevant =
       (changelog.packages.length > 0 &&
         changelog.packages.some(
-          (pkgName) => pkgName === packageNameWithoutScope
+          (pkgName) => pkgName === packageNameWithoutScope || pkgName === getDirectoryNameFromPath(packageInfo.path)
         )) ||
       (packageInfo.isRoot && changelog.packages.length === 0);
 
