@@ -110,7 +110,7 @@ export function createOrCheckoutBranch(branchName: string) {
 
 export function commitAndPushChanges() {
   execFileSync('git', ['add', '.'], { stdio: 'inherit' });
-  execFileSync('git', ['commit', '-m', 'chore: update release branch'], { stdio: 'inherit' });
+  execFileSync('git', ['commit', '-m', 'update release branch'], { stdio: 'inherit' });
   execFileSync('git', ['push', 'origin', 'HEAD'], { stdio: 'inherit' });
 }
 

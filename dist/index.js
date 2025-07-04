@@ -28579,7 +28579,7 @@ function createOrCheckoutBranch(branchName) {
 }
 function commitAndPushChanges() {
   (0, import_child_process.execFileSync)("git", ["add", "."], { stdio: "inherit" });
-  (0, import_child_process.execFileSync)("git", ["commit", "-m", "chore: update release branch"], { stdio: "inherit" });
+  (0, import_child_process.execFileSync)("git", ["commit", "-m", "update release branch"], { stdio: "inherit" });
   (0, import_child_process.execFileSync)("git", ["push", "origin", "HEAD"], { stdio: "inherit" });
 }
 function hasUnstagedChanges() {
