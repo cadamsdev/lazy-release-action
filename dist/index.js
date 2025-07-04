@@ -29153,6 +29153,30 @@ var import_github3 = __toESM(require_github());
 var RELEASE_BRANCH = "lazy-release/main";
 var PR_COMMENT_STATUS_ID = "b3da20ce-59b6-4bbd-a6e3-6d625f45d008";
 var RELEASE_PR_TITLE = "Version Packages";
+(async () => {
+  preRun();
+  if (import_github3.context.payload.pull_request?.merged) {
+    checkoutBranch(DEFAULT_BRANCH);
+    console.log(
+      `Pull request #${import_github3.context.payload.pull_request.number} has been merged.`
+    );
+    const isRelease = await isLastCommitAReleaseCommit();
+    if (isRelease) {
+      await publish();
+      return;
+    }
+    await createOrUpdateReleasePR();
+  } else if (!import_github3.context.payload.pull_request?.merged) {
+    console.log(
+      `Pull request #${import_github3.context.payload.pull_request?.number} is not merged yet.`
+    );
+    if (!isPRTitleValid(PR_TITLE) && PR_TITLE !== RELEASE_PR_TITLE) {
+      await createOrUpdatePRStatusComment(false);
+      throw new Error(`Invalid pull request title: ${PR_TITLE}`);
+    }
+    await createOrUpdatePRStatusComment(true);
+  }
+})();
 function preRun() {
   const version = (0, import_child_process2.execSync)("git --version")?.toString().trim();
   console.log(`git: ${version.replace("git version ", "")}`);
@@ -29181,30 +29205,6 @@ async function isLastCommitAReleaseCommit() {
   console.log(`lastCommit=${lastCommit}`);
   return lastCommit.includes(RELEASE_ID);
 }
-(async () => {
-  preRun();
-  if (import_github3.context.payload.pull_request?.merged) {
-    checkoutBranch(DEFAULT_BRANCH);
-    console.log(
-      `Pull request #${import_github3.context.payload.pull_request.number} has been merged.`
-    );
-    const isRelease = await isLastCommitAReleaseCommit();
-    if (isRelease) {
-      await publish();
-      return;
-    }
-    await createOrUpdateReleasePR();
-  } else if (!import_github3.context.payload.pull_request?.merged) {
-    console.log(
-      `Pull request #${import_github3.context.payload.pull_request?.number} is not merged yet.`
-    );
-    if (!isPRTitleValid(PR_TITLE) && PR_TITLE !== RELEASE_PR_TITLE) {
-      await createOrUpdatePRStatusComment(false);
-      throw new Error(`Invalid pull request title: ${PR_TITLE}`);
-    }
-    await createOrUpdatePRStatusComment(true);
-  }
-})();
 async function createSnapshot(changedPkgInfos) {
   if (!SNAPSHOTS_ENABLED) {
     console.log("Snapshots are disabled, skipping snapshot creation.");
