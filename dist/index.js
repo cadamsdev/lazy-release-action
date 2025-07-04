@@ -28550,12 +28550,12 @@ function createOrCheckoutBranch(branchName) {
           pkgJsonPath
         ],
         {
-          stdio: "inherit"
+          stdio: "pipe"
         }
       );
     } catch (error) {
-      console.warn(
-        `Failed to checkout package.json for ${pkgJsonPath}: ${error}`
+      console.log(
+        `Skipping ${pkgJsonPath} - file doesn't exist on ${DEFAULT_BRANCH}`
       );
     }
     try {
@@ -28567,11 +28567,13 @@ function createOrCheckoutBranch(branchName) {
           changelogPath
         ],
         {
-          stdio: "inherit"
+          stdio: "pipe"
         }
       );
     } catch (error) {
-      console.warn(`Failed to checkout CHANGELOG.md for ${changelogPath}: ${error}`);
+      console.log(
+        `Skipping ${changelogPath} - file doesn't exist on ${DEFAULT_BRANCH}`
+      );
     }
   });
 }
