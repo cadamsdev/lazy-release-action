@@ -29,10 +29,21 @@ export function createOrCheckoutBranch(branchName: string) {
     console.log(`Switched to branch ${branchName}`);
 
     execFileSync('git', ['fetch', 'origin'], { stdio: 'inherit' });
-    execFileSync('git', ['reset', '--hard', `origin/${DEFAULT_BRANCH}`], { stdio: 'inherit' });
+    execFileSync('git', ['reset', '--hard', `origin/${DEFAULT_BRANCH}`], {
+      stdio: 'inherit',
+    });
 
-    execFileSync('git', ['push', '--force'], { stdio: 'inherit' });
-    console.log(`Pushed updated ${branchName} to remote`);
+    // Check if there are any changes to commit
+    if (hasUnstagedChanges()) {
+      execFileSync('git', ['add', '.'], { stdio: 'inherit' });
+      execFileSync(
+        'git',
+        ['commit', '-m', `Sync ${branchName} with ${DEFAULT_BRANCH}`],
+        { stdio: 'inherit' }
+      );
+    }
+
+    execFileSync('git', ['push', 'origin', branchName], { stdio: 'inherit' });
   } catch (error) {
     console.log(`Branch ${branchName} does not exist, creating it.`);
     execFileSync('git', ['checkout', '-b', branchName], { stdio: 'inherit' });
@@ -43,38 +54,6 @@ export function createOrCheckoutBranch(branchName: string) {
     });
     console.log(`Created and pushed new branch ${branchName}`);
   }
-
-    const packagePaths = getPackagePaths();
-
-    const filesToCheckout = [
-      'package.json',
-      'package-lock.json',
-      'CHANGELOG.md',
-    ]
-
-    // checkout package.json and CHANGELOG.md files from default branch
-    packagePaths.forEach((packagePath) => {
-      for (const file of filesToCheckout) {
-        const filePath = `${toDirectoryPath(packagePath)}/${file}`;
-        try {
-          execFileSync(
-            'git',
-            [
-              'checkout',
-              `origin/${DEFAULT_BRANCH}`,
-              filePath,
-            ],
-            {
-              stdio: 'pipe',
-            }
-          );
-        } catch (error) {
-          console.log(
-            `Skipping ${filePath} - file doesn't exist on ${DEFAULT_BRANCH}`
-          );
-        }
-      }
-    });
 }
 
 export function commitAndPushChanges() {

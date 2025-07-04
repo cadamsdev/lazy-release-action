@@ -28073,6 +28073,83 @@ var GITHUB_TOKEN = process.env["INPUT_GITHUB-TOKEN"] || "";
 var SNAPSHOTS_ENABLED = process.env["INPUT_SNAPSHOTS"] ? process.env["INPUT_SNAPSHOTS"] === "true" : false;
 var DEFAULT_BRANCH = process.env.DEFAULT_BRANCH || "main";
 
+// src/api/git.ts
+function setupGitConfig() {
+  console.log("Setting up git config");
+  (0, import_child_process.execFileSync)("git", ["config", "--global", "user.name", "github-actions[bot]"], {
+    stdio: "inherit"
+  });
+  (0, import_child_process.execFileSync)(
+    "git",
+    ["config", "--global", "user.email", "41898282+github-actions[bot]@users.noreply.github.com"],
+    { stdio: "inherit" }
+  );
+  (0, import_child_process.execFileSync)("git", ["config", "--global", "--add", "safe.directory", "/github/workspace"], {
+    stdio: "inherit"
+  });
+}
+function checkoutBranch(branchName) {
+  (0, import_child_process.execFileSync)("git", ["fetch", "origin", branchName], { stdio: "inherit" });
+  (0, import_child_process.execFileSync)("git", ["checkout", branchName], { stdio: "inherit" });
+}
+function createOrCheckoutBranch(branchName) {
+  try {
+    (0, import_child_process.execFileSync)("git", ["checkout", branchName], { stdio: "inherit" });
+    console.log(`Switched to branch ${branchName}`);
+    (0, import_child_process.execFileSync)("git", ["fetch", "origin"], { stdio: "inherit" });
+    (0, import_child_process.execFileSync)("git", ["reset", "--hard", `origin/${DEFAULT_BRANCH}`], {
+      stdio: "inherit"
+    });
+    if (hasUnstagedChanges()) {
+      (0, import_child_process.execFileSync)("git", ["add", "."], { stdio: "inherit" });
+      (0, import_child_process.execFileSync)(
+        "git",
+        ["commit", "-m", `Sync ${branchName} with ${DEFAULT_BRANCH}`],
+        { stdio: "inherit" }
+      );
+    }
+    (0, import_child_process.execFileSync)("git", ["push", "origin", branchName], { stdio: "inherit" });
+  } catch (error) {
+    console.log(`Branch ${branchName} does not exist, creating it.`);
+    (0, import_child_process.execFileSync)("git", ["checkout", "-b", branchName], { stdio: "inherit" });
+    (0, import_child_process.execFileSync)("git", ["push", "-u", "origin", branchName], {
+      stdio: "inherit"
+    });
+    console.log(`Created and pushed new branch ${branchName}`);
+  }
+}
+function commitAndPushChanges() {
+  (0, import_child_process.execFileSync)("git", ["add", "."], { stdio: "inherit" });
+  (0, import_child_process.execFileSync)("git", ["commit", "-m", "update release branch"], { stdio: "inherit" });
+  (0, import_child_process.execFileSync)("git", ["push", "origin", "HEAD"], { stdio: "inherit" });
+}
+function hasUnstagedChanges() {
+  try {
+    const statusOutput = (0, import_child_process.execSync)("git status --porcelain", {
+      encoding: "utf-8"
+    });
+    return statusOutput.trim().length > 0;
+  } catch (error) {
+    console.error("Error checking git status:", error);
+    return false;
+  }
+}
+function doesTagExistOnRemote(tagName) {
+  try {
+    (0, import_child_process.execSync)("git fetch --tags", { stdio: "pipe" });
+    const result = (0, import_child_process.execSync)(
+      `git ls-remote --tags origin refs/tags/${tagName}`,
+      {
+        stdio: "pipe",
+        encoding: "utf-8"
+      }
+    );
+    return result.trim().length > 0;
+  } catch (error) {
+    return false;
+  }
+}
+
 // src/utils.ts
 var import_github = __toESM(require_github());
 var DATE_NOW = /* @__PURE__ */ new Date();
@@ -28483,102 +28560,6 @@ function replaceChangelogSection(newVersion, newChangelogContent, existingChange
 function toDirectoryPath(filePath) {
   const lastSlashIndex = filePath.lastIndexOf("/");
   return lastSlashIndex !== -1 ? filePath.substring(0, lastSlashIndex) : "";
-}
-
-// src/api/git.ts
-function setupGitConfig() {
-  console.log("Setting up git config");
-  (0, import_child_process.execFileSync)("git", ["config", "--global", "user.name", "github-actions[bot]"], {
-    stdio: "inherit"
-  });
-  (0, import_child_process.execFileSync)(
-    "git",
-    ["config", "--global", "user.email", "41898282+github-actions[bot]@users.noreply.github.com"],
-    { stdio: "inherit" }
-  );
-  (0, import_child_process.execFileSync)("git", ["config", "--global", "--add", "safe.directory", "/github/workspace"], {
-    stdio: "inherit"
-  });
-}
-function checkoutBranch(branchName) {
-  (0, import_child_process.execFileSync)("git", ["fetch", "origin", branchName], { stdio: "inherit" });
-  (0, import_child_process.execFileSync)("git", ["checkout", branchName], { stdio: "inherit" });
-}
-function createOrCheckoutBranch(branchName) {
-  try {
-    (0, import_child_process.execFileSync)("git", ["checkout", branchName], { stdio: "inherit" });
-    console.log(`Switched to branch ${branchName}`);
-    (0, import_child_process.execFileSync)("git", ["fetch", "origin"], { stdio: "inherit" });
-    (0, import_child_process.execFileSync)("git", ["reset", "--hard", `origin/${DEFAULT_BRANCH}`], { stdio: "inherit" });
-    (0, import_child_process.execFileSync)("git", ["push", "--force"], { stdio: "inherit" });
-    console.log(`Pushed updated ${branchName} to remote`);
-  } catch (error) {
-    console.log(`Branch ${branchName} does not exist, creating it.`);
-    (0, import_child_process.execFileSync)("git", ["checkout", "-b", branchName], { stdio: "inherit" });
-    (0, import_child_process.execFileSync)("git", ["push", "-u", "origin", branchName], {
-      stdio: "inherit"
-    });
-    console.log(`Created and pushed new branch ${branchName}`);
-  }
-  const packagePaths = getPackagePaths();
-  const filesToCheckout = [
-    "package.json",
-    "package-lock.json",
-    "CHANGELOG.md"
-  ];
-  packagePaths.forEach((packagePath) => {
-    for (const file of filesToCheckout) {
-      const filePath = `${toDirectoryPath(packagePath)}/${file}`;
-      try {
-        (0, import_child_process.execFileSync)(
-          "git",
-          [
-            "checkout",
-            `origin/${DEFAULT_BRANCH}`,
-            filePath
-          ],
-          {
-            stdio: "pipe"
-          }
-        );
-      } catch (error) {
-        console.log(
-          `Skipping ${filePath} - file doesn't exist on ${DEFAULT_BRANCH}`
-        );
-      }
-    }
-  });
-}
-function commitAndPushChanges() {
-  (0, import_child_process.execFileSync)("git", ["add", "."], { stdio: "inherit" });
-  (0, import_child_process.execFileSync)("git", ["commit", "-m", "update release branch"], { stdio: "inherit" });
-  (0, import_child_process.execFileSync)("git", ["push", "origin", "HEAD"], { stdio: "inherit" });
-}
-function hasUnstagedChanges() {
-  try {
-    const statusOutput = (0, import_child_process.execSync)("git status --porcelain", {
-      encoding: "utf-8"
-    });
-    return statusOutput.trim().length > 0;
-  } catch (error) {
-    console.error("Error checking git status:", error);
-    return false;
-  }
-}
-function doesTagExistOnRemote(tagName) {
-  try {
-    (0, import_child_process.execSync)("git fetch --tags", { stdio: "pipe" });
-    const result = (0, import_child_process.execSync)(
-      `git ls-remote --tags origin refs/tags/${tagName}`,
-      {
-        stdio: "pipe",
-        encoding: "utf-8"
-      }
-    );
-    return result.trim().length > 0;
-  } catch (error) {
-    return false;
-  }
 }
 
 // node_modules/tinyglobby/dist/index.mjs
