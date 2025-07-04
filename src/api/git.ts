@@ -61,7 +61,7 @@ export function createOrCheckoutBranch(branchName: string) {
 
     // commit and push
     execFileSync('git', ['add', '.'], { stdio: 'inherit' });
-    execFileSync('git', ['commit', '-m', `Sync ${branchName} with ${DEFAULT_BRANCH}`], { stdio: 'inherit' });
+    execFileSync('git', ['commit', '-m', `sync ${branchName} with ${DEFAULT_BRANCH}`], { stdio: 'inherit' });
     execFileSync('git', ['push', 'origin', branchName], { stdio: 'inherit' });
     console.log(`Committed and pushed changes to ${branchName}`);
   } catch (error) {

@@ -28121,7 +28121,7 @@ function createOrCheckoutBranch(branchName) {
       stdio: "inherit"
     });
     (0, import_child_process.execFileSync)("git", ["add", "."], { stdio: "inherit" });
-    (0, import_child_process.execFileSync)("git", ["commit", "-m", `Sync ${branchName} with ${DEFAULT_BRANCH}`], { stdio: "inherit" });
+    (0, import_child_process.execFileSync)("git", ["commit", "-m", `sync ${branchName} with ${DEFAULT_BRANCH}`], { stdio: "inherit" });
     (0, import_child_process.execFileSync)("git", ["push", "origin", branchName], { stdio: "inherit" });
     console.log(`Committed and pushed changes to ${branchName}`);
   } catch (error) {
