@@ -66,44 +66,33 @@ export function createOrCheckoutBranch(branchName: string) {
 
     const packagePaths = getPackagePaths();
 
+    const filesToCheckout = [
+      'package.json',
+      'package-lock.json',
+      'CHANGELOG.md',
+    ]
+
     // checkout package.json and CHANGELOG.md files from default branch
     packagePaths.forEach((packagePath) => {
-      const pkgJsonPath = `${toDirectoryPath(packagePath)}/package.json`;
-      const changelogPath = `${toDirectoryPath(packagePath)}/CHANGELOG.md`;
-      try {
-        execFileSync(
-          'git',
-          [
-            'checkout',
-            `origin/${DEFAULT_BRANCH}`,
-            pkgJsonPath,
-          ],
-          {
-            stdio: 'pipe',
-          }
-        );
-      } catch (error) {
-        console.log(
-          `Skipping ${pkgJsonPath} - file doesn't exist on ${DEFAULT_BRANCH}`
-        );
-      }
-
-      try {
-        execFileSync(
-          'git',
-          [
-            'checkout',
-            `origin/${DEFAULT_BRANCH}`,
-            changelogPath,
-          ],
-          {
-            stdio: 'pipe',
-          }
-        );
-      } catch (error) {
-        console.log(
-          `Skipping ${changelogPath} - file doesn't exist on ${DEFAULT_BRANCH}`
-        );
+      for (const file of filesToCheckout) {
+        const filePath = `${toDirectoryPath(packagePath)}/${file}`;
+        try {
+          execFileSync(
+            'git',
+            [
+              'checkout',
+              `origin/${DEFAULT_BRANCH}`,
+              filePath,
+            ],
+            {
+              stdio: 'pipe',
+            }
+          );
+        } catch (error) {
+          console.log(
+            `Skipping ${filePath} - file doesn't exist on ${DEFAULT_BRANCH}`
+          );
+        }
       }
     });
 }

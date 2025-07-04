@@ -28538,42 +28538,31 @@ function createOrCheckoutBranch(branchName) {
     console.log(`Created and pushed new branch ${branchName}`);
   }
   const packagePaths = getPackagePaths();
+  const filesToCheckout = [
+    "package.json",
+    "package-lock.json",
+    "CHANGELOG.md"
+  ];
   packagePaths.forEach((packagePath) => {
-    const pkgJsonPath = `${toDirectoryPath(packagePath)}/package.json`;
-    const changelogPath = `${toDirectoryPath(packagePath)}/CHANGELOG.md`;
-    try {
-      (0, import_child_process.execFileSync)(
-        "git",
-        [
-          "checkout",
-          `origin/${DEFAULT_BRANCH}`,
-          pkgJsonPath
-        ],
-        {
-          stdio: "pipe"
-        }
-      );
-    } catch (error) {
-      console.log(
-        `Skipping ${pkgJsonPath} - file doesn't exist on ${DEFAULT_BRANCH}`
-      );
-    }
-    try {
-      (0, import_child_process.execFileSync)(
-        "git",
-        [
-          "checkout",
-          `origin/${DEFAULT_BRANCH}`,
-          changelogPath
-        ],
-        {
-          stdio: "pipe"
-        }
-      );
-    } catch (error) {
-      console.log(
-        `Skipping ${changelogPath} - file doesn't exist on ${DEFAULT_BRANCH}`
-      );
+    for (const file of filesToCheckout) {
+      const filePath = `${toDirectoryPath(packagePath)}/${file}`;
+      try {
+        (0, import_child_process.execFileSync)(
+          "git",
+          [
+            "checkout",
+            `origin/${DEFAULT_BRANCH}`,
+            filePath
+          ],
+          {
+            stdio: "pipe"
+          }
+        );
+      } catch (error) {
+        console.log(
+          `Skipping ${filePath} - file doesn't exist on ${DEFAULT_BRANCH}`
+        );
+      }
     }
   });
 }
