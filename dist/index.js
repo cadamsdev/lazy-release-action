@@ -28508,26 +28508,9 @@ function createOrCheckoutBranch(branchName) {
   try {
     (0, import_child_process.execFileSync)("git", ["checkout", branchName], { stdio: "inherit" });
     console.log(`Switched to branch ${branchName}`);
-    try {
-      (0, import_child_process.execFileSync)("git", ["merge", `origin/${DEFAULT_BRANCH}`], {
-        stdio: "inherit"
-      });
-      console.log(`Merged main into ${branchName}`);
-    } catch (mergeError) {
-      console.log(
-        `Merge conflicts detected, resolving by taking theirs strategy`
-      );
-      (0, import_child_process.execFileSync)("git", ["merge", "--abort"], { stdio: "inherit" });
-      (0, import_child_process.execFileSync)(
-        "git",
-        ["merge", "-X", "theirs", `origin/${DEFAULT_BRANCH}`],
-        {
-          stdio: "inherit"
-        }
-      );
-      console.log(`Resolved merge conflicts by taking theirs strategy`);
-    }
-    (0, import_child_process.execFileSync)("git", ["push", "origin", branchName], { stdio: "inherit" });
+    (0, import_child_process.execFileSync)("git", ["fetch", "origin"], { stdio: "inherit" });
+    (0, import_child_process.execFileSync)("git", ["reset", "--hard", "origin/main"], { stdio: "inherit" });
+    (0, import_child_process.execFileSync)("git", ["push", "--force"], { stdio: "inherit" });
     console.log(`Pushed updated ${branchName} to remote`);
   } catch (error) {
     console.log(`Branch ${branchName} does not exist, creating it.`);
