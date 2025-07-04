@@ -1,5 +1,6 @@
 import { execFileSync, execSync } from 'child_process';
 import { DEFAULT_BRANCH } from '../constants';
+import { getPackagePaths } from '..';
 
 export function setupGitConfig() {
   console.log('Setting up git config');
@@ -61,6 +62,18 @@ export function createOrCheckoutBranch(branchName: string) {
     });
     console.log(`Created and pushed new branch ${branchName}`);
   }
+
+    const packagePaths = getPackagePaths();
+
+    // checkout package.json and CHANGELOG.md files from default branch
+    packagePaths.forEach((packagePath) => {
+      execFileSync('git', ['checkout', `origin/${DEFAULT_BRANCH}`, `${packagePath}/package.json`], {
+        stdio: 'inherit',
+      });
+      execFileSync('git', ['checkout', `origin/${DEFAULT_BRANCH}`, `${packagePath}/CHANGELOG.md`], {
+        stdio: 'inherit',
+      });
+    });
 }
 
 export function commitAndPushChanges() {

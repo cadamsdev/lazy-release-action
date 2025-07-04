@@ -28125,6 +28125,15 @@ function createOrCheckoutBranch(branchName) {
     });
     console.log(`Created and pushed new branch ${branchName}`);
   }
+  const packagePaths = getPackagePaths();
+  packagePaths.forEach((packagePath) => {
+    (0, import_child_process.execFileSync)("git", ["checkout", `origin/${DEFAULT_BRANCH}`, `${packagePath}/package.json`], {
+      stdio: "inherit"
+    });
+    (0, import_child_process.execFileSync)("git", ["checkout", `origin/${DEFAULT_BRANCH}`, `${packagePath}/CHANGELOG.md`], {
+      stdio: "inherit"
+    });
+  });
 }
 function commitAndPushChanges() {
   (0, import_child_process.execFileSync)("git", ["add", "."], { stdio: "inherit" });
