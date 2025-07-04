@@ -499,6 +499,7 @@ export function generateChangelogContent(pkgInfo: PackageInfo, changelogs: Chang
   const packageChangelogs = changelogs.filter(
     (changelog) =>
       changelog.packages.includes(pkgNameWithoutScope) ||
+      changelog.packages.includes(getDirectoryNameFromPath(pkgInfo.path)) ||
       (pkgInfo.isRoot && changelog.packages.length === 0)
   );
 

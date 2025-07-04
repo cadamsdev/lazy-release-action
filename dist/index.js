@@ -28505,7 +28505,7 @@ function getChangelogDate(date) {
 function generateChangelogContent(pkgInfo, changelogs, date = DATE_NOW) {
   const pkgNameWithoutScope = getPackageNameWithoutScope(pkgInfo.name);
   const packageChangelogs = changelogs.filter(
-    (changelog) => changelog.packages.includes(pkgNameWithoutScope) || pkgInfo.isRoot && changelog.packages.length === 0
+    (changelog) => changelog.packages.includes(pkgNameWithoutScope) || changelog.packages.includes(getDirectoryNameFromPath(pkgInfo.path)) || pkgInfo.isRoot && changelog.packages.length === 0
   );
   let markdown = `## ${pkgInfo.newVersion} (${getChangelogDate(date)})
 
