@@ -29876,7 +29876,7 @@ function updatePackageInfo(packageInfo, changelogs) {
   let semver = "patch";
   for (const changelog of changelogs) {
     const isRelevant = changelog.packages.length > 0 && changelog.packages.some(
-      (pkgName) => pkgName === packageNameWithoutScope
+      (pkgName) => pkgName === packageNameWithoutScope || pkgName === getDirectoryNameFromPath(packageInfo.path)
     ) || packageInfo.isRoot && changelog.packages.length === 0;
     if (!isRelevant) {
       continue;

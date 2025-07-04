@@ -1004,7 +1004,7 @@ export function updatePackageInfo(
     const isRelevant =
       (changelog.packages.length > 0 &&
         changelog.packages.some(
-          (pkgName) => pkgName === packageNameWithoutScope
+          (pkgName) => pkgName === packageNameWithoutScope || pkgName === getDirectoryNameFromPath(packageInfo.path)
         )) ||
       (packageInfo.isRoot && changelog.packages.length === 0);
 
