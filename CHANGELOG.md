@@ -1,3 +1,14 @@
+## 0.3.0 (2025-07-04)
+
+### 🚀 New Features
+- Allow for using the directory name instead of package name in PR
+title
+
+### 🐛 Bug Fixes
+- Sync release branch with default branch ([#11](https://github.com/cadamsdev/lazy-release-action/pull/11))
+- Package count in PR status comment ([#8](https://github.com/cadamsdev/lazy-release-action/pull/8))
+
+
 ## 0.2.0 (2025-07-02)
 
 ### 🚀 New Features
