@@ -1,36 +1,66 @@
-import { execSync } from 'child_process';
+import { execFileSync, execSync } from 'child_process';
+import { DEFAULT_BRANCH } from '../constants';
 
 export function setupGitConfig() {
   console.log('Setting up git config');
-  execSync('git config --global user.name github-actions[bot]', {
+  execFileSync('git', ['config', '--global', 'user.name', 'github-actions[bot]'], {
     stdio: 'inherit',
   });
-  execSync(
-    'git config --global user.email 41898282+github-actions[bot]@users.noreply.github.com',
+  execFileSync(
+    'git',
+    ['config', '--global', 'user.email', '41898282+github-actions[bot]@users.noreply.github.com'],
     { stdio: 'inherit' }
   );
-  execSync('git config --global --add safe.directory /github/workspace'),
-    { stdio: 'inherit' };
+  execFileSync('git', ['config', '--global', '--add', 'safe.directory', '/github/workspace'], {
+    stdio: 'inherit',
+  });
 }
 
 export function checkoutBranch(branchName: string) {
-  execSync(`git fetch origin ${branchName}`, { stdio: 'inherit' });
-  execSync(`git checkout ${branchName}`, { stdio: 'inherit' });
+  execFileSync('git', ['fetch', 'origin', branchName], { stdio: 'inherit' });
+  execFileSync('git', ['checkout', branchName], { stdio: 'inherit' });
 }
 
 export function createOrCheckoutBranch(branchName: string) {
   try {
-    execSync(`git checkout ${branchName}`, { stdio: 'inherit' });
+    execFileSync('git', ['checkout', branchName], { stdio: 'inherit' });
+    console.log(`Switched to branch ${branchName}`);
+
+    // merge default branch into the current branch
+    try {
+      execFileSync('git', ['merge', `origin/${DEFAULT_BRANCH}`], {
+        stdio: 'inherit',
+      });
+      console.log(`Merged main into ${branchName}`);
+    } catch (mergeError) {
+      console.log(
+        `Merge conflicts detected, resolving by taking theirs strategy`
+      );
+      // Reset to clean state and merge with theirs strategy
+      execFileSync('git', ['merge', '--abort'], { stdio: 'inherit' });
+      execFileSync(
+        'git',
+        ['merge', '-X', 'theirs', `origin/${DEFAULT_BRANCH}`],
+        {
+          stdio: 'inherit',
+        }
+      );
+      console.log(`Resolved merge conflicts by taking theirs strategy`);
+    }
+
+    // Push the updated branch to remote
+    execFileSync('git', ['push', 'origin', branchName], { stdio: 'inherit' });
+    console.log(`Pushed updated ${branchName} to remote`);
   } catch (error) {
     console.log(`Branch ${branchName} does not exist, creating it.`);
-    execSync(`git checkout -b ${branchName}`, { stdio: 'inherit' });
+    execFileSync('git', ['checkout', '-b', branchName], { stdio: 'inherit' });
   }
 }
 
 export function commitAndPushChanges() {
-  execSync('git add .', { stdio: 'inherit' });
-  execSync('git commit -m "chore: update release branch"', { stdio: 'inherit' });
-  execSync('git push origin HEAD', { stdio: 'inherit' });
+  execFileSync('git', ['add', '.'], { stdio: 'inherit' });
+  execFileSync('git', ['commit', '-m', 'chore: update release branch'], { stdio: 'inherit' });
+  execFileSync('git', ['push', 'origin', 'HEAD'], { stdio: 'inherit' });
 }
 
 export function hasUnstagedChanges(): boolean {

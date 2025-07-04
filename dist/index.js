@@ -28067,33 +28067,65 @@ var import_child_process2 = require("child_process");
 
 // src/api/git.ts
 var import_child_process = require("child_process");
+
+// src/constants.ts
+var GITHUB_TOKEN = process.env["INPUT_GITHUB-TOKEN"] || "";
+var SNAPSHOTS_ENABLED = process.env["INPUT_SNAPSHOTS"] ? process.env["INPUT_SNAPSHOTS"] === "true" : false;
+var DEFAULT_BRANCH = process.env.DEFAULT_BRANCH || "main";
+
+// src/api/git.ts
 function setupGitConfig() {
   console.log("Setting up git config");
-  (0, import_child_process.execSync)("git config --global user.name github-actions[bot]", {
+  (0, import_child_process.execFileSync)("git", ["config", "--global", "user.name", "github-actions[bot]"], {
     stdio: "inherit"
   });
-  (0, import_child_process.execSync)(
-    "git config --global user.email 41898282+github-actions[bot]@users.noreply.github.com",
+  (0, import_child_process.execFileSync)(
+    "git",
+    ["config", "--global", "user.email", "41898282+github-actions[bot]@users.noreply.github.com"],
     { stdio: "inherit" }
   );
-  (0, import_child_process.execSync)("git config --global --add safe.directory /github/workspace"), { stdio: "inherit" };
+  (0, import_child_process.execFileSync)("git", ["config", "--global", "--add", "safe.directory", "/github/workspace"], {
+    stdio: "inherit"
+  });
 }
 function checkoutBranch(branchName) {
-  (0, import_child_process.execSync)(`git fetch origin ${branchName}`, { stdio: "inherit" });
-  (0, import_child_process.execSync)(`git checkout ${branchName}`, { stdio: "inherit" });
+  (0, import_child_process.execFileSync)("git", ["fetch", "origin", branchName], { stdio: "inherit" });
+  (0, import_child_process.execFileSync)("git", ["checkout", branchName], { stdio: "inherit" });
 }
 function createOrCheckoutBranch(branchName) {
   try {
-    (0, import_child_process.execSync)(`git checkout ${branchName}`, { stdio: "inherit" });
+    (0, import_child_process.execFileSync)("git", ["checkout", branchName], { stdio: "inherit" });
+    console.log(`Switched to branch ${branchName}`);
+    try {
+      (0, import_child_process.execFileSync)("git", ["merge", `origin/${DEFAULT_BRANCH}`], {
+        stdio: "inherit"
+      });
+      console.log(`Merged main into ${branchName}`);
+    } catch (mergeError) {
+      console.log(
+        `Merge conflicts detected, resolving by taking theirs strategy`
+      );
+      (0, import_child_process.execFileSync)("git", ["merge", "--abort"], { stdio: "inherit" });
+      (0, import_child_process.execFileSync)(
+        "git",
+        ["merge", "-X", "theirs", `origin/${DEFAULT_BRANCH}`],
+        {
+          stdio: "inherit"
+        }
+      );
+      console.log(`Resolved merge conflicts by taking theirs strategy`);
+    }
+    (0, import_child_process.execFileSync)("git", ["push", "origin", branchName], { stdio: "inherit" });
+    console.log(`Pushed updated ${branchName} to remote`);
   } catch (error) {
     console.log(`Branch ${branchName} does not exist, creating it.`);
-    (0, import_child_process.execSync)(`git checkout -b ${branchName}`, { stdio: "inherit" });
+    (0, import_child_process.execFileSync)("git", ["checkout", "-b", branchName], { stdio: "inherit" });
   }
 }
 function commitAndPushChanges() {
-  (0, import_child_process.execSync)("git add .", { stdio: "inherit" });
-  (0, import_child_process.execSync)('git commit -m "chore: update release branch"', { stdio: "inherit" });
-  (0, import_child_process.execSync)("git push origin HEAD", { stdio: "inherit" });
+  (0, import_child_process.execFileSync)("git", ["add", "."], { stdio: "inherit" });
+  (0, import_child_process.execFileSync)("git", ["commit", "-m", "chore: update release branch"], { stdio: "inherit" });
+  (0, import_child_process.execFileSync)("git", ["push", "origin", "HEAD"], { stdio: "inherit" });
 }
 function hasUnstagedChanges() {
   try {
@@ -28121,11 +28153,6 @@ function doesTagExistOnRemote(tagName) {
     return false;
   }
 }
-
-// src/constants.ts
-var GITHUB_TOKEN = process.env["INPUT_GITHUB-TOKEN"] || "";
-var SNAPSHOTS_ENABLED = process.env["INPUT_SNAPSHOTS"] ? process.env["INPUT_SNAPSHOTS"] === "true" : false;
-var DEFAULT_BRANCH = process.env.DEFAULT_BRANCH || "main";
 
 // src/utils.ts
 var import_github = __toESM(require_github());
