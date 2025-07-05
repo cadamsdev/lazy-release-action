@@ -1131,7 +1131,7 @@ export function getChangedPackageInfos(
 
   for (const changedPkg of directlyChangedPackageInfos) {
     const pkgNameWithoutScope = getPackageNameWithoutScope(changedPkg.name);
-    const fixedGroup = findFixedGroup(pkgNameWithoutScope, fixedGroups);
+    const fixedGroup = findFixedGroup(changedPkg.name, fixedGroups);
 
     if (fixedGroup && !processedGroups.has(fixedGroup.join(','))) {
       console.log(`Found fixed group for ${pkgNameWithoutScope}:`, fixedGroup);
