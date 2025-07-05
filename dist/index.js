@@ -28052,13 +28052,13 @@ Support boolean input list: \`true | True | TRUE | false | False | FALSE\``);
 // src/index.ts
 var index_exports = {};
 __export(index_exports, {
+  applyNewVersion: () => applyNewVersion,
   getChangedPackageInfos: () => getChangedPackageInfos,
   getChangedPackages: () => getChangedPackages,
   getNewVersion: () => getNewVersion,
   getPackageInfo: () => getPackageInfo,
   getPackageInfos: () => getPackageInfos,
   getPackagePaths: () => getPackagePaths,
-  updatePackageInfo: () => updatePackageInfo,
   updatePackageJsonFile: () => updatePackageJsonFile
 });
 module.exports = __toCommonJS(index_exports);
@@ -29309,13 +29309,13 @@ async function createOrUpdatePRStatusComment(shouldCreateSnapshot = false) {
     return;
   }
   console.log(`Found ${packagePaths.length} package.json files.`);
-  const pkgInfos = getPackageInfos(packagePaths);
-  if (pkgInfos.length === 0) {
+  const allPkgInfos = getPackageInfos(packagePaths);
+  if (allPkgInfos.length === 0) {
     console.log("No packages found, skipping...");
     return;
   }
-  console.log(`Found ${pkgInfos.length} packages.`);
-  const rootPackageName = pkgInfos.find((pkg) => pkg.isRoot)?.name;
+  console.log(`Found ${allPkgInfos.length} packages.`);
+  const rootPackageName = allPkgInfos.find((pkg) => pkg.isRoot)?.name;
   if (prBody) {
     changelogs = getChangelogFromMarkdown(prBody, rootPackageName);
   } else if (PR_TITLE) {
@@ -29333,7 +29333,7 @@ async function createOrUpdatePRStatusComment(shouldCreateSnapshot = false) {
   }
   const { changedPackageInfos, indirectPackageInfos } = getChangedPackageInfos(
     changelogs,
-    pkgInfos
+    allPkgInfos
   );
   const pkgUpdateCount = changedPackageInfos.length + indirectPackageInfos.length;
   if (pkgUpdateCount) {
@@ -29349,12 +29349,14 @@ async function createOrUpdatePRStatusComment(shouldCreateSnapshot = false) {
   if (changedPackageInfos.length) {
     console.log(`Found ${changedPackageInfos.length} changed packages.`);
     changedPackageInfos.forEach((pkgInfo) => {
-      updatePackageInfo(pkgInfo, changelogs);
-      updatePackageJsonFile(pkgInfo);
+      applyNewVersion(pkgInfo, changelogs);
+    });
+    changedPackageInfos.forEach((pkgInfo) => {
+      updatePackageJsonFile(pkgInfo, allPkgInfos);
     });
     indirectPackageInfos.forEach((pkgInfo) => {
       bumpIndirectPackageVersion(pkgInfo);
-      updateIndirectPackageJsonFile(pkgInfo, pkgInfos);
+      updateIndirectPackageJsonFile(pkgInfo, allPkgInfos);
     });
     const content = generateMarkdown(
       changedPackageInfos,
@@ -29657,25 +29659,27 @@ async function createOrUpdateReleasePR() {
   await createOrCheckoutBranch(RELEASE_BRANCH);
   const commits = await getRecentCommits();
   const packagePaths = getPackagePaths();
-  const packageInfos = getPackageInfos(packagePaths);
-  const rootPackageName = packageInfos.find((pkg) => pkg.isRoot)?.name;
+  const allPkgInfos = getPackageInfos(packagePaths);
+  const rootPackageName = allPkgInfos.find((pkg) => pkg.isRoot)?.name;
   const changelogs = getChangelogFromCommits(commits, rootPackageName);
   const { changedPackageInfos, indirectPackageInfos } = getChangedPackageInfos(
     changelogs,
-    packageInfos
+    allPkgInfos
   );
   if (changedPackageInfos.length === 0) {
     console.log("No packages changed, skipping release PR creation.");
     return;
   }
   changedPackageInfos.forEach((pkgInfo) => {
-    updatePackageInfo(pkgInfo, changelogs);
-    updatePackageJsonFile(pkgInfo);
+    applyNewVersion(pkgInfo, changelogs);
+  });
+  changedPackageInfos.forEach((pkgInfo) => {
+    updatePackageJsonFile(pkgInfo, allPkgInfos);
     createOrUpdateChangelog(pkgInfo, changelogs);
   });
   indirectPackageInfos.forEach((pkgInfo) => {
     bumpIndirectPackageVersion(pkgInfo);
-    updateIndirectPackageJsonFile(pkgInfo, packageInfos);
+    updateIndirectPackageJsonFile(pkgInfo, allPkgInfos);
     createOrUpdateChangelog(pkgInfo, []);
   });
   const markdown = generateMarkdown(
@@ -29853,16 +29857,40 @@ ${updatedChangelogContent}`);
     (0, import_fs.writeFileSync)(changelogFilePath, changelogContent, "utf-8");
   }
 }
-function updatePackageJsonFile(packageInfo) {
-  if (!packageInfo.newVersion) {
+function updatePackageJsonFile(pkgInfo, allPkgInfos) {
+  if (!pkgInfo.newVersion) {
     return;
   }
-  const packageJsonPath = packageInfo.path;
+  const packageJsonPath = pkgInfo.path;
   let packageJsonString = (0, import_fs.readFileSync)(packageJsonPath, "utf-8");
   const packageJson = JSON.parse(packageJsonString);
-  packageJson.version = packageInfo.newVersion;
+  packageJson.version = pkgInfo.newVersion;
+  const dependencyFields = [
+    "dependencies",
+    "devDependencies",
+    "peerDependencies",
+    "optionalDependencies"
+  ];
+  for (const field of dependencyFields) {
+    if (packageJson[field]) {
+      for (const depName of Object.keys(packageJson[field])) {
+        const depPackageInfo = allPkgInfos.find(
+          (pkg) => pkg.name === depName
+        );
+        if (depPackageInfo && depPackageInfo.newVersion) {
+          const currentVersionSpec = packageJson[field][depName];
+          const prefix = getVersionPrefix(currentVersionSpec);
+          const newVersionSpec = prefix + depPackageInfo.newVersion;
+          console.log(
+            `Updating dependency ${depName} from ${currentVersionSpec} to ${newVersionSpec} in ${pkgInfo.name}`
+          );
+          packageJson[field][depName] = newVersionSpec;
+        }
+      }
+    }
+  }
   console.log(
-    `Updating ${packageInfo.name} to version ${packageInfo.newVersion}`
+    `Updating ${pkgInfo.name} to version ${pkgInfo.newVersion}`
   );
   (0, import_fs.writeFileSync)(
     packageJsonPath,
@@ -29870,7 +29898,7 @@ function updatePackageJsonFile(packageInfo) {
     "utf-8"
   );
 }
-function updatePackageInfo(packageInfo, changelogs) {
+function applyNewVersion(packageInfo, changelogs) {
   const isV0 = packageInfo.version.startsWith("0.");
   const packageNameWithoutScope = getPackageNameWithoutScope(packageInfo.name);
   const directoryName = getDirectoryNameFromPath(packageInfo.path);
@@ -29975,13 +30003,13 @@ function getPackageInfo(packagePath) {
 }
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
+  applyNewVersion,
   getChangedPackageInfos,
   getChangedPackages,
   getNewVersion,
   getPackageInfo,
   getPackageInfos,
   getPackagePaths,
-  updatePackageInfo,
   updatePackageJsonFile
 });
 /*! Bundled license information:
