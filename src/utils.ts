@@ -34,14 +34,16 @@ export const COMMIT_TYPE_PATTERN =
   /^(feat|fix|perf|chore|docs|style|test|build|ci|revert)(\(([^)]+)\))?(!)?$/;
 
 export interface LazyReleaseConfig {
-  fixed?: string[][];
+  fixed: string[][];
 }
 
 export function getConfig(): LazyReleaseConfig {
   const configPath = join(process.cwd(), 'lazy-release.json');
 
   if (!existsSync(configPath)) {
-    return {};
+    return {
+      fixed: [],
+    };
   }
 
   try {
@@ -49,13 +51,15 @@ export function getConfig(): LazyReleaseConfig {
     return JSON.parse(configContent) as LazyReleaseConfig;
   } catch (error) {
     console.warn('Error reading lazy-release.json config:', error);
-    return {};
+    return {
+      fixed: [],
+    };
   }
 }
 
 export function getFixedGroups(): string[][] {
   const config = getConfig();
-  return config.fixed || [];
+  return config.fixed;
 }
 
 export function findFixedGroup(

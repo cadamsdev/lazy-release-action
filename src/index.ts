@@ -19,6 +19,7 @@ import {
   generateMarkdown,
   getChangelogFromCommits,
   getChangelogFromMarkdown,
+  getConfig,
   getDirectoryNameFromPath,
   getFixedGroups,
   getGitHubReleaseName,
@@ -938,6 +939,7 @@ function bumpIndirectPackageVersion(pkgInfo: PackageInfo): void {
 }
 
 export function getPackageInfos(packagePaths: string[]): PackageInfo[] {
+  const config = getConfig();
   const packageInfos = packagePaths.map((packagePath) =>
     getPackageInfo(packagePath)
   );
@@ -1296,6 +1298,7 @@ export interface PackageInfo {
   isRoot: boolean;
   isPrivate: boolean;
   dependencies: string[];
+  fixedDependencies: string[];
 }
 
 export function getPackageInfo(packagePath: string): PackageInfo {
@@ -1309,6 +1312,7 @@ export function getPackageInfo(packagePath: string): PackageInfo {
     isRoot: packagePath === 'package.json',
     isPrivate: packageJson.private || false,
     dependencies: [],
+    fixedDependencies: [],
   };
 
   return packageInfo;
