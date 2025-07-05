@@ -997,6 +997,7 @@ export function updatePackageInfo(
   changelogs: Changelog[]
 ): void {
   const packageNameWithoutScope = getPackageNameWithoutScope(packageInfo.name);
+  const directoryName = getDirectoryNameFromPath(packageInfo.path);
 
   let semver = 'patch' as SemverBump;
 
@@ -1004,7 +1005,8 @@ export function updatePackageInfo(
     const isRelevant =
       (changelog.packages.length > 0 &&
         changelog.packages.some(
-          (pkgName) => pkgName === packageNameWithoutScope || pkgName === getDirectoryNameFromPath(packageInfo.path)
+          (pkgName) =>
+            pkgName === packageNameWithoutScope || pkgName === directoryName
         )) ||
       (packageInfo.isRoot && changelog.packages.length === 0);
 
