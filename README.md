@@ -4,6 +4,10 @@
 
 The easiest way to version, publish and create changelogs for your JavaScript/TypeScript projects.
 
+If you enjoy the tool, please consider giving it a star ⭐️ on GitHub! Also if you find it useful, consider supporting my work by buying me a coffee. Your support helps me continue to improve and maintain the project.
+
+[!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/cadamsdev)
+
 ## 📝 Setup
 
 1. Update pull request settings
