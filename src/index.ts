@@ -214,15 +214,15 @@ async function createOrUpdatePRStatusComment(shouldCreateSnapshot = false) {
 
   console.log(`Found ${packagePaths.length} package.json files.`);
 
-  const pkgInfos = getPackageInfos(packagePaths);
-  if (pkgInfos.length === 0) {
+  const allPkgInfos = getPackageInfos(packagePaths);
+  if (allPkgInfos.length === 0) {
     console.log('No packages found, skipping...');
     return;
   }
 
-  console.log(`Found ${pkgInfos.length} packages.`);
+  console.log(`Found ${allPkgInfos.length} packages.`);
 
-  const rootPackageName = pkgInfos.find((pkg) => pkg.isRoot)?.name;
+  const rootPackageName = allPkgInfos.find((pkg) => pkg.isRoot)?.name;
 
   if (prBody) {
     changelogs = getChangelogFromMarkdown(prBody, rootPackageName);
@@ -244,7 +244,7 @@ async function createOrUpdatePRStatusComment(shouldCreateSnapshot = false) {
 
   const { changedPackageInfos, indirectPackageInfos } = getChangedPackageInfos(
     changelogs,
-    pkgInfos
+    allPkgInfos
   );
 
   const pkgUpdateCount = changedPackageInfos.length + indirectPackageInfos.length;
@@ -262,19 +262,22 @@ async function createOrUpdatePRStatusComment(shouldCreateSnapshot = false) {
   if (changedPackageInfos.length) {
     console.log(`Found ${changedPackageInfos.length} changed packages.`);
 
-    // update changed packages based on the changelogs
     changedPackageInfos.forEach((pkgInfo) => {
-      updatePackageInfo(pkgInfo, changelogs);
+      // apply the new version based on the changelogs
+      applyNewVersion(pkgInfo, changelogs);
+    });
 
-      // update the package.json files with the new versions
-      updatePackageJsonFile(pkgInfo);
+    changedPackageInfos.forEach((pkgInfo) => {
+      // update the package.json version with the new version
+      // bump any dependency versions that reference other packages in the workspace
+      updatePackageJsonFile(pkgInfo, allPkgInfos);
     });
 
     // update indirect packages based on the changed packages
     indirectPackageInfos.forEach((pkgInfo) => {
       bumpIndirectPackageVersion(pkgInfo);
 
-      updateIndirectPackageJsonFile(pkgInfo, pkgInfos);
+      updateIndirectPackageJsonFile(pkgInfo, allPkgInfos);
     });
 
     // generate markdown from changelogs
@@ -683,16 +686,16 @@ async function createOrUpdateReleasePR() {
   const packagePaths = getPackagePaths();
 
   // get package data from package.json files
-  const packageInfos = getPackageInfos(packagePaths);
+  const allPkgInfos = getPackageInfos(packagePaths);
 
-  const rootPackageName = packageInfos.find((pkg) => pkg.isRoot)?.name;
+  const rootPackageName = allPkgInfos.find((pkg) => pkg.isRoot)?.name;
 
   // get changelog from commits
   const changelogs = getChangelogFromCommits(commits, rootPackageName);
 
   const { changedPackageInfos, indirectPackageInfos } = getChangedPackageInfos(
     changelogs,
-    packageInfos
+    allPkgInfos
   );
 
   if (changedPackageInfos.length === 0) {
@@ -700,12 +703,14 @@ async function createOrUpdateReleasePR() {
     return;
   }
 
-  // update changed packages based on the changelogs
   changedPackageInfos.forEach((pkgInfo) => {
-    updatePackageInfo(pkgInfo, changelogs);
+    // apply the new version based on the changelogs
+    applyNewVersion(pkgInfo, changelogs);
+  });
 
+  changedPackageInfos.forEach((pkgInfo) => {
     // update the package.json files with the new versions
-    updatePackageJsonFile(pkgInfo);
+    updatePackageJsonFile(pkgInfo, allPkgInfos);
 
     // create or update changelog files
     createOrUpdateChangelog(pkgInfo, changelogs);
@@ -714,9 +719,7 @@ async function createOrUpdateReleasePR() {
   // update indirect packages based on the changed packages
   indirectPackageInfos.forEach((pkgInfo) => {
     bumpIndirectPackageVersion(pkgInfo);
-
-    updateIndirectPackageJsonFile(pkgInfo, packageInfos);
-
+    updateIndirectPackageJsonFile(pkgInfo, allPkgInfos);
     createOrUpdateChangelog(pkgInfo, []);
   });
 
@@ -968,20 +971,50 @@ function createOrUpdateChangelog(
   }
 }
 
-export function updatePackageJsonFile(packageInfo: PackageInfo): void {
-  if (!packageInfo.newVersion) {
+export function updatePackageJsonFile(pkgInfo: PackageInfo, allPkgInfos: PackageInfo[]): void {
+  if (!pkgInfo.newVersion) {
     return;
   }
 
-  const packageJsonPath = packageInfo.path;
+  const packageJsonPath = pkgInfo.path;
   let packageJsonString = readFileSync(packageJsonPath, 'utf-8');
   const packageJson = JSON.parse(packageJsonString);
 
   // Update the version in the package.json
-  packageJson.version = packageInfo.newVersion;
+  packageJson.version = pkgInfo.newVersion;
+
+  // Update dependencies that reference other packages in the workspace
+  const dependencyFields = [
+    'dependencies',
+    'devDependencies',
+    'peerDependencies',
+    'optionalDependencies',
+  ];
+
+  for (const field of dependencyFields) {
+    if (packageJson[field]) {
+      for (const depName of Object.keys(packageJson[field])) {
+        // Find if this dependency is one of our workspace packages
+        const depPackageInfo = allPkgInfos.find(
+          (pkg) => pkg.name === depName
+        );
+        if (depPackageInfo && depPackageInfo.newVersion) {
+          const currentVersionSpec = packageJson[field][depName];
+          const prefix = getVersionPrefix(currentVersionSpec);
+          const newVersionSpec = prefix + depPackageInfo.newVersion;
+
+          console.log(
+            `Updating dependency ${depName} from ${currentVersionSpec} to ${newVersionSpec} in ${pkgInfo.name}`
+          );
+
+          packageJson[field][depName] = newVersionSpec;
+        }
+      }
+    }
+  }
 
   console.log(
-    `Updating ${packageInfo.name} to version ${packageInfo.newVersion}`
+    `Updating ${pkgInfo.name} to version ${pkgInfo.newVersion}`
   );
 
   // Write the updated package.json back to the file
@@ -992,7 +1025,7 @@ export function updatePackageJsonFile(packageInfo: PackageInfo): void {
   );
 }
 
-export function updatePackageInfo(
+export function applyNewVersion(
   packageInfo: PackageInfo,
   changelogs: Changelog[]
 ): void {
