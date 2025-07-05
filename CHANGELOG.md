@@ -1,9 +1,3 @@
-## 0.3.1 (2025-07-05)
-
-### 🐛 Bug Fixes
-- Versioning breaking changes for v0 ([#13](https://github.com/cadamsdev/lazy-release-action/pull/13))
-
-
 ## 0.3.0 (2025-07-04)
 
 ### 🚀 New Features
