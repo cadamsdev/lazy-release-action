@@ -29909,7 +29909,7 @@ function updatePackageJsonFile(packageInfo) {
 function updatePackageInfo(packageInfo, changelogs) {
   const packageNameWithoutScope = getPackageNameWithoutScope(packageInfo.name);
   const fixedGroups = getFixedGroups();
-  const fixedGroup = findFixedGroup(packageNameWithoutScope, fixedGroups);
+  const fixedGroup = findFixedGroup(packageInfo.name, fixedGroups);
   let semver = "patch";
   if (fixedGroup) {
     const groupSemverBumps = [];

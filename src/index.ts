@@ -1007,7 +1007,7 @@ export function updatePackageInfo(
 ): void {
   const packageNameWithoutScope = getPackageNameWithoutScope(packageInfo.name);
   const fixedGroups = getFixedGroups();
-  const fixedGroup = findFixedGroup(packageNameWithoutScope, fixedGroups);
+  const fixedGroup = findFixedGroup(packageInfo.name, fixedGroups);
 
   let semver = 'patch' as SemverBump;
 
