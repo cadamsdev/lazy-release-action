@@ -37,13 +37,14 @@ import {
 } from './utils';
 import { globSync } from 'tinyglobby';
 import { existsSync, readFileSync, writeFileSync } from 'fs';
-import { inc } from 'semver';
+import { gtr, inc } from 'semver';
 import * as githubApi from './api/github';
 import { join } from 'path';
 import { detect } from 'package-manager-detector/detect';
 import { resolveCommand } from 'package-manager-detector/commands';
 import { setOutput } from '@actions/core';
 import { context } from '@actions/github';
+import { group } from 'console';
 
 const RELEASE_BRANCH = 'lazy-release/main';
 const PR_COMMENT_STATUS_ID = 'b3da20ce-59b6-4bbd-a6e3-6d625f45d008';
@@ -268,8 +269,14 @@ async function createOrUpdatePRStatusComment(shouldCreateSnapshot = false) {
     // update changed packages based on the changelogs
     changedPackageInfos.forEach((pkgInfo) => {
       updatePackageInfo(pkgInfo, changelogs, pkgInfos);
+    });
 
-      // update the package.json files with the new versions
+    // update fixed package versions
+    console.log('Updating fixed packages...');
+    updateFixedPackages(pkgInfos);
+
+    // update package.json with the new versions
+    changedPackageInfos.forEach((pkgInfo) => {
       updatePackageJsonFile(pkgInfo);
     });
 
@@ -335,6 +342,46 @@ async function createOrUpdatePRStatusComment(shouldCreateSnapshot = false) {
   } else {
     console.log('Creating new PR status comment');
     await githubApi.createPRComment(markdown);
+  }
+}
+
+async function updateFixedPackages(allPkgInfos: PackageInfo[]): Promise<void> {
+  const fixedGroups = getFixedGroups();
+  if (fixedGroups.length === 0) {
+    console.log('No fixed groups found, skipping fixed package updates.');
+    return;
+  }
+
+  for (const fixedGroup of fixedGroups) {
+    let greatestVersion = '';
+    const groupPkgs: PackageInfo[] = [];
+    for (const fixedPkgName of fixedGroup) {
+      const fixedPkgInfo = allPkgInfos.find(
+        (pkg) => pkg.name === fixedPkgName
+      );
+  
+      if (!fixedPkgInfo) {
+        console.warn(`Fixed package ${fixedPkgName} not found, skipping.`);
+        continue;
+      }
+
+      if (!greatestVersion) {
+        greatestVersion = fixedPkgInfo.version;
+      } else if (greatestVersion && gtr(fixedPkgInfo.version, greatestVersion)) {
+        greatestVersion = fixedPkgInfo.version;
+      }
+
+      groupPkgs.push(fixedPkgInfo);
+    }
+
+    if (greatestVersion) {
+      groupPkgs.forEach((pkg) => {
+        pkg.newVersion = greatestVersion;
+        console.log(
+          `Updating fixed package ${pkg.name} to version ${pkg.newVersion}`
+        );
+      });
+    }
   }
 }
 
@@ -1202,7 +1249,7 @@ export function getChangedPackageInfos(
 
 export function getNewVersion(
   currentVersion: string,
-  semverBump: SemverBump
+  semverBump: SemverBump,
 ): string {
   let newVersion = currentVersion;
   switch (semverBump) {

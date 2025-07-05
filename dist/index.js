@@ -26642,8 +26642,8 @@ var require_outside = __commonJS({
 var require_gtr = __commonJS({
   "node_modules/semver/ranges/gtr.js"(exports2, module2) {
     var outside = require_outside();
-    var gtr = (version, range, options) => outside(version, range, ">", options);
-    module2.exports = gtr;
+    var gtr2 = (version, range, options) => outside(version, range, ">", options);
+    module2.exports = gtr2;
   }
 });
 
@@ -26918,7 +26918,7 @@ var require_semver2 = __commonJS({
     var minVersion = require_min_version();
     var validRange = require_valid2();
     var outside = require_outside();
-    var gtr = require_gtr();
+    var gtr2 = require_gtr();
     var ltr = require_ltr();
     var intersects = require_intersects();
     var simplifyRange = require_simplify();
@@ -26956,7 +26956,7 @@ var require_semver2 = __commonJS({
       minVersion,
       validRange,
       outside,
-      gtr,
+      gtr: gtr2,
       ltr,
       intersects,
       simplifyRange,
@@ -29382,6 +29382,10 @@ async function createOrUpdatePRStatusComment(shouldCreateSnapshot = false) {
     console.log(`Found ${changedPackageInfos.length} changed packages.`);
     changedPackageInfos.forEach((pkgInfo) => {
       updatePackageInfo(pkgInfo, changelogs, pkgInfos);
+    });
+    console.log("Updating fixed packages...");
+    updateFixedPackages(pkgInfos);
+    changedPackageInfos.forEach((pkgInfo) => {
       updatePackageJsonFile(pkgInfo);
     });
     indirectPackageInfos.forEach((pkgInfo) => {
@@ -29438,6 +29442,40 @@ async function createOrUpdatePRStatusComment(shouldCreateSnapshot = false) {
   } else {
     console.log("Creating new PR status comment");
     await createPRComment(markdown);
+  }
+}
+async function updateFixedPackages(allPkgInfos) {
+  const fixedGroups = getFixedGroups();
+  if (fixedGroups.length === 0) {
+    console.log("No fixed groups found, skipping fixed package updates.");
+    return;
+  }
+  for (const fixedGroup of fixedGroups) {
+    let greatestVersion = "";
+    const groupPkgs = [];
+    for (const fixedPkgName of fixedGroup) {
+      const fixedPkgInfo = allPkgInfos.find(
+        (pkg) => pkg.name === fixedPkgName
+      );
+      if (!fixedPkgInfo) {
+        console.warn(`Fixed package ${fixedPkgName} not found, skipping.`);
+        continue;
+      }
+      if (!greatestVersion) {
+        greatestVersion = fixedPkgInfo.version;
+      } else if (greatestVersion && (0, import_semver.gtr)(fixedPkgInfo.version, greatestVersion)) {
+        greatestVersion = fixedPkgInfo.version;
+      }
+      groupPkgs.push(fixedPkgInfo);
+    }
+    if (greatestVersion) {
+      groupPkgs.forEach((pkg) => {
+        pkg.newVersion = greatestVersion;
+        console.log(
+          `Updating fixed package ${pkg.name} to version ${pkg.newVersion}`
+        );
+      });
+    }
   }
 }
 async function publish() {
