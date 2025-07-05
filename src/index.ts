@@ -1145,6 +1145,11 @@ export function getChangedPackageInfos(
             getDirectoryNameFromPath(pkg.path) === groupMemberName
         );
 
+        console.log(
+          `Checking group member ${groupMemberName} for fixed group ${fixedGroup.join(',')}`
+        );
+        console.log(`groupMemberPkg:`, groupMemberPkg);
+
         if (
           groupMemberPkg &&
           !expandedChangedPackageInfos.find(

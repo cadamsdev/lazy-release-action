@@ -29999,6 +29999,10 @@ function getChangedPackageInfos(changelogs, allPkgInfos) {
         const groupMemberPkg = allPkgInfos.find(
           (pkg) => getPackageNameWithoutScope(pkg.name) === groupMemberName || getDirectoryNameFromPath(pkg.path) === groupMemberName
         );
+        console.log(
+          `Checking group member ${groupMemberName} for fixed group ${fixedGroup.join(",")}`
+        );
+        console.log(`groupMemberPkg:`, groupMemberPkg);
         if (groupMemberPkg && !expandedChangedPackageInfos.find(
           (p) => p.name === groupMemberPkg.name
         )) {
