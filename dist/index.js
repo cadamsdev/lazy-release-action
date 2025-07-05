@@ -29533,6 +29533,7 @@ function createTags(packageInfos) {
         stdio: "inherit"
       });
       tagsToCreate.push(tagName);
+      setPackageVersionOutput(pkgInfo);
     } catch (error) {
       console.error(`Failed to create tag ${tagName}:`, error);
     }
@@ -29548,6 +29549,10 @@ function createTags(packageInfos) {
   } catch (error) {
     console.error("Failed to push tags:", error);
   }
+}
+function setPackageVersionOutput(pkgInfo) {
+  const outputName = `${getPackageNameWithoutScope(pkgInfo.name)}_version`;
+  (0, import_core.setOutput)(outputName, pkgInfo.version);
 }
 async function createGitHubRelease2(releasePkgInfos) {
   console.log("Creating GitHub release...");
