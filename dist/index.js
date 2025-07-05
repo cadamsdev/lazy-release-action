@@ -29381,7 +29381,7 @@ async function createOrUpdatePRStatusComment(shouldCreateSnapshot = false) {
   if (changedPackageInfos.length) {
     console.log(`Found ${changedPackageInfos.length} changed packages.`);
     changedPackageInfos.forEach((pkgInfo) => {
-      updatePackageInfo(pkgInfo, changelogs);
+      updatePackageInfo(pkgInfo, changelogs, pkgInfos);
       updatePackageJsonFile(pkgInfo);
     });
     indirectPackageInfos.forEach((pkgInfo) => {
@@ -29705,7 +29705,7 @@ async function createOrUpdateReleasePR() {
     return;
   }
   changedPackageInfos.forEach((pkgInfo) => {
-    updatePackageInfo(pkgInfo, changelogs);
+    updatePackageInfo(pkgInfo, changelogs, packageInfos);
     updatePackageJsonFile(pkgInfo);
     createOrUpdateChangelog(pkgInfo, changelogs);
   });
@@ -29906,7 +29906,7 @@ function updatePackageJsonFile(packageInfo) {
     "utf-8"
   );
 }
-function updatePackageInfo(packageInfo, changelogs) {
+function updatePackageInfo(packageInfo, changelogs, allPkgInfos) {
   const packageNameWithoutScope = getPackageNameWithoutScope(packageInfo.name);
   const fixedGroups = getFixedGroups();
   const fixedGroup = findFixedGroup(packageInfo.name, fixedGroups);
@@ -29914,9 +29914,14 @@ function updatePackageInfo(packageInfo, changelogs) {
   if (fixedGroup) {
     const groupSemverBumps = [];
     for (const groupMemberName of fixedGroup) {
+      const groupMemberPkg = allPkgInfos.find((pkg) => pkg.name === groupMemberName);
+      if (!groupMemberPkg) {
+        console.warn(`Fixed group member ${groupMemberName} not found in package infos.`);
+        continue;
+      }
       for (const changelog of changelogs) {
         const isRelevant = changelog.packages.length > 0 && changelog.packages.some(
-          (pkgName) => pkgName === groupMemberName
+          (pkgName) => pkgName === getPackageNameWithoutScope(groupMemberPkg.name) || pkgName === getDirectoryNameFromPath(groupMemberPkg.path)
         ) || packageInfo.isRoot && changelog.packages.length === 0;
         if (isRelevant) {
           if (changelog.isBreakingChange) {

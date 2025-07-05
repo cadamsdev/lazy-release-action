@@ -267,7 +267,7 @@ async function createOrUpdatePRStatusComment(shouldCreateSnapshot = false) {
 
     // update changed packages based on the changelogs
     changedPackageInfos.forEach((pkgInfo) => {
-      updatePackageInfo(pkgInfo, changelogs);
+      updatePackageInfo(pkgInfo, changelogs, pkgInfos);
 
       // update the package.json files with the new versions
       updatePackageJsonFile(pkgInfo);
@@ -711,7 +711,7 @@ async function createOrUpdateReleasePR() {
 
   // update changed packages based on the changelogs
   changedPackageInfos.forEach((pkgInfo) => {
-    updatePackageInfo(pkgInfo, changelogs);
+    updatePackageInfo(pkgInfo, changelogs, packageInfos);
 
     // update the package.json files with the new versions
     updatePackageJsonFile(pkgInfo);
@@ -1003,7 +1003,8 @@ export function updatePackageJsonFile(packageInfo: PackageInfo): void {
 
 export function updatePackageInfo(
   packageInfo: PackageInfo,
-  changelogs: Changelog[]
+  changelogs: Changelog[],
+  allPkgInfos: PackageInfo[],
 ): void {
   const packageNameWithoutScope = getPackageNameWithoutScope(packageInfo.name);
   const fixedGroups = getFixedGroups();
@@ -1016,11 +1017,19 @@ export function updatePackageInfo(
     const groupSemverBumps: SemverBump[] = [];
 
     for (const groupMemberName of fixedGroup) {
+      const groupMemberPkg = allPkgInfos.find((pkg) => pkg.name === groupMemberName);
+      if (!groupMemberPkg) {
+        console.warn(`Fixed group member ${groupMemberName} not found in package infos.`);
+        continue;
+      }
+
       for (const changelog of changelogs) {
         const isRelevant =
           (changelog.packages.length > 0 &&
             changelog.packages.some(
-              (pkgName) => pkgName === groupMemberName
+              (pkgName) =>
+                pkgName === getPackageNameWithoutScope(groupMemberPkg.name) ||
+                pkgName === getDirectoryNameFromPath(groupMemberPkg.path)
             )) ||
           (packageInfo.isRoot && changelog.packages.length === 0);
 
