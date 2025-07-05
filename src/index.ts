@@ -766,7 +766,13 @@ async function createOrUpdateReleasePR() {
   // update changed packages based on the changelogs
   changedPackageInfos.forEach((pkgInfo) => {
     updatePackageInfo(pkgInfo, changelogs, packageInfos);
+  });
 
+  // update fixed package versions
+  console.log('Updating fixed packages...');
+  updateFixedPackages(packageInfos);
+
+  changedPackageInfos.forEach((pkgInfo) => {
     // update the package.json files with the new versions
     updatePackageJsonFile(pkgInfo);
 

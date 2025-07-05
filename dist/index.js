@@ -29750,6 +29750,10 @@ async function createOrUpdateReleasePR() {
   }
   changedPackageInfos.forEach((pkgInfo) => {
     updatePackageInfo(pkgInfo, changelogs, packageInfos);
+  });
+  console.log("Updating fixed packages...");
+  updateFixedPackages(packageInfos);
+  changedPackageInfos.forEach((pkgInfo) => {
     updatePackageJsonFile(pkgInfo);
     createOrUpdateChangelog(pkgInfo, changelogs);
   });
