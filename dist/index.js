@@ -29871,6 +29871,7 @@ function updatePackageJsonFile(packageInfo) {
   );
 }
 function updatePackageInfo(packageInfo, changelogs) {
+  const isV0 = packageInfo.version.startsWith("0.");
   const packageNameWithoutScope = getPackageNameWithoutScope(packageInfo.name);
   const directoryName = getDirectoryNameFromPath(packageInfo.path);
   let semver = "patch";
@@ -29881,7 +29882,9 @@ function updatePackageInfo(packageInfo, changelogs) {
     if (!isRelevant) {
       continue;
     }
-    if (changelog.isBreakingChange) {
+    if (changelog.isBreakingChange && isV0) {
+      semver = "minor";
+    } else if (changelog.isBreakingChange) {
       semver = "major";
       break;
     } else if (changelog.semverBump === "minor" && semver !== "major") {

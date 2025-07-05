@@ -996,6 +996,7 @@ export function updatePackageInfo(
   packageInfo: PackageInfo,
   changelogs: Changelog[]
 ): void {
+  const isV0 = packageInfo.version.startsWith('0.');
   const packageNameWithoutScope = getPackageNameWithoutScope(packageInfo.name);
   const directoryName = getDirectoryNameFromPath(packageInfo.path);
 
@@ -1014,7 +1015,9 @@ export function updatePackageInfo(
       continue;
     }
 
-    if (changelog.isBreakingChange) {
+    if (changelog.isBreakingChange && isV0) {
+      semver = 'minor'; // In v0, breaking changes are treated as minor bumps
+    } else if (changelog.isBreakingChange) {
       semver = 'major';
       break; // Breaking changes take precedence
     } else if (changelog.semverBump === 'minor' && semver !== 'major') {
