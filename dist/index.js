@@ -29461,10 +29461,16 @@ async function updateFixedPackages(allPkgInfos) {
         console.warn(`Fixed package ${fixedPkgName} not found, skipping.`);
         continue;
       }
+      if (!fixedPkgInfo.newVersion) {
+        console.warn(
+          `No new version for fixed package ${fixedPkgName}, skipping update.`
+        );
+        continue;
+      }
       if (!greatestVersion) {
-        greatestVersion = fixedPkgInfo.version;
-      } else if (greatestVersion && (0, import_semver.gtr)(fixedPkgInfo.version, greatestVersion)) {
-        greatestVersion = fixedPkgInfo.version;
+        greatestVersion = fixedPkgInfo.newVersion;
+      } else if (greatestVersion && (0, import_semver.gtr)(fixedPkgInfo.newVersion, greatestVersion)) {
+        greatestVersion = fixedPkgInfo.newVersion;
       }
       groupPkgs.push(fixedPkgInfo);
     }

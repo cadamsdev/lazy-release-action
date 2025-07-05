@@ -365,10 +365,17 @@ async function updateFixedPackages(allPkgInfos: PackageInfo[]): Promise<void> {
         continue;
       }
 
+      if (!fixedPkgInfo.newVersion) {
+        console.warn(
+          `No new version for fixed package ${fixedPkgName}, skipping update.`
+        );
+        continue;
+      }
+
       if (!greatestVersion) {
-        greatestVersion = fixedPkgInfo.version;
-      } else if (greatestVersion && gtr(fixedPkgInfo.version, greatestVersion)) {
-        greatestVersion = fixedPkgInfo.version;
+        greatestVersion = fixedPkgInfo.newVersion;
+      } else if (greatestVersion && gtr(fixedPkgInfo.newVersion, greatestVersion)) {
+        greatestVersion = fixedPkgInfo.newVersion;
       }
 
       groupPkgs.push(fixedPkgInfo);
