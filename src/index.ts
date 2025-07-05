@@ -1140,9 +1140,7 @@ export function getChangedPackageInfos(
       // Add all other packages in the fixed group
       for (const groupMemberName of fixedGroup) {
         const groupMemberPkg = allPkgInfos.find(
-          (pkg) =>
-            getPackageNameWithoutScope(pkg.name) === groupMemberName ||
-            getDirectoryNameFromPath(pkg.path) === groupMemberName
+          (pkg) => pkg.name === groupMemberName
         );
 
         console.log(
