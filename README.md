@@ -1,5 +1,7 @@
 # Lazy Release Action
 
+[![contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](https://github.com/cadamsdev/lazy-release-action/issues) [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0) ![GitHub Tag](https://img.shields.io/github/v/tag/cadamsdev/lazy-release-action)
+
 The easiest way to version, publish and create changelogs for your JavaScript/TypeScript projects.
 
 ## 📝 Setup
