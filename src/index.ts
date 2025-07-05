@@ -526,6 +526,7 @@ function createTags(packageInfos: PackageInfo[]): void {
 
 function setPackageVersionOutput(pkgInfo: PackageInfo): void {
   const outputName = `${getPackageNameWithoutScope(pkgInfo.name)}_version`;
+  console.log(`Setting output for ${outputName} to ${pkgInfo.version}`);
   setOutput(outputName, pkgInfo.version);
 }
 

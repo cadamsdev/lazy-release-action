@@ -29552,6 +29552,7 @@ function createTags(packageInfos) {
 }
 function setPackageVersionOutput(pkgInfo) {
   const outputName = `${getPackageNameWithoutScope(pkgInfo.name)}_version`;
+  console.log(`Setting output for ${outputName} to ${pkgInfo.version}`);
   (0, import_core.setOutput)(outputName, pkgInfo.version);
 }
 async function createGitHubRelease2(releasePkgInfos) {
