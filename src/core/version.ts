@@ -1,7 +1,7 @@
 import { inc } from "semver";
-import { Changelog, getDirectoryNameFromPath, getPackageNameWithoutScope, getVersionPrefix, SemverBump } from "../utils";
+import { Changelog, getDirectoryNameFromPath, getPackageNameWithoutScope, SemverBump } from "../utils";
 import { PackageInfo } from "../types";
-import { readFileSync, writeFileSync } from "fs";
+
 
 export function applyNewVersion(
   packageInfo: PackageInfo,
@@ -59,55 +59,3 @@ export function getNewVersion(
   return newVersion;
 }
 
-export function updatePackageJsonFile(
-  pkgInfo: PackageInfo,
-  allPkgInfos: PackageInfo[]
-): void {
-  if (!pkgInfo.newVersion) {
-    return;
-  }
-
-  const packageJsonPath = pkgInfo.path;
-  let packageJsonString = readFileSync(packageJsonPath, 'utf-8');
-  const packageJson = JSON.parse(packageJsonString);
-
-  // Update the version in the package.json
-  packageJson.version = pkgInfo.newVersion;
-
-  // Update dependencies that reference other packages in the workspace
-  const dependencyFields = [
-    'dependencies',
-    'devDependencies',
-    'peerDependencies',
-    'optionalDependencies',
-  ];
-
-  for (const field of dependencyFields) {
-    if (packageJson[field]) {
-      for (const depName of Object.keys(packageJson[field])) {
-        // Find if this dependency is one of our workspace packages
-        const depPackageInfo = allPkgInfos.find((pkg) => pkg.name === depName);
-        if (depPackageInfo && depPackageInfo.newVersion) {
-          const currentVersionSpec = packageJson[field][depName];
-          const prefix = getVersionPrefix(currentVersionSpec);
-          const newVersionSpec = prefix + depPackageInfo.newVersion;
-
-          console.log(
-            `Updating dependency ${depName} from ${currentVersionSpec} to ${newVersionSpec} in ${pkgInfo.name}`
-          );
-
-          packageJson[field][depName] = newVersionSpec;
-        }
-      }
-    }
-  }
-
-  console.log(`Updating ${pkgInfo.name} to version ${pkgInfo.newVersion}`);
-
-  // Write the updated package.json back to the file
-  writeFileSync(
-    packageJsonPath,
-    JSON.stringify(packageJson, null, 2) + '\n',
-    'utf-8'
-  );
-}

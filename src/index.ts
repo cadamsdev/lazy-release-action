@@ -13,27 +13,22 @@ import {
   Changelog,
   createChangelogFromChangelogItem,
   getChangelogFromMarkdown,
-  getDirectoryNameFromPath,
   getPackageNameWithoutScope,
-  getVersionPrefix,
   increaseHeadingLevel,
   parseReleasePRBody,
   RELEASE_ID,
   ReleasePackageInfo,
 } from './utils';
-import { globSync } from 'tinyglobby';
-import { readFileSync, writeFileSync } from 'fs';
 import * as githubApi from './api/github';
 import { detect } from 'package-manager-detector/detect';
 import { resolveCommand } from 'package-manager-detector/commands';
 import { context } from '@actions/github';
 import { getChangelogFromCommits } from './utils/changelog';
-import { PackageInfo } from './types';
-import { getPackageInfos } from './utils/package';
+import { bumpIndirectPackageVersion, getChangedPackageInfos, getPackageInfos, getPackagePaths, updateIndirectPackageJsonFile, updatePackageJsonFile, updatePackageLockFiles } from './utils/package';
 import { generateMarkdown } from './utils/markdown';
 import { CONVENTIONAL_COMMITS_PATTERN, isPRTitleValid } from './utils/validation';
 import { createSnapshot } from './core/snapshots';
-import { applyNewVersion, getNewVersion, updatePackageJsonFile } from './core/version';
+import { applyNewVersion } from './core/version';
 import { createOrUpdateChangelog } from './core/changelog';
 import { createTags, publishPackages } from './core/publish';
 import { createGitHubRelease } from './core/release';
@@ -543,226 +538,4 @@ async function createOrUpdateReleasePR() {
     body: appendReleaseIdToMarkdown(markdown),
     head: RELEASE_BRANCH,
   });
-}
-
-export function updateIndirectPackageJsonFile(
-  pkgInfo: PackageInfo,
-  allPackageInfos: PackageInfo[]
-): void {
-  if (!pkgInfo.newVersion) {
-    return;
-  }
-
-  const packageJsonPath = pkgInfo.path;
-  let packageJsonString = readFileSync(packageJsonPath, 'utf-8');
-  const packageJson = JSON.parse(packageJsonString);
-
-  // Update the version in the package.json
-  packageJson.version = pkgInfo.newVersion;
-
-  // Update dependencies that reference other packages in the workspace
-  const dependencyFields = [
-    'dependencies',
-    'devDependencies',
-    'peerDependencies',
-    'optionalDependencies',
-  ];
-
-  for (const field of dependencyFields) {
-    if (packageJson[field]) {
-      for (const depName of Object.keys(packageJson[field])) {
-        // Find if this dependency is one of our workspace packages
-        const depPackageInfo = allPackageInfos.find(
-          (pkg) => pkg.name === depName
-        );
-        if (depPackageInfo && depPackageInfo.newVersion) {
-          const currentVersionSpec = packageJson[field][depName];
-          const prefix = getVersionPrefix(currentVersionSpec);
-          const newVersionSpec = prefix + depPackageInfo.newVersion;
-
-          console.log(
-            `Updating dependency ${depName} from ${currentVersionSpec} to ${newVersionSpec} in ${pkgInfo.name}`
-          );
-
-          packageJson[field][depName] = newVersionSpec;
-        }
-      }
-    }
-  }
-
-  console.log(`Updating ${pkgInfo.name} to version ${pkgInfo.newVersion}`);
-
-  // go through all the packages, update any package.json files that reference this package
-  allPackageInfos.forEach((otherPkg) => {
-    updateDependentPackages(pkgInfo, otherPkg);
-  });
-
-  // Write the updated package.json back to the file
-  writeFileSync(
-    packageJsonPath,
-    JSON.stringify(packageJson, null, 2) + '\n',
-    'utf-8'
-  );
-}
-
-function updateDependentPackages(
-  indirectPkgInfo: PackageInfo,
-  otherPkg: PackageInfo
-): void {
-  // check if other pkg depends on the indirect package
-  if (!otherPkg.dependencies.includes(indirectPkgInfo.name)) {
-    return; // No dependency, nothing to update
-  }
-
-  console.log(
-    `Updating dependent package ${otherPkg.name} for indirect package ${indirectPkgInfo.name}`
-  );
-
-  // Read the package.json of the other package
-  const otherPackageJsonPath = otherPkg.path;
-  let otherPackageJsonString = readFileSync(otherPackageJsonPath, 'utf-8');
-  const otherPackageJson = JSON.parse(otherPackageJsonString);
-
-  const dependencyFields = [
-    'dependencies',
-    'devDependencies',
-    'peerDependencies',
-    'optionalDependencies',
-  ];
-
-  for (const field of dependencyFields) {
-    if (otherPackageJson[field]) {
-      for (const depName of Object.keys(otherPackageJson[field])) {
-        // Find if this dependency is one of our workspace packages
-        if (depName !== indirectPkgInfo.name) {
-          continue;
-        }
-
-        const currentVersionSpec = otherPackageJson[field][depName];
-        const prefix = getVersionPrefix(currentVersionSpec);
-        let newPackageVersion = prefix + indirectPkgInfo.newVersion;
-        if (indirectPkgInfo.newVersion?.includes('-snapshot')) {
-          newPackageVersion = indirectPkgInfo.newVersion;
-        }
-
-        console.log(
-          `Updating dependency ${depName} from ${currentVersionSpec} to ${newPackageVersion} in ${otherPkg.name}`
-        );
-
-        otherPackageJson[field][depName] = newPackageVersion;
-      }
-    }
-  }
-
-  // Write the updated package.json back to the file
-  writeFileSync(
-    otherPackageJsonPath,
-    JSON.stringify(otherPackageJson, null, 2) + '\n',
-    'utf-8'
-  );
-}
-
-function bumpIndirectPackageVersion(pkgInfo: PackageInfo): void {
-  // TODO implement fixed logic for indirect packages
-
-  pkgInfo.newVersion = getNewVersion(pkgInfo.version, 'patch');
-}
-
-export async function updatePackageLockFiles(dirPath = ''): Promise<void> {
-  const pm = await detect();
-
-  if (!pm) {
-    throw new Error('No package manager detected');
-  }
-
-  const rc = resolveCommand(pm.agent, 'install', []);
-
-  if (!rc?.command) {
-    throw new Error(`No command found for package manager ${pm.agent}`);
-  }
-
-  const fullCommand = [rc.command, ...(rc.args || [])].join(' ');
-  console.log(`Running package manager command: ${fullCommand}`);
-
-  execSync(fullCommand, {
-    cwd: dirPath ? dirPath : undefined,
-    stdio: 'inherit',
-  });
-}
-
-export function getChangedPackages(
-  changelogs: Changelog[],
-  rootPackageName?: string
-): string[] {
-  const changedPackages = new Set<string>();
-  let hasRootPackageChanged = false;
-  for (const changelog of changelogs) {
-    if (changelog.packages.length === 0) {
-      hasRootPackageChanged = true;
-      continue; // This changelog applies to the root package
-    }
-
-    for (const pkgName of changelog.packages) {
-      changedPackages.add(pkgName);
-    }
-  }
-
-  if (rootPackageName && hasRootPackageChanged) {
-    changedPackages.add(getPackageNameWithoutScope(rootPackageName));
-  }
-
-  return Array.from(changedPackages);
-}
-
-export function getChangedPackageInfos(
-  changelogs: Changelog[],
-  allPkgInfos: PackageInfo[]
-): { changedPackageInfos: PackageInfo[]; indirectPackageInfos: PackageInfo[] } {
-  console.log('allPkgInfos', allPkgInfos);
-
-  const rootPackageName = allPkgInfos.find((pkg) => pkg.isRoot)?.name;
-  console.log('rootPackageName:', rootPackageName);
-
-  const directlyChangedPkgNames = getChangedPackages(
-    changelogs,
-    rootPackageName
-  );
-  console.log('directlyChangedPkgNames:', directlyChangedPkgNames);
-
-  // Find packages that are directly changed
-  const directlyChangedPackageInfos = allPkgInfos.filter((pkg) =>
-    directlyChangedPkgNames.includes(getPackageNameWithoutScope(pkg.name)) ||
-    directlyChangedPkgNames.includes(getDirectoryNameFromPath(pkg.path))
-  );
-  console.log('directlyChangedPackageInfos:', directlyChangedPackageInfos);
-
-  // Find packages that have dependencies on changed packages
-  const indirectlyChangedPackageInfos = allPkgInfos.filter((pkg) => {
-    const found = directlyChangedPackageInfos.find((changedPkg) => changedPkg.name === pkg.name);
-
-    if (found) {
-      // If the package itself is directly changed, skip it
-      return false;
-    }
-
-    // Check if any of its dependencies are in the directly changed packages
-    return pkg.dependencies.some((depName) => directlyChangedPackageInfos.some(
-      (changedPkg) => changedPkg.name === depName
-    ));
-  });
-
-  console.log('indirectlyChangedPackageInfos:', indirectlyChangedPackageInfos);
-  return {
-    changedPackageInfos: directlyChangedPackageInfos,
-    indirectPackageInfos: indirectlyChangedPackageInfos,
-  };
-}
-
-export function getPackagePaths(): string[] {
-  const packagePaths = globSync('**/package.json', {
-    ignore: ['**/node_modules/**', '**/dist/**'],
-  });
-
-  console.log('getPackagePaths', packagePaths);
-  return packagePaths;
 }
