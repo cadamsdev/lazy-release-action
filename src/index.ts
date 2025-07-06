@@ -8,7 +8,7 @@ import {
   hasUnstagedChanges,
   setupGitConfig,
 } from './api/git';
-import { DEFAULT_BRANCH, GITHUB_TOKEN, SNAPSHOTS_ENABLED } from './constants';
+import { BASE_BRANCH, GITHUB_TOKEN, SNAPSHOTS_ENABLED } from './constants';
 import {
   appendReleaseIdToMarkdown,
   Changelog,
@@ -51,7 +51,7 @@ const RELEASE_PR_TITLE = 'Version Packages';
 
   if (context.payload.pull_request?.merged) {
     // checkout git branch
-    checkoutBranch(DEFAULT_BRANCH);
+    checkoutBranch(BASE_BRANCH);
 
     console.log(
       `Pull request #${context.payload.pull_request.number} has been merged.`

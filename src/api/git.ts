@@ -1,7 +1,5 @@
-import { exec, execFileSync, execSync } from 'child_process';
-import { DEFAULT_BRANCH } from '../constants';
-import { getPackagePaths } from '..';
-import { toDirectoryPath } from '../utils';
+import { execFileSync, execSync } from 'child_process';
+import { BASE_BRANCH } from '../constants';
 
 export function setupGitConfig() {
   console.log('Setting up git config');
@@ -30,23 +28,19 @@ export function createOrCheckoutBranch(branchName: string) {
 
     // merge default branch into the current branch
     try {
-      execFileSync('git', ['merge', `origin/${DEFAULT_BRANCH}`], {
+      execFileSync('git', ['merge', `origin/${BASE_BRANCH}`], {
         stdio: 'inherit',
       });
-      console.log(`Merged ${DEFAULT_BRANCH} into ${branchName}`);
+      console.log(`Merged ${BASE_BRANCH} into ${branchName}`);
     } catch (mergeError) {
       console.log(
         `Merge conflicts detected, resolving by taking theirs strategy`
       );
       // Reset to clean state and merge with theirs strategy
       execFileSync('git', ['merge', '--abort'], { stdio: 'inherit' });
-      execFileSync(
-        'git',
-        ['merge', '-X', 'theirs', `origin/${DEFAULT_BRANCH}`],
-        {
-          stdio: 'inherit',
-        }
-      );
+      execFileSync('git', ['merge', '-X', 'theirs', `origin/${BASE_BRANCH}`], {
+        stdio: 'inherit',
+      });
       console.log(`Resolved merge conflicts by taking theirs strategy`);
     }
 
@@ -55,13 +49,17 @@ export function createOrCheckoutBranch(branchName: string) {
     console.log(`Pushed updated ${branchName} to remote`);
 
     // checkout all files from default branch
-    execFileSync('git', ['checkout', `origin/${DEFAULT_BRANCH}`, '--', '.'], {
+    execFileSync('git', ['checkout', `origin/${BASE_BRANCH}`, '--', '.'], {
       stdio: 'inherit',
     });
 
     // commit and push
     execFileSync('git', ['add', '.'], { stdio: 'inherit' });
-    execFileSync('git', ['commit', '-m', `sync ${branchName} with ${DEFAULT_BRANCH}`], { stdio: 'inherit' });
+    execFileSync(
+      'git',
+      ['commit', '-m', `sync ${branchName} with ${BASE_BRANCH}`],
+      { stdio: 'inherit' }
+    );
     execFileSync('git', ['push', 'origin', branchName], { stdio: 'inherit' });
     console.log(`Committed and pushed changes to ${branchName}`);
   } catch (error) {

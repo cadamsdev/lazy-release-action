@@ -1,5 +1,5 @@
 import { context, getOctokit } from '@actions/github';
-import { GITHUB_TOKEN, DEFAULT_BRANCH } from '../constants';
+import { GITHUB_TOKEN, BASE_BRANCH } from '../constants';
 
 export const githubApi = getOctokit(GITHUB_TOKEN);
 export const PR_NUMBER = context.payload.pull_request?.number || 0;
@@ -36,7 +36,7 @@ export async function createOrUpdatePR({
   title,
   body,
   head,
-  base = DEFAULT_BRANCH,
+  base = BASE_BRANCH,
 }: CreatePRConfig) {
   const eventData = getEventData();
 
@@ -80,7 +80,7 @@ export async function prExists(head: string) {
     owner: eventData.owner,
     repo: eventData.repo,
     head: `${eventData.owner}:${head}`,
-    base: DEFAULT_BRANCH,
+    base: BASE_BRANCH,
   });
 
   return existingPRs.data.length > 0;
