@@ -29363,10 +29363,13 @@ async function createOrUpdatePRStatusComment(shouldCreateSnapshot = false) {
   } else {
     markdown += "\u26A0\uFE0F No packages changed.\n";
   }
-  const lastCommitHash = (0, import_child_process2.execSync)("git rev-parse HEAD").toString().trim();
-  markdown += `Latest commit: ${lastCommitHash}
+  const latestCommitHash = import_github3.context.payload.pull_request?.head.sha;
+  if (latestCommitHash) {
+    console.log(`Latest commit hash: ${latestCommitHash}`);
+    markdown += `Latest commit: ${latestCommitHash}
 
 `;
+  }
   if (changedPackageInfos.length) {
     console.log(`Found ${changedPackageInfos.length} changed packages.`);
     changedPackageInfos.forEach((pkgInfo) => {
