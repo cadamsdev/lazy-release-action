@@ -29363,10 +29363,10 @@ async function createOrUpdatePRStatusComment(shouldCreateSnapshot = false) {
   } else {
     markdown += "\u26A0\uFE0F No packages changed.\n";
   }
-  const lastCommitHash = import_github3.context.payload.pull_request?.head.sha;
-  if (lastCommitHash) {
-    console.log(`Last commit hash: ${lastCommitHash}`);
-    markdown += `Latest commit: ${lastCommitHash}
+  const latestCommitHash = import_github3.context.payload.pull_request?.head.sha;
+  if (latestCommitHash) {
+    console.log(`Latest commit hash: ${latestCommitHash}`);
+    markdown += `Latest commit: ${latestCommitHash}
 
 `;
   }
