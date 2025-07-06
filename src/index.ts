@@ -270,8 +270,11 @@ async function createOrUpdatePRStatusComment(shouldCreateSnapshot = false) {
     markdown += '⚠️ No packages changed.\n';
   }
 
-  const lastCommitHash = execSync('git rev-parse HEAD').toString().trim();
-  markdown += `Latest commit: ${lastCommitHash}\n\n`;
+  const lastCommitHash = context.payload.pull_request?.head.sha;
+  if (lastCommitHash) {
+    console.log(`Last commit hash: ${lastCommitHash}`);
+    markdown += `Latest commit: ${lastCommitHash}\n\n`;
+  }
 
   if (changedPackageInfos.length) {
     console.log(`Found ${changedPackageInfos.length} changed packages.`);
