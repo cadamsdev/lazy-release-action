@@ -23,13 +23,11 @@ import {
   parseReleasePRBody,
   RELEASE_ID,
   ReleasePackageInfo,
-  SemverBump,
   toDirectoryPath,
   updateChangelog,
 } from './utils';
 import { globSync } from 'tinyglobby';
 import { existsSync, readFileSync, writeFileSync } from 'fs';
-import { inc } from 'semver';
 import * as githubApi from './api/github';
 import { join } from 'path';
 import { detect } from 'package-manager-detector/detect';
@@ -42,6 +40,7 @@ import { getPackageInfos } from './utils/package';
 import { generateMarkdown } from './utils/markdown';
 import { CONVENTIONAL_COMMITS_PATTERN, isPRTitleValid } from './utils/validation';
 import { createSnapshot } from './core/snapshots';
+import { applyNewVersion, getNewVersion, updatePackageJsonFile } from './core/version';
 
 const RELEASE_BRANCH = 'lazy-release/main';
 const PR_COMMENT_STATUS_ID = 'b3da20ce-59b6-4bbd-a6e3-6d625f45d008';
@@ -890,96 +889,6 @@ function createOrUpdateChangelog(
   }
 }
 
-export function updatePackageJsonFile(pkgInfo: PackageInfo, allPkgInfos: PackageInfo[]): void {
-  if (!pkgInfo.newVersion) {
-    return;
-  }
-
-  const packageJsonPath = pkgInfo.path;
-  let packageJsonString = readFileSync(packageJsonPath, 'utf-8');
-  const packageJson = JSON.parse(packageJsonString);
-
-  // Update the version in the package.json
-  packageJson.version = pkgInfo.newVersion;
-
-  // Update dependencies that reference other packages in the workspace
-  const dependencyFields = [
-    'dependencies',
-    'devDependencies',
-    'peerDependencies',
-    'optionalDependencies',
-  ];
-
-  for (const field of dependencyFields) {
-    if (packageJson[field]) {
-      for (const depName of Object.keys(packageJson[field])) {
-        // Find if this dependency is one of our workspace packages
-        const depPackageInfo = allPkgInfos.find(
-          (pkg) => pkg.name === depName
-        );
-        if (depPackageInfo && depPackageInfo.newVersion) {
-          const currentVersionSpec = packageJson[field][depName];
-          const prefix = getVersionPrefix(currentVersionSpec);
-          const newVersionSpec = prefix + depPackageInfo.newVersion;
-
-          console.log(
-            `Updating dependency ${depName} from ${currentVersionSpec} to ${newVersionSpec} in ${pkgInfo.name}`
-          );
-
-          packageJson[field][depName] = newVersionSpec;
-        }
-      }
-    }
-  }
-
-  console.log(
-    `Updating ${pkgInfo.name} to version ${pkgInfo.newVersion}`
-  );
-
-  // Write the updated package.json back to the file
-  writeFileSync(
-    packageJsonPath,
-    JSON.stringify(packageJson, null, 2) + '\n',
-    'utf-8'
-  );
-}
-
-export function applyNewVersion(
-  packageInfo: PackageInfo,
-  changelogs: Changelog[]
-): void {
-  const isV0 = packageInfo.version.startsWith('0.');
-  const packageNameWithoutScope = getPackageNameWithoutScope(packageInfo.name);
-  const directoryName = getDirectoryNameFromPath(packageInfo.path);
-
-  let semver = 'patch' as SemverBump;
-
-  for (const changelog of changelogs) {
-    const isRelevant =
-      (changelog.packages.length > 0 &&
-        changelog.packages.some(
-          (pkgName) =>
-            pkgName === packageNameWithoutScope || pkgName === directoryName
-        )) ||
-      (packageInfo.isRoot && changelog.packages.length === 0);
-
-    if (!isRelevant) {
-      continue;
-    }
-
-    if (changelog.isBreakingChange && isV0) {
-      semver = 'minor'; // In v0, breaking changes are treated as minor bumps
-    } else if (changelog.isBreakingChange) {
-      semver = 'major';
-      break; // Breaking changes take precedence
-    } else if (changelog.semverBump === 'minor' && semver !== 'major') {
-      semver = 'minor';
-    }
-  }
-
-  packageInfo.newVersion = getNewVersion(packageInfo.version, semver);
-}
-
 export function getChangedPackages(
   changelogs: Changelog[],
   rootPackageName?: string
@@ -1046,26 +955,6 @@ export function getChangedPackageInfos(
     changedPackageInfos: directlyChangedPackageInfos,
     indirectPackageInfos: indirectlyChangedPackageInfos,
   };
-}
-
-export function getNewVersion(
-  currentVersion: string,
-  semverBump: SemverBump
-): string {
-  let newVersion = currentVersion;
-  switch (semverBump) {
-    case 'major':
-      newVersion = inc(newVersion, 'major') || '';
-      break;
-    case 'minor':
-      newVersion = inc(newVersion, 'minor') || '';
-      break;
-    default:
-      newVersion = inc(newVersion, 'patch') || '';
-      break;
-  }
-
-  return newVersion;
 }
 
 export function getPackagePaths(): string[] {
