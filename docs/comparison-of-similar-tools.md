@@ -16,3 +16,4 @@
 | Supports multi-package repos | ✅           | ❌                                                     |
 | Creates snapshots            | ✅           | ❌                                                     |
 | PR Status Comments           | ✅           | ❌                                                     |
+| Creates a Release PR         | ✅           | ❌                                                     |
