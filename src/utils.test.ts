@@ -7,7 +7,6 @@ import {
   getDirectoryNameFromPath,
   getPackageNameWithoutScope,
   getPullRequestUrl,
-  getTagName,
   RELEASE_ID,
   removeReleasePRComment,
   replaceChangelogSection,
@@ -16,7 +15,6 @@ import {
   TYPE_TO_CHANGELOG_TYPE,
   updateChangelog,
 } from './utils';
-import { PackageInfo } from './types';
 
 describe('generateMarkdown', () => {
   it('should extract the commit type from a changlog item', () => {
@@ -287,34 +285,6 @@ describe('generateMarkdown', () => {
       '0.0.2'
     );
     expect(updatedChangelog).toEqual(expectedChangelog);
-  });
-
-  it('should get the tagName', () => {
-    const pkgInfo: PackageInfo = {
-      name: 'test-package',
-      version: '1.0.0',
-      newVersion: '1.0.1',
-      isRoot: false,
-      isPrivate: false,
-      path: '',
-      dependencies: [],
-    }
-
-    expect(getTagName(pkgInfo)).toEqual('test-package@1.0.0');
-  });
-
-  it('should get the tagName for root package', () => {
-    const pkgInfo: PackageInfo = {
-      name: 'test-package',
-      version: '1.0.0',
-      newVersion: '1.0.1',
-      isRoot: true,
-      isPrivate: false,
-      path: '',
-      dependencies: [],
-    };
-
-    expect(getTagName(pkgInfo)).toEqual('v1.0.0');
   });
 
   it('should get directory name from a file path', () => {

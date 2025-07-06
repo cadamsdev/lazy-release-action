@@ -193,30 +193,6 @@ export interface PackageRelease {
   changelog: PackageChangelogEntry;
 }
 
-export function getTagName(pkgInfo: PackageInfo): string {
-  let tagName = '';
-
-  if (pkgInfo.isRoot) {
-    tagName = `v${pkgInfo.version}`;
-  } else {
-    tagName = `${pkgInfo.name}@${pkgInfo.version}`;
-  }
-
-  return tagName;
-}
-
-export function getGitHubReleaseName(pkgInfo: PackageInfo): string {
-  let releaseName = '';
-
-  if (pkgInfo.isRoot) {
-    releaseName = `v${pkgInfo.version}`;
-  } else {
-    releaseName = `${getPackageNameWithoutScope(pkgInfo.name)}@${pkgInfo.version}`;
-  }
-
-  return releaseName;
-}
-
 export interface ReleasePackageInfo {
   pkgInfo: PackageInfo;
   changelogEntry: PackageChangelogEntry;

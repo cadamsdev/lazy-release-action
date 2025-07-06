@@ -1,10 +1,9 @@
 import { exec } from '@actions/exec';
-import { execFileSync, execSync } from 'child_process';
+import { execSync } from 'child_process';
 import {
   checkoutBranch,
   commitAndPushChanges,
   createOrCheckoutBranch,
-  doesTagExistOnRemote,
   hasUnstagedChanges,
   setupGitConfig,
 } from './api/git';
@@ -15,22 +14,18 @@ import {
   createChangelogFromChangelogItem,
   getChangelogFromMarkdown,
   getDirectoryNameFromPath,
-  getGitHubReleaseName,
   getPackageNameWithoutScope,
-  getTagName,
   getVersionPrefix,
   increaseHeadingLevel,
   parseReleasePRBody,
   RELEASE_ID,
   ReleasePackageInfo,
-  toDirectoryPath,
 } from './utils';
 import { globSync } from 'tinyglobby';
 import { readFileSync, writeFileSync } from 'fs';
 import * as githubApi from './api/github';
 import { detect } from 'package-manager-detector/detect';
 import { resolveCommand } from 'package-manager-detector/commands';
-import { setOutput } from '@actions/core';
 import { context } from '@actions/github';
 import { getChangelogFromCommits } from './utils/changelog';
 import { PackageInfo } from './types';
@@ -40,6 +35,8 @@ import { CONVENTIONAL_COMMITS_PATTERN, isPRTitleValid } from './utils/validation
 import { createSnapshot } from './core/snapshots';
 import { applyNewVersion, getNewVersion, updatePackageJsonFile } from './core/version';
 import { createOrUpdateChangelog } from './core/changelog';
+import { createTags, publishPackages } from './core/publish';
+import { createGitHubRelease } from './core/release';
 
 const RELEASE_BRANCH = 'lazy-release/main';
 const PR_COMMENT_STATUS_ID = 'b3da20ce-59b6-4bbd-a6e3-6d625f45d008';
@@ -358,153 +355,6 @@ async function publish(): Promise<void> {
   createTags(changedPkgInfos);
   await publishPackages(changedPkgInfos);
   await createGitHubRelease(releasePkgInfos);
-}
-
-async function publishPackages(changedPkgInfos: PackageInfo[]): Promise<void> {
-  console.log('Publishing packages...');
-
-  let hasPublished: boolean = false;
-  changedPkgInfos.forEach(async (pkgInfo) => {
-    if (pkgInfo.isPrivate) {
-      console.warn(`Package ${pkgInfo.name} is private, skipping publish.`);
-      return;
-    }
-
-    if (!pkgInfo.version) {
-      console.warn(`No version for package ${pkgInfo.name}, skipping publish.`);
-      return;
-    }
-
-    console.log(
-      `Publishing package ${pkgInfo.name} version ${pkgInfo.version}...`
-    );
-
-    const dirPath = toDirectoryPath(pkgInfo.path);
-
-    const pm = await detect();
-    if (!pm) {
-      throw new Error('No package manager detected');
-    }
-
-    const fullPublishCommand = [pm.agent, 'publish'].join(' ');
-
-    try {
-      console.log(`Running package manager command: ${fullPublishCommand}`);
-      execSync(fullPublishCommand, {
-        stdio: 'inherit',
-        cwd: dirPath,
-      });
-      hasPublished = true;
-    } catch (error) {
-      if (error instanceof Error) {
-        // log error if its not a 409
-        if (error.message.includes('409 Conflict')) {
-          console.warn(`Package ${pkgInfo.name} already exists, skipping...`);
-        } else {
-          console.error(
-            `Error publishing package ${pkgInfo.name}:`,
-            error.message
-          );
-        }
-      }
-    }
-  });
-
-  console.log(
-    hasPublished
-      ? 'Packages published successfully.'
-      : 'No packages were published.'
-  );
-  setOutput('published', hasPublished);
-}
-
-function createTags(packageInfos: PackageInfo[]): void {
-  console.log('Creating tags...');
-
-  const tagsToCreate: string[] = [];
-  packageInfos.forEach((pkgInfo) => {
-    if (!pkgInfo.version) {
-      console.warn(
-        `No version for package ${pkgInfo.name}, skipping tag creation.`
-      );
-      return;
-    }
-
-    const tagName = getTagName(pkgInfo);
-
-    // Check if tag exists on remote
-    const tagExists = doesTagExistOnRemote(tagName);
-    if (tagExists) {
-      console.log(`Tag ${tagName} already exists on remote, skipping...`);
-      return;
-    }
-
-    console.log(`Creating tag: ${tagName}`);
-    try {
-      execSync(`git tag -a ${tagName} -m "Release ${tagName}"`, {
-        stdio: 'inherit',
-      });
-      tagsToCreate.push(tagName);
-
-      setPackageVersionOutput(pkgInfo);
-    } catch (error) {
-      console.error(`Failed to create tag ${tagName}:`, error);
-    }
-  });
-
-  if (tagsToCreate.length === 0) {
-    console.log('No new tags to push.');
-    return;
-  }
-
-  console.log(`Pushing ${tagsToCreate.length} new tags...`);
-  try {
-    execFileSync('git', ['push', '--tags'], { stdio: 'inherit' });
-    console.log('Tags pushed successfully.');
-  } catch (error) {
-    console.error('Failed to push tags:', error);
-  }
-}
-
-function setPackageVersionOutput(pkgInfo: PackageInfo): void {
-  const outputName = `${getPackageNameWithoutScope(pkgInfo.name)}_version`;
-  console.log(`Setting output for ${outputName} to ${pkgInfo.version}`);
-  setOutput(outputName, pkgInfo.version);
-}
-
-async function createGitHubRelease(
-  releasePkgInfos: ReleasePackageInfo[]
-): Promise<void> {
-  console.log('Creating GitHub release...');
-
-  for (const releasePkgInfo of releasePkgInfos) {
-    const { changelogEntry, pkgInfo } = releasePkgInfo;
-    if (!changelogEntry.heading.newVersion) {
-      console.warn(
-        `No version for package ${changelogEntry.heading.newVersion}, skipping release creation.`
-      );
-      continue;
-    }
-
-    const tagName = getTagName(releasePkgInfo.pkgInfo);
-
-    // Check if tag exists on remote
-    const tagExists = doesTagExistOnRemote(tagName);
-    if (!tagExists) {
-      console.warn(
-        `Tag ${tagName} does not exist on remote, skipping release creation.`
-      );
-      continue;
-    }
-
-    const releaseName = getGitHubReleaseName(pkgInfo);
-    console.log(`Creating release for ${releaseName}...`);
-    await githubApi.createGitHubRelease({
-      tag_name: tagName,
-      name: releaseName,
-      body: changelogEntry.content.trim(),
-    });
-  }
 }
 
 export interface Commit {
