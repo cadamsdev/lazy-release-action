@@ -14,7 +14,6 @@ import {
   Changelog,
   CONVENTIONAL_COMMITS_PATTERN,
   createChangelogFromChangelogItem,
-  generateMarkdown,
   getChangelogFromMarkdown,
   getDirectoryNameFromPath,
   getGitHubReleaseName,
@@ -42,6 +41,7 @@ import { context } from '@actions/github';
 import { generateChangelogContent, getChangelogFromCommits } from './utils/changelog';
 import { PackageInfo } from './types';
 import { getPackageInfos } from './utils/package';
+import { generateMarkdown } from './utils/markdown';
 
 const RELEASE_BRANCH = 'lazy-release/main';
 const PR_COMMENT_STATUS_ID = 'b3da20ce-59b6-4bbd-a6e3-6d625f45d008';

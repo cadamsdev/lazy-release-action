@@ -28412,78 +28412,6 @@ function getPackageNameWithoutScope(packageName) {
 function increaseHeadingLevel(message) {
   return message.replace(/(#+)/g, "$1#");
 }
-function generateMarkdown(changedPackageInfos, indirectPackageInfos, changelogs) {
-  let markdown = "# \u{1F449} Changelog\n\n";
-  changedPackageInfos.forEach((pkg) => {
-    const pkgNameWithoutScope = getPackageNameWithoutScope(pkg.name);
-    const packageChangelogs = changelogs.filter(
-      (changelog) => changelog.packages.includes(pkgNameWithoutScope) || changelog.packages.includes(getDirectoryNameFromPath(pkg.path)) || pkg.isRoot && changelog.packages.length === 0
-    );
-    if (packageChangelogs.length === 0) {
-      return;
-    }
-    if (pkg.isRoot) {
-      markdown += `## ${pkg.version}`;
-    } else {
-      markdown += `## ${pkgNameWithoutScope}@${pkg.version}`;
-    }
-    if (pkg.newVersion) {
-      markdown += `\u27A1\uFE0F${pkg.newVersion}`;
-    }
-    markdown += "\n\n";
-    const changelogsWithBreakingChanges = packageChangelogs.filter(
-      (changelog) => changelog.isBreakingChange
-    );
-    if (changelogsWithBreakingChanges.length) {
-      markdown += `### \u26A0\uFE0F Breaking Changes
-`;
-    }
-    for (let i = 0; i < changelogsWithBreakingChanges.length; i++) {
-      const changelog = changelogsWithBreakingChanges[i];
-      markdown += "- ";
-      markdown += changelog.description + "\n";
-    }
-    if (changelogsWithBreakingChanges.length) {
-      markdown += "\n";
-    }
-    const groupedChangelogs = {};
-    for (const changelog of packageChangelogs) {
-      if (changelog.isBreakingChange) {
-        continue;
-      }
-      if (!groupedChangelogs[changelog.type]) {
-        groupedChangelogs[changelog.type] = [];
-      }
-      groupedChangelogs[changelog.type].push(changelog);
-    }
-    const sortedTypes = Object.keys(groupedChangelogs).sort(
-      (a, b) => TYPE_TO_CHANGELOG_TYPE[a].sort - TYPE_TO_CHANGELOG_TYPE[b].sort
-    );
-    for (const sortedType of sortedTypes) {
-      const changelogs2 = groupedChangelogs[sortedType];
-      const changelogType = TYPE_TO_CHANGELOG_TYPE[sortedType];
-      markdown += `### ${changelogType.emoji} ${changelogType.displayName}
-`;
-      for (const changelog of changelogs2) {
-        markdown += `- ${changelog.description}
-`;
-      }
-      markdown += "\n";
-    }
-  });
-  indirectPackageInfos.forEach((pkgInfo) => {
-    const pkgNameWithoutScope = getPackageNameWithoutScope(pkgInfo.name);
-    markdown += `## ${pkgNameWithoutScope}@${pkgInfo.version}`;
-    if (pkgInfo.newVersion) {
-      markdown += `\u27A1\uFE0F${pkgInfo.newVersion}`;
-    }
-    markdown += "\n\n";
-    markdown += `\u{1F4E6} Updated due to dependency changes
-
-`;
-  });
-  return markdown;
-}
 function getTagName(pkgInfo) {
   let tagName = "";
   if (pkgInfo.isRoot) {
@@ -29244,6 +29172,80 @@ function getPackageInfos(packagePaths) {
     pkgInfo.dependencies = packageInfos.filter((p) => p.name !== pkgInfo.name && allDeps.has(p.name)).map((p) => p.name);
   });
   return packageInfos;
+}
+
+// src/utils/markdown.ts
+function generateMarkdown(changedPackageInfos, indirectPackageInfos, changelogs) {
+  let markdown = "# \u{1F449} Changelog\n\n";
+  changedPackageInfos.forEach((pkg) => {
+    const pkgNameWithoutScope = getPackageNameWithoutScope(pkg.name);
+    const packageChangelogs = changelogs.filter(
+      (changelog) => changelog.packages.includes(pkgNameWithoutScope) || changelog.packages.includes(getDirectoryNameFromPath(pkg.path)) || pkg.isRoot && changelog.packages.length === 0
+    );
+    if (packageChangelogs.length === 0) {
+      return;
+    }
+    if (pkg.isRoot) {
+      markdown += `## ${pkg.version}`;
+    } else {
+      markdown += `## ${pkgNameWithoutScope}@${pkg.version}`;
+    }
+    if (pkg.newVersion) {
+      markdown += `\u27A1\uFE0F${pkg.newVersion}`;
+    }
+    markdown += "\n\n";
+    const changelogsWithBreakingChanges = packageChangelogs.filter(
+      (changelog) => changelog.isBreakingChange
+    );
+    if (changelogsWithBreakingChanges.length) {
+      markdown += `### \u26A0\uFE0F Breaking Changes
+`;
+    }
+    for (let i = 0; i < changelogsWithBreakingChanges.length; i++) {
+      const changelog = changelogsWithBreakingChanges[i];
+      markdown += "- ";
+      markdown += changelog.description + "\n";
+    }
+    if (changelogsWithBreakingChanges.length) {
+      markdown += "\n";
+    }
+    const groupedChangelogs = {};
+    for (const changelog of packageChangelogs) {
+      if (changelog.isBreakingChange) {
+        continue;
+      }
+      if (!groupedChangelogs[changelog.type]) {
+        groupedChangelogs[changelog.type] = [];
+      }
+      groupedChangelogs[changelog.type].push(changelog);
+    }
+    const sortedTypes = Object.keys(groupedChangelogs).sort(
+      (a, b) => TYPE_TO_CHANGELOG_TYPE[a].sort - TYPE_TO_CHANGELOG_TYPE[b].sort
+    );
+    for (const sortedType of sortedTypes) {
+      const changelogs2 = groupedChangelogs[sortedType];
+      const changelogType = TYPE_TO_CHANGELOG_TYPE[sortedType];
+      markdown += `### ${changelogType.emoji} ${changelogType.displayName}
+`;
+      for (const changelog of changelogs2) {
+        markdown += `- ${changelog.description}
+`;
+      }
+      markdown += "\n";
+    }
+  });
+  indirectPackageInfos.forEach((pkgInfo) => {
+    const pkgNameWithoutScope = getPackageNameWithoutScope(pkgInfo.name);
+    markdown += `## ${pkgNameWithoutScope}@${pkgInfo.version}`;
+    if (pkgInfo.newVersion) {
+      markdown += `\u27A1\uFE0F${pkgInfo.newVersion}`;
+    }
+    markdown += "\n\n";
+    markdown += `\u{1F4E6} Updated due to dependency changes
+
+`;
+  });
+  return markdown;
 }
 
 // src/index.ts
