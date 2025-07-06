@@ -1,3 +1,25 @@
+## 0.4.0 (2025-07-06)
+
+### 🚀 New Features
+- Can now publish packages to npm ([#22](https://github.com/cadamsdev/lazy-release-action/pull/22))
+- Added input to specify default branch ([#20](https://github.com/cadamsdev/lazy-release-action/pull/20))
+- Added outputs for the new package versions ([#16](https://github.com/cadamsdev/lazy-release-action/pull/16))
+
+### 🐛 Bug Fixes
+- Remove Release PR comment from GitHub Release ([#21](https://github.com/cadamsdev/lazy-release-action/pull/21))
+- Updating package.json dependency versions ([#15](https://github.com/cadamsdev/lazy-release-action/pull/15))
+- Versioning breaking changes for v0 ([#13](https://github.com/cadamsdev/lazy-release-action/pull/13))
+
+### 🏠 Chores
+- Added license ([#18](https://github.com/cadamsdev/lazy-release-action/pull/18))
+
+### 📖 Documentation
+- Updated README ([#17](https://github.com/cadamsdev/lazy-release-action/pull/17))
+
+### 🤖 Automation
+- Renamed ci.yml to pull-request.yml ([#19](https://github.com/cadamsdev/lazy-release-action/pull/19))
+
+
 ## 0.3.0 (2025-07-04)
 
 ### 🚀 New Features
