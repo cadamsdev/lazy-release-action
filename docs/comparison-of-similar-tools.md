@@ -15,3 +15,4 @@
 | Creates changelogs           | ✅           | ✅                                                     |
 | Supports multi-package repos | ✅           | ❌                                                     |
 | Creates snapshots            | ✅           | ❌                                                     |
+| PR Status Comments           | ✅           | ❌                                                     |
