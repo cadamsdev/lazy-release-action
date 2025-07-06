@@ -28071,7 +28071,7 @@ var import_child_process = require("child_process");
 // src/constants.ts
 var GITHUB_TOKEN = process.env["INPUT_GITHUB-TOKEN"] || "";
 var SNAPSHOTS_ENABLED = process.env["INPUT_SNAPSHOTS"] ? process.env["INPUT_SNAPSHOTS"] === "true" : false;
-var BASE_BRANCH = process.env["INPUT_BASE-BRANCH"] || "main";
+var DEFAULT_BRANCH = process.env["INPUT_DEFAULT-BRANCH"] || "main";
 
 // src/api/git.ts
 function setupGitConfig() {
@@ -28097,29 +28097,33 @@ function createOrCheckoutBranch(branchName) {
     (0, import_child_process.execFileSync)("git", ["checkout", branchName], { stdio: "inherit" });
     console.log(`Switched to branch ${branchName}`);
     try {
-      (0, import_child_process.execFileSync)("git", ["merge", `origin/${BASE_BRANCH}`], {
+      (0, import_child_process.execFileSync)("git", ["merge", `origin/${DEFAULT_BRANCH}`], {
         stdio: "inherit"
       });
-      console.log(`Merged ${BASE_BRANCH} into ${branchName}`);
+      console.log(`Merged ${DEFAULT_BRANCH} into ${branchName}`);
     } catch (mergeError) {
       console.log(
         `Merge conflicts detected, resolving by taking theirs strategy`
       );
       (0, import_child_process.execFileSync)("git", ["merge", "--abort"], { stdio: "inherit" });
-      (0, import_child_process.execFileSync)("git", ["merge", "-X", "theirs", `origin/${BASE_BRANCH}`], {
-        stdio: "inherit"
-      });
+      (0, import_child_process.execFileSync)(
+        "git",
+        ["merge", "-X", "theirs", `origin/${DEFAULT_BRANCH}`],
+        {
+          stdio: "inherit"
+        }
+      );
       console.log(`Resolved merge conflicts by taking theirs strategy`);
     }
     (0, import_child_process.execFileSync)("git", ["push", "origin", branchName], { stdio: "inherit" });
     console.log(`Pushed updated ${branchName} to remote`);
-    (0, import_child_process.execFileSync)("git", ["checkout", `origin/${BASE_BRANCH}`, "--", "."], {
+    (0, import_child_process.execFileSync)("git", ["checkout", `origin/${DEFAULT_BRANCH}`, "--", "."], {
       stdio: "inherit"
     });
     (0, import_child_process.execFileSync)("git", ["add", "."], { stdio: "inherit" });
     (0, import_child_process.execFileSync)(
       "git",
-      ["commit", "-m", `sync ${branchName} with ${BASE_BRANCH}`],
+      ["commit", "-m", `sync ${branchName} with ${DEFAULT_BRANCH}`],
       { stdio: "inherit" }
     );
     (0, import_child_process.execFileSync)("git", ["push", "origin", branchName], { stdio: "inherit" });
@@ -28820,7 +28824,7 @@ async function createOrUpdatePR({
   title,
   body,
   head,
-  base = BASE_BRANCH
+  base = DEFAULT_BRANCH
 }) {
   const eventData = getEventData();
   const existingPRs = await githubApi.rest.pulls.list({
@@ -29195,7 +29199,7 @@ var RELEASE_PR_TITLE = "Version Packages";
 (async () => {
   preRun();
   if (import_github3.context.payload.pull_request?.merged) {
-    checkoutBranch(BASE_BRANCH);
+    checkoutBranch(DEFAULT_BRANCH);
     console.log(
       `Pull request #${import_github3.context.payload.pull_request.number} has been merged.`
     );

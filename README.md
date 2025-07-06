@@ -136,11 +136,11 @@ jobs:
 
 ### Inputs
 
-| Input          | Type    | Default Value | Description                  |
-| -------------- | ------- | ------------- | ---------------------------- |
-| `github-token` | string  | `''`          | GitHub authentication token  |
-| `base-branch`  | string  | `main`        | The base branch to sync with |
-| `snapshots`    | boolean | `false`       | Whether to create snapshots  |
+| Input            | Type    | Default Value | Description                 |
+| ---------------- | ------- | ------------- | --------------------------- |
+| `github-token`   | string  | `''`          | GitHub authentication token |
+| `default-branch` | string  | `main`        | The repo's default branch   |
+| `snapshots`      | boolean | `false`       | Whether to create snapshots |
 
 examples
 
