@@ -28172,26 +28172,60 @@ function doesTagExistOnRemote(tagName) {
 
 // src/utils.ts
 var import_github = __toESM(require_github());
+
+// src/utils/changelog.ts
 var DATE_NOW = /* @__PURE__ */ new Date();
-var RELEASE_ID = "ebe18c5c-b9c6-4fca-8b11-90bf80ad229e";
-var TYPE_TO_CHANGELOG_TYPE = {
-  feat: { emoji: "\u{1F680}", displayName: "New Features", sort: 0 },
-  fix: { emoji: "\u{1F41B}", displayName: "Bug Fixes", sort: 1 },
-  perf: { emoji: "\u26A1\uFE0F", displayName: "Performance Improvements", sort: 2 },
-  chore: { emoji: "\u{1F3E0}", displayName: "Chores", sort: 3 },
-  docs: { emoji: "\u{1F4D6}", displayName: "Documentation", sort: 4 },
-  style: { emoji: "\u{1F3A8}", displayName: "Styles", sort: 5 },
-  refactor: { emoji: "\u267B\uFE0F", displayName: "Refactors", sort: 6 },
-  test: { emoji: "\u2705", displayName: "Tests", sort: 7 },
-  build: { emoji: "\u{1F4E6}", displayName: "Build", sort: 8 },
-  ci: { emoji: "\u{1F916}", displayName: "Automation", sort: 9 },
-  revert: { emoji: "\u23EA", displayName: "Reverts", sort: 10 }
-};
-var CONVENTIONAL_COMMITS_PATTERN = /^(feat|fix|perf|chore|docs|style|test|build|ci|revert)(!)?(\(([a-z-0-9]+)(,\s*[a-z-0-9]+)*\))?(!)?: .+/;
-var COMMIT_TYPE_PATTERN = /^(feat|fix|perf|chore|docs|style|test|build|ci|revert)(\(([^)]+)\))?(!)?$/;
-function getDirectoryNameFromPath(filePath) {
-  const parts = filePath.split("/");
-  return parts[parts.length - 2];
+function generateChangelogContent(pkgInfo, changelogs, date = DATE_NOW) {
+  const pkgNameWithoutScope = getPackageNameWithoutScope(pkgInfo.name);
+  const packageChangelogs = changelogs.filter(
+    (changelog) => changelog.packages.includes(pkgNameWithoutScope) || changelog.packages.includes(getDirectoryNameFromPath(pkgInfo.path)) || pkgInfo.isRoot && changelog.packages.length === 0
+  );
+  let markdown = `## ${pkgInfo.newVersion} (${getChangelogDate(date)})
+
+`;
+  const changelogsWithBreakingChanges = packageChangelogs.filter(
+    (changelog) => changelog.isBreakingChange
+  );
+  if (changelogsWithBreakingChanges.length) {
+    markdown += `### \u26A0\uFE0F Breaking Changes
+`;
+  }
+  for (let i = 0; i < changelogsWithBreakingChanges.length; i++) {
+    const changelog = changelogsWithBreakingChanges[i];
+    markdown += `- ${changelog.description}
+`;
+  }
+  if (changelogsWithBreakingChanges.length) {
+    markdown += "\n";
+  }
+  const groupedChangelogs = {};
+  for (const changelog of packageChangelogs) {
+    if (changelog.isBreakingChange) {
+      continue;
+    }
+    if (!groupedChangelogs[changelog.type]) {
+      groupedChangelogs[changelog.type] = [];
+    }
+    groupedChangelogs[changelog.type].push(changelog);
+  }
+  const sortedTypes = Object.keys(groupedChangelogs).sort(
+    (a, b) => TYPE_TO_CHANGELOG_TYPE[a].sort - TYPE_TO_CHANGELOG_TYPE[b].sort
+  );
+  for (const sortedType of sortedTypes) {
+    const changelogs2 = groupedChangelogs[sortedType];
+    const changelogType = TYPE_TO_CHANGELOG_TYPE[sortedType];
+    markdown += `### ${changelogType.emoji} ${changelogType.displayName}
+`;
+    for (const changelog of changelogs2) {
+      markdown += `- ${changelog.description}
+`;
+    }
+    markdown += "\n";
+  }
+  if (packageChangelogs.length === 0) {
+    markdown += `\u{1F4E6} Updated due to dependency changes`;
+  }
+  return markdown.trim();
 }
 function getChangelogSectionFromCommitMessage(commitMessage) {
   const section = "## Changelog\n";
@@ -28212,6 +28246,62 @@ function getChangelogSectionFromCommitMessage(commitMessage) {
   }
   const changelogSection = commitMessage.substring(startIndex + section.length, endIndex).trim();
   return changelogSection;
+}
+function getChangelogFromCommits(commits, rootPackageName) {
+  const changelogs = [];
+  for (const commit of commits) {
+    if (commit.message.includes("## Changelog")) {
+      const changelogSection = getChangelogSectionFromCommitMessage(
+        commit.message
+      );
+      const changelogItems = getChangelogItems(changelogSection);
+      for (const item of changelogItems) {
+        const changelog = createChangelogFromChangelogItem(
+          item,
+          rootPackageName
+        );
+        if (!changelog) {
+          continue;
+        }
+        changelogs.push(changelog);
+      }
+    } else {
+      const changelog = createChangelogFromChangelogItem(
+        commit.message,
+        rootPackageName
+      );
+      if (changelog) {
+        changelogs.push(changelog);
+      }
+    }
+  }
+  console.log(
+    `Found ${changelogs.length} changelogs from commits.`,
+    changelogs
+  );
+  return changelogs;
+}
+
+// src/utils.ts
+var RELEASE_ID = "ebe18c5c-b9c6-4fca-8b11-90bf80ad229e";
+var TYPE_TO_CHANGELOG_TYPE = {
+  feat: { emoji: "\u{1F680}", displayName: "New Features", sort: 0 },
+  fix: { emoji: "\u{1F41B}", displayName: "Bug Fixes", sort: 1 },
+  perf: { emoji: "\u26A1\uFE0F", displayName: "Performance Improvements", sort: 2 },
+  chore: { emoji: "\u{1F3E0}", displayName: "Chores", sort: 3 },
+  docs: { emoji: "\u{1F4D6}", displayName: "Documentation", sort: 4 },
+  style: { emoji: "\u{1F3A8}", displayName: "Styles", sort: 5 },
+  refactor: { emoji: "\u267B\uFE0F", displayName: "Refactors", sort: 6 },
+  test: { emoji: "\u2705", displayName: "Tests", sort: 7 },
+  build: { emoji: "\u{1F4E6}", displayName: "Build", sort: 8 },
+  ci: { emoji: "\u{1F916}", displayName: "Automation", sort: 9 },
+  revert: { emoji: "\u23EA", displayName: "Reverts", sort: 10 }
+};
+var CONVENTIONAL_COMMITS_PATTERN = /^(feat|fix|perf|chore|docs|style|test|build|ci|revert)(!)?(\(([a-z-0-9]+)(,\s*[a-z-0-9]+)*\))?(!)?: .+/;
+var COMMIT_TYPE_PATTERN = /^(feat|fix|perf|chore|docs|style|test|build|ci|revert)(\(([^)]+)\))?(!)?$/;
+function getDirectoryNameFromPath(filePath) {
+  const parts = filePath.split("/");
+  return parts[parts.length - 2];
 }
 function isPRTitleValid(prTitle) {
   return CONVENTIONAL_COMMITS_PATTERN.test(prTitle);
@@ -28242,35 +28332,6 @@ function getChangelogFromMarkdown(markdown, rootPackageName) {
     }
     changelogs.push(changelog);
   }
-  return changelogs;
-}
-function getChangelogFromCommits(commits, rootPackageName) {
-  const changelogs = [];
-  for (const commit of commits) {
-    if (commit.message.includes("## Changelog")) {
-      const changelogSection = getChangelogSectionFromCommitMessage(commit.message);
-      const changelogItems = getChangelogItems(changelogSection);
-      for (const item of changelogItems) {
-        const changelog = createChangelogFromChangelogItem(
-          item,
-          rootPackageName
-        );
-        if (!changelog) {
-          continue;
-        }
-        changelogs.push(changelog);
-      }
-    } else {
-      const changelog = createChangelogFromChangelogItem(
-        commit.message,
-        rootPackageName
-      );
-      if (changelog) {
-        changelogs.push(changelog);
-      }
-    }
-  }
-  console.log(`Found ${changelogs.length} changelogs from commits.`, changelogs);
   return changelogs;
 }
 function createChangelogFromChangelogItem(item, rootPackageName) {
@@ -28511,58 +28572,6 @@ function updateChangelog(existingChangelogContent, newChangelogContent, newVersi
 }
 function getChangelogDate(date) {
   return date.toISOString().split("T")[0];
-}
-function generateChangelogContent(pkgInfo, changelogs, date = DATE_NOW) {
-  const pkgNameWithoutScope = getPackageNameWithoutScope(pkgInfo.name);
-  const packageChangelogs = changelogs.filter(
-    (changelog) => changelog.packages.includes(pkgNameWithoutScope) || changelog.packages.includes(getDirectoryNameFromPath(pkgInfo.path)) || pkgInfo.isRoot && changelog.packages.length === 0
-  );
-  let markdown = `## ${pkgInfo.newVersion} (${getChangelogDate(date)})
-
-`;
-  const changelogsWithBreakingChanges = packageChangelogs.filter(
-    (changelog) => changelog.isBreakingChange
-  );
-  if (changelogsWithBreakingChanges.length) {
-    markdown += `### \u26A0\uFE0F Breaking Changes
-`;
-  }
-  for (let i = 0; i < changelogsWithBreakingChanges.length; i++) {
-    const changelog = changelogsWithBreakingChanges[i];
-    markdown += `- ${changelog.description}
-`;
-  }
-  if (changelogsWithBreakingChanges.length) {
-    markdown += "\n";
-  }
-  const groupedChangelogs = {};
-  for (const changelog of packageChangelogs) {
-    if (changelog.isBreakingChange) {
-      continue;
-    }
-    if (!groupedChangelogs[changelog.type]) {
-      groupedChangelogs[changelog.type] = [];
-    }
-    groupedChangelogs[changelog.type].push(changelog);
-  }
-  const sortedTypes = Object.keys(groupedChangelogs).sort(
-    (a, b) => TYPE_TO_CHANGELOG_TYPE[a].sort - TYPE_TO_CHANGELOG_TYPE[b].sort
-  );
-  for (const sortedType of sortedTypes) {
-    const changelogs2 = groupedChangelogs[sortedType];
-    const changelogType = TYPE_TO_CHANGELOG_TYPE[sortedType];
-    markdown += `### ${changelogType.emoji} ${changelogType.displayName}
-`;
-    for (const changelog of changelogs2) {
-      markdown += `- ${changelog.description}
-`;
-    }
-    markdown += "\n";
-  }
-  if (packageChangelogs.length === 0) {
-    markdown += `\u{1F4E6} Updated due to dependency changes`;
-  }
-  return markdown.trim();
 }
 function replaceChangelogSection(newVersion, newChangelogContent, existingChangelogContent) {
   const versionHeader = `## ${newVersion}

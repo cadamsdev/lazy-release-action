@@ -3,15 +3,10 @@ import {
   appendReleaseIdToMarkdown,
   Changelog,
   CONVENTIONAL_COMMITS_PATTERN,
-  createChangelogFromChangelogItem,
   extractCommitType,
   extractCommitTypeParts,
   extractDescription,
-  generateChangelogContent,
   generateMarkdown,
-  getChangelogFromCommits,
-  getChangelogItems,
-  getChangelogSectionFromCommitMessage,
   getDirectoryNameFromPath,
   getPackageNameWithoutScope,
   getPullRequestUrl,
@@ -24,70 +19,9 @@ import {
   TYPE_TO_CHANGELOG_TYPE,
   updateChangelog,
 } from './utils';
-import { Commit, PackageInfo } from '.';
+import { PackageInfo } from '.';
 
 describe('generateMarkdown', () => {
-  it('should generate markdown for a given changeset map', async () => {
-    const commitMsg = `
-## Changelog
-
-- feat(ui-components): Added new responsive table component 
-\`\`\`html
-<ds-table>
-   ...
-</ds-table>
-\`\`\`
-- fix(ui-components): Resolved button focus state accessibility issue
-- refactor(api-client!): Completely rewrote authentication flow
-- chore(api-client): Updated dependencies and improved test coverage
-- fix(utils): Corrected date formatting in exported reports
-- chore(utils): Removed unused helper functions    
-`;
-
-    const changelogSection = await getChangelogSectionFromCommitMessage(
-      commitMsg
-    );
-
-    const expectedChangelogSection = `- feat(ui-components): Added new responsive table component 
-\`\`\`html
-<ds-table>
-   ...
-</ds-table>
-\`\`\`
-- fix(ui-components): Resolved button focus state accessibility issue
-- refactor(api-client!): Completely rewrote authentication flow
-- chore(api-client): Updated dependencies and improved test coverage
-- fix(utils): Corrected date formatting in exported reports
-- chore(utils): Removed unused helper functions`;
-
-    expect(changelogSection).toBe(expectedChangelogSection);
-  });
-
-  it('should return an array of changelog items', async () => {
-    const commitMsg = `
-## Changelog
-
-- feat(ui-components): Added new responsive table component 
-\`\`\`html
-<ds-table>
-   ...
-</ds-table>
-\`\`\`
-- fix(ui-components): Resolved button focus state accessibility issue
-- refactor(api-client!): Completely rewrote authentication flow
-- chore(api-client): Updated dependencies and improved test coverage
-- fix(utils): Corrected date formatting in exported reports
-- chore(utils): Removed unused helper functions    
-`;
-
-    const changelogSection = await getChangelogSectionFromCommitMessage(
-      commitMsg
-    );
-
-    const changelogItems = getChangelogItems(changelogSection);
-    expect(changelogItems.length).toEqual(6);
-  });
-
   it('should extract the commit type from a changlog item', () => {
     const item = 'feat(ui-components): Added new responsive table component';
     const commitType = extractCommitType(item);
@@ -132,39 +66,6 @@ describe('generateMarkdown', () => {
       const { type } = extractCommitTypeParts(commitType);
       expect(type).toEqual('feat');
     });
-  });
-
-  it('should extract changelogs from commit messages', async () => {
-    process.env.GITHUB_REPOSITORY = 'test-owner/test-repo';
-
-    const commits: Commit[] = [
-      {
-        hash: '123456',
-        message: `## Changelog
-      - feat(package-a): Some description
-      - chore(package-a,package-b): Some description 2`,
-      },
-    ];
-
-    const changelog = getChangelogFromCommits(commits);
-    const expectedChangelog: Changelog[] = [
-      {
-        type: 'feat',
-        description: 'Some description',
-        semverBump: 'minor',
-        isBreakingChange: false,
-        packages: ['package-a'],
-      },
-      {
-        type: 'chore',
-        description: 'Some description 2',
-        semverBump: 'patch',
-        isBreakingChange: false,
-        packages: ['package-a', 'package-b'],
-      },
-    ];
-
-    expect(changelog).toEqual(expectedChangelog);
   });
 
   it('should generate markdown for changelog', () => {
@@ -556,128 +457,10 @@ describe('generateMarkdown', () => {
     expect(getTagName(pkgInfo)).toEqual('v1.0.0');
   });
 
-  it('should generate changelog markdown', () => {
-    const pkgInfo: PackageInfo = {
-      name: 'some-package',
-      version: '1.0.0',
-      newVersion: '1.0.1',
-      isRoot: false,
-      isPrivate: false,
-      path: '',
-      dependencies: [],
-    };
-
-    const changelogs: Changelog[] =[
-      {
-        type: 'feat',
-        description: 'Added new feature',
-        semverBump: 'minor',
-        isBreakingChange: false,
-        packages: ['some-package'],
-      },
-      {
-        type: 'fix',
-        description: 'Fixed a bug',
-        semverBump: 'patch',
-        isBreakingChange: false,
-        packages: ['some-package'],
-      },
-    ]
-
-    const markdown = generateChangelogContent(pkgInfo, changelogs, new Date('2025-06-29'));
-    const expectedMarkdown = `## 1.0.1 (2025-06-29)
-
-### 🚀 New Features
-- Added new feature
-
-### 🐛 Bug Fixes
-- Fixed a bug`;
-
-    expect(markdown).toEqual(expectedMarkdown);
-  });
-
-  it('should generate changelog markdown using directory name', () => {
-    const pkgInfo: PackageInfo = {
-      name: '@cadamsdev/atlas-components',
-      version: '0.0.6',
-      newVersion: '0.1.0',
-      path: 'packages/components/package.json',
-      isRoot: false,
-      isPrivate: false,
-      dependencies: [],
-    };
-
-    const changelogs: Changelog[] = [
-      {
-        type: 'chore',
-        description:
-          'Test 28 ([#47](https://github.com/cadamsdev/ds-web-2/pull/47))',
-        packages: ['components'],
-        isBreakingChange: false,
-        semverBump: 'patch',
-      },
-      {
-        type: 'chore',
-        description:
-          'Test 27 ([#46](https://github.com/cadamsdev/ds-web-2/pull/46))',
-        packages: ['components'],
-        isBreakingChange: false,
-        semverBump: 'patch',
-      },
-      {
-        type: 'chore',
-        description:
-          'Test 26 ([#44](https://github.com/cadamsdev/ds-web-2/pull/44))',
-        packages: ['components'],
-        isBreakingChange: false,
-        semverBump: 'patch',
-      },
-      {
-        type: 'feat',
-        description:
-          'Test 25 ([#42](https://github.com/cadamsdev/ds-web-2/pull/42))',
-        packages: ['components'],
-        isBreakingChange: false,
-        semverBump: 'minor',
-      },
-    ];
-
-    const markdown = generateChangelogContent(
-      pkgInfo,
-      changelogs,
-      new Date('2025-07-04')
-    );
-
-    const expectedMarkdown = `## 0.1.0 (2025-07-04)
-
-### 🚀 New Features
-- Test 25 ([#42](https://github.com/cadamsdev/ds-web-2/pull/42))
-
-### 🏠 Chores
-- Test 28 ([#47](https://github.com/cadamsdev/ds-web-2/pull/47))
-- Test 27 ([#46](https://github.com/cadamsdev/ds-web-2/pull/46))
-- Test 26 ([#44](https://github.com/cadamsdev/ds-web-2/pull/44))`;
-
-    expect(markdown).toEqual(expectedMarkdown);
-  });
-
   it('should get directory name from a file path', () => {
     const filePath = 'src/packages/components/package.json';
     expect(getDirectoryNameFromPath(filePath)).toEqual('components');
   });
-
-  it('should create changelog from PR title', () => {
-    const prTitle = 'feat(components): test using directory name';
-    const changelog = createChangelogFromChangelogItem(prTitle);
-    const expectedChangelog: Changelog = {
-      type: 'feat',
-      description: 'Test using directory name',
-      semverBump: 'minor',
-      isBreakingChange: false,
-      packages: ['components'],
-    };
-    expect(changelog).toEqual(expectedChangelog);
-  }); 
 
   it('should remove Release PR comment from markdown', () => {
     const markdown = `## Changelog
