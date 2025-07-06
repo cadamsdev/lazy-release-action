@@ -24,19 +24,12 @@ export const TYPE_TO_CHANGELOG_TYPE: Record<string, ChangelogType> = {
   revert: { emoji: '⏪', displayName: 'Reverts', sort: 10 },
 };
 
-export const CONVENTIONAL_COMMITS_PATTERN =
-  /^(feat|fix|perf|chore|docs|style|test|build|ci|revert)(!)?(\(([a-z-0-9]+)(,\s*[a-z-0-9]+)*\))?(!)?: .+/; // https://regexr.com/8flmk
-
 export const COMMIT_TYPE_PATTERN =
   /^(feat|fix|perf|chore|docs|style|test|build|ci|revert)(\(([^)]+)\))?(!)?$/;
 
 export function getDirectoryNameFromPath(filePath: string): string {
   const parts = filePath.split('/');
   return parts[parts.length - 2];
-}
-
-export function isPRTitleValid(prTitle: string): boolean {
-  return CONVENTIONAL_COMMITS_PATTERN.test(prTitle);
 }
 
 export function getChangelogItems(changelogSection: string): string[] {

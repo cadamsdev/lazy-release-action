@@ -12,7 +12,6 @@ import { DEFAULT_BRANCH, GITHUB_TOKEN, NPM_TOKEN, SNAPSHOTS_ENABLED } from './co
 import {
   appendReleaseIdToMarkdown,
   Changelog,
-  CONVENTIONAL_COMMITS_PATTERN,
   createChangelogFromChangelogItem,
   getChangelogFromMarkdown,
   getDirectoryNameFromPath,
@@ -21,7 +20,6 @@ import {
   getTagName,
   getVersionPrefix,
   increaseHeadingLevel,
-  isPRTitleValid,
   parseReleasePRBody,
   RELEASE_ID,
   ReleasePackageInfo,
@@ -42,6 +40,7 @@ import { generateChangelogContent, getChangelogFromCommits } from './utils/chang
 import { PackageInfo } from './types';
 import { getPackageInfos } from './utils/package';
 import { generateMarkdown } from './utils/markdown';
+import { CONVENTIONAL_COMMITS_PATTERN, isPRTitleValid } from './utils/validation';
 
 const RELEASE_BRANCH = 'lazy-release/main';
 const PR_COMMENT_STATUS_ID = 'b3da20ce-59b6-4bbd-a6e3-6d625f45d008';

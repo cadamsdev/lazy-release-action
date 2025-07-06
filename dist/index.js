@@ -28295,14 +28295,10 @@ var TYPE_TO_CHANGELOG_TYPE = {
   ci: { emoji: "\u{1F916}", displayName: "Automation", sort: 9 },
   revert: { emoji: "\u23EA", displayName: "Reverts", sort: 10 }
 };
-var CONVENTIONAL_COMMITS_PATTERN = /^(feat|fix|perf|chore|docs|style|test|build|ci|revert)(!)?(\(([a-z-0-9]+)(,\s*[a-z-0-9]+)*\))?(!)?: .+/;
 var COMMIT_TYPE_PATTERN = /^(feat|fix|perf|chore|docs|style|test|build|ci|revert)(\(([^)]+)\))?(!)?$/;
 function getDirectoryNameFromPath(filePath) {
   const parts = filePath.split("/");
   return parts[parts.length - 2];
-}
-function isPRTitleValid(prTitle) {
-  return CONVENTIONAL_COMMITS_PATTERN.test(prTitle);
 }
 function getChangelogItems(changelogSection) {
   const lines = changelogSection.split("- ");
@@ -29246,6 +29242,12 @@ function generateMarkdown(changedPackageInfos, indirectPackageInfos, changelogs)
 `;
   });
   return markdown;
+}
+
+// src/utils/validation.ts
+var CONVENTIONAL_COMMITS_PATTERN = /^(feat|fix|perf|chore|docs|style|test|build|ci|revert)(!)?(\(([a-z-0-9]+)(,\s*[a-z-0-9]+)*\))?(!)?: .+/;
+function isPRTitleValid(prTitle) {
+  return CONVENTIONAL_COMMITS_PATTERN.test(prTitle);
 }
 
 // src/index.ts
