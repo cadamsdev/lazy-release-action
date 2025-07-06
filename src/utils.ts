@@ -1,6 +1,6 @@
 import { context } from "@actions/github";
-import { PackageInfo } from ".";
 import { getChangelogSectionFromCommitMessage } from "./utils/changelog";
+import { PackageInfo } from "./types";
 
 export const RELEASE_ID = 'ebe18c5c-b9c6-4fca-8b11-90bf80ad229e';
 

@@ -19,7 +19,7 @@ import {
   TYPE_TO_CHANGELOG_TYPE,
   updateChangelog,
 } from './utils';
-import { PackageInfo } from '.';
+import { PackageInfo } from './types';
 
 describe('generateMarkdown', () => {
   it('should extract the commit type from a changlog item', () => {

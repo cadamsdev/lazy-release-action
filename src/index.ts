@@ -40,6 +40,8 @@ import { resolveCommand } from 'package-manager-detector/commands';
 import { setOutput } from '@actions/core';
 import { context } from '@actions/github';
 import { generateChangelogContent, getChangelogFromCommits } from './utils/changelog';
+import { PackageInfo } from './types';
+import { getPackageInfos } from './utils/package';
 
 const RELEASE_BRANCH = 'lazy-release/main';
 const PR_COMMENT_STATUS_ID = 'b3da20ce-59b6-4bbd-a6e3-6d625f45d008';
@@ -896,39 +898,6 @@ function bumpIndirectPackageVersion(pkgInfo: PackageInfo): void {
   pkgInfo.newVersion = getNewVersion(pkgInfo.version, 'patch');
 }
 
-export function getPackageInfos(packagePaths: string[]): PackageInfo[] {
-  const packageInfos = packagePaths.map((packagePath) =>
-    getPackageInfo(packagePath)
-  );
-
-  // find dependencies for each package
-  packageInfos.forEach((pkgInfo) => {
-    const packageJsonString = readFileSync(pkgInfo.path, 'utf-8');
-    const packageJson = JSON.parse(packageJsonString);
-
-    const allDeps = new Set<string>();
-
-    // Collect all types of dependencies
-    const dependencyFields = [
-      'dependencies',
-      'devDependencies',
-      'peerDependencies',
-      'optionalDependencies',
-    ];
-    for (const field of dependencyFields) {
-      if (packageJson[field]) {
-        Object.keys(packageJson[field]).forEach((dep) => allDeps.add(dep));
-      }
-    }
-
-    // Filter to only include workspace packages
-    pkgInfo.dependencies = packageInfos
-      .filter((p) => p.name !== pkgInfo.name && allDeps.has(p.name))
-      .map((p) => p.name);
-  });
-  return packageInfos;
-}
-
 async function updatePackageLockFiles(dirPath = ''): Promise<void> {
   const pm = await detect();
 
@@ -1180,30 +1149,4 @@ export function getPackagePaths(): string[] {
 
   console.log('getPackagePaths', packagePaths);
   return packagePaths;
-}
-
-export interface PackageInfo {
-  name: string;
-  version: string;
-  newVersion?: string;
-  path: string;
-  isRoot: boolean;
-  isPrivate: boolean;
-  dependencies: string[];
-}
-
-export function getPackageInfo(packagePath: string): PackageInfo {
-  const packageJsonString = readFileSync(packagePath, 'utf-8');
-  const packageJson = JSON.parse(packageJsonString);
-
-  const packageInfo: PackageInfo = {
-    name: packageJson.name,
-    version: packageJson.version,
-    path: packagePath,
-    isRoot: packagePath === 'package.json',
-    isPrivate: packageJson.private || false,
-    dependencies: [],
-  };
-
-  return packageInfo;
 }

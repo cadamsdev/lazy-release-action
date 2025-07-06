@@ -1,4 +1,5 @@
-import { Commit, PackageInfo } from "..";
+import { Commit } from "..";
+import { PackageInfo } from "../types";
 import { Changelog, createChangelogFromChangelogItem, getChangelogDate, getChangelogItems, getDirectoryNameFromPath, getPackageNameWithoutScope, TYPE_TO_CHANGELOG_TYPE } from "../utils";
 
 const DATE_NOW = new Date();

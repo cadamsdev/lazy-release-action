@@ -28056,8 +28056,6 @@ __export(index_exports, {
   getChangedPackageInfos: () => getChangedPackageInfos,
   getChangedPackages: () => getChangedPackages,
   getNewVersion: () => getNewVersion,
-  getPackageInfo: () => getPackageInfo,
-  getPackageInfos: () => getPackageInfos,
   getPackagePaths: () => getPackagePaths,
   updatePackageJsonFile: () => updatePackageJsonFile
 });
@@ -28815,7 +28813,7 @@ function globSync(patternsOrOptions, options) {
 }
 
 // src/index.ts
-var import_fs = require("fs");
+var import_fs2 = require("fs");
 var import_semver = __toESM(require_semver2());
 
 // src/api/github.ts
@@ -29208,6 +29206,47 @@ function constructCommand(value, args) {
 // src/index.ts
 var import_core = __toESM(require_core());
 var import_github3 = __toESM(require_github());
+
+// src/utils/package.ts
+var import_fs = require("fs");
+function getPackageInfo(packagePath) {
+  const packageJsonString = (0, import_fs.readFileSync)(packagePath, "utf-8");
+  const packageJson = JSON.parse(packageJsonString);
+  const packageInfo = {
+    name: packageJson.name,
+    version: packageJson.version,
+    path: packagePath,
+    isRoot: packagePath === "package.json",
+    isPrivate: packageJson.private || false,
+    dependencies: []
+  };
+  return packageInfo;
+}
+function getPackageInfos(packagePaths) {
+  const packageInfos = packagePaths.map(
+    (packagePath) => getPackageInfo(packagePath)
+  );
+  packageInfos.forEach((pkgInfo) => {
+    const packageJsonString = (0, import_fs.readFileSync)(pkgInfo.path, "utf-8");
+    const packageJson = JSON.parse(packageJsonString);
+    const allDeps = /* @__PURE__ */ new Set();
+    const dependencyFields = [
+      "dependencies",
+      "devDependencies",
+      "peerDependencies",
+      "optionalDependencies"
+    ];
+    for (const field of dependencyFields) {
+      if (packageJson[field]) {
+        Object.keys(packageJson[field]).forEach((dep) => allDeps.add(dep));
+      }
+    }
+    pkgInfo.dependencies = packageInfos.filter((p) => p.name !== pkgInfo.name && allDeps.has(p.name)).map((p) => p.name);
+  });
+  return packageInfos;
+}
+
+// src/index.ts
 var RELEASE_BRANCH = "lazy-release/main";
 var PR_COMMENT_STATUS_ID = "b3da20ce-59b6-4bbd-a6e3-6d625f45d008";
 var RELEASE_PR_TITLE = "Version Packages";
@@ -29292,7 +29331,7 @@ async function createSnapshot(changedPkgInfos) {
 async function createPackageSnapshot(pkgInfo, allPkgInfos) {
   console.log(`Creating snapshot for package: ${pkgInfo.name}`);
   const dirPath = toDirectoryPath(pkgInfo.path);
-  if (!pkgInfo.isRoot && !(0, import_fs.existsSync)(dirPath)) {
+  if (!pkgInfo.isRoot && !(0, import_fs2.existsSync)(dirPath)) {
     console.warn(`Directory ${dirPath} does not exist, skipping snapshot.`);
     return;
   }
@@ -29301,11 +29340,11 @@ async function createPackageSnapshot(pkgInfo, allPkgInfos) {
     throw new Error("No package manager detected");
   }
   const packageJsonPath = (0, import_path2.join)(dirPath, "package.json");
-  if (!(0, import_fs.existsSync)(packageJsonPath)) {
+  if (!(0, import_fs2.existsSync)(packageJsonPath)) {
     console.warn(`Package.json file not found in ${dirPath}, skipping snapshot.`);
     return;
   }
-  const packageJson = JSON.parse((0, import_fs.readFileSync)(packageJsonPath, "utf-8"));
+  const packageJson = JSON.parse((0, import_fs2.readFileSync)(packageJsonPath, "utf-8"));
   if (packageJson.private) {
     console.warn(`Package ${pkgInfo.name} is private, skipping snapshot.`);
     return;
@@ -29743,7 +29782,7 @@ function updateIndirectPackageJsonFile(pkgInfo, allPackageInfos) {
     return;
   }
   const packageJsonPath = pkgInfo.path;
-  let packageJsonString = (0, import_fs.readFileSync)(packageJsonPath, "utf-8");
+  let packageJsonString = (0, import_fs2.readFileSync)(packageJsonPath, "utf-8");
   const packageJson = JSON.parse(packageJsonString);
   packageJson.version = pkgInfo.newVersion;
   const dependencyFields = [
@@ -29774,7 +29813,7 @@ function updateIndirectPackageJsonFile(pkgInfo, allPackageInfos) {
   allPackageInfos.forEach((otherPkg) => {
     updateDependentPackages(pkgInfo, otherPkg);
   });
-  (0, import_fs.writeFileSync)(
+  (0, import_fs2.writeFileSync)(
     packageJsonPath,
     JSON.stringify(packageJson, null, 2) + "\n",
     "utf-8"
@@ -29788,7 +29827,7 @@ function updateDependentPackages(indirectPkgInfo, otherPkg) {
     `Updating dependent package ${otherPkg.name} for indirect package ${indirectPkgInfo.name}`
   );
   const otherPackageJsonPath = otherPkg.path;
-  let otherPackageJsonString = (0, import_fs.readFileSync)(otherPackageJsonPath, "utf-8");
+  let otherPackageJsonString = (0, import_fs2.readFileSync)(otherPackageJsonPath, "utf-8");
   const otherPackageJson = JSON.parse(otherPackageJsonString);
   const dependencyFields = [
     "dependencies",
@@ -29815,7 +29854,7 @@ function updateDependentPackages(indirectPkgInfo, otherPkg) {
       }
     }
   }
-  (0, import_fs.writeFileSync)(
+  (0, import_fs2.writeFileSync)(
     otherPackageJsonPath,
     JSON.stringify(otherPackageJson, null, 2) + "\n",
     "utf-8"
@@ -29823,29 +29862,6 @@ function updateDependentPackages(indirectPkgInfo, otherPkg) {
 }
 function bumpIndirectPackageVersion(pkgInfo) {
   pkgInfo.newVersion = getNewVersion(pkgInfo.version, "patch");
-}
-function getPackageInfos(packagePaths) {
-  const packageInfos = packagePaths.map(
-    (packagePath) => getPackageInfo(packagePath)
-  );
-  packageInfos.forEach((pkgInfo) => {
-    const packageJsonString = (0, import_fs.readFileSync)(pkgInfo.path, "utf-8");
-    const packageJson = JSON.parse(packageJsonString);
-    const allDeps = /* @__PURE__ */ new Set();
-    const dependencyFields = [
-      "dependencies",
-      "devDependencies",
-      "peerDependencies",
-      "optionalDependencies"
-    ];
-    for (const field of dependencyFields) {
-      if (packageJson[field]) {
-        Object.keys(packageJson[field]).forEach((dep) => allDeps.add(dep));
-      }
-    }
-    pkgInfo.dependencies = packageInfos.filter((p) => p.name !== pkgInfo.name && allDeps.has(p.name)).map((p) => p.name);
-  });
-  return packageInfos;
 }
 async function updatePackageLockFiles(dirPath = "") {
   const pm = await detect();
@@ -29874,8 +29890,8 @@ function createOrUpdateChangelog(packageInfo, changelogs) {
     `Generated changelog content for ${packageInfo.name}:
 ${changelogContent}`
   );
-  if ((0, import_fs.existsSync)(changelogFilePath)) {
-    const existingChangelogContent = (0, import_fs.readFileSync)(changelogFilePath, "utf-8");
+  if ((0, import_fs2.existsSync)(changelogFilePath)) {
+    const existingChangelogContent = (0, import_fs2.readFileSync)(changelogFilePath, "utf-8");
     console.log(
       `Existing changelog content for ${packageInfo.name}:
 ${existingChangelogContent}`
@@ -29888,12 +29904,12 @@ ${existingChangelogContent}`
     console.log(`Updating changelog file at ${changelogFilePath}`);
     console.log(`Updated changelog content:
 ${updatedChangelogContent}`);
-    (0, import_fs.writeFileSync)(changelogFilePath, updatedChangelogContent, "utf-8");
+    (0, import_fs2.writeFileSync)(changelogFilePath, updatedChangelogContent, "utf-8");
   } else {
     console.log(
       `Changelog file does not exist at ${changelogFilePath}, creating new one.`
     );
-    (0, import_fs.writeFileSync)(changelogFilePath, changelogContent, "utf-8");
+    (0, import_fs2.writeFileSync)(changelogFilePath, changelogContent, "utf-8");
   }
 }
 function updatePackageJsonFile(pkgInfo, allPkgInfos) {
@@ -29901,7 +29917,7 @@ function updatePackageJsonFile(pkgInfo, allPkgInfos) {
     return;
   }
   const packageJsonPath = pkgInfo.path;
-  let packageJsonString = (0, import_fs.readFileSync)(packageJsonPath, "utf-8");
+  let packageJsonString = (0, import_fs2.readFileSync)(packageJsonPath, "utf-8");
   const packageJson = JSON.parse(packageJsonString);
   packageJson.version = pkgInfo.newVersion;
   const dependencyFields = [
@@ -29931,7 +29947,7 @@ function updatePackageJsonFile(pkgInfo, allPkgInfos) {
   console.log(
     `Updating ${pkgInfo.name} to version ${pkgInfo.newVersion}`
   );
-  (0, import_fs.writeFileSync)(
+  (0, import_fs2.writeFileSync)(
     packageJsonPath,
     JSON.stringify(packageJson, null, 2) + "\n",
     "utf-8"
@@ -30027,27 +30043,12 @@ function getPackagePaths() {
   console.log("getPackagePaths", packagePaths);
   return packagePaths;
 }
-function getPackageInfo(packagePath) {
-  const packageJsonString = (0, import_fs.readFileSync)(packagePath, "utf-8");
-  const packageJson = JSON.parse(packageJsonString);
-  const packageInfo = {
-    name: packageJson.name,
-    version: packageJson.version,
-    path: packagePath,
-    isRoot: packagePath === "package.json",
-    isPrivate: packageJson.private || false,
-    dependencies: []
-  };
-  return packageInfo;
-}
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   applyNewVersion,
   getChangedPackageInfos,
   getChangedPackages,
   getNewVersion,
-  getPackageInfo,
-  getPackageInfos,
   getPackagePaths,
   updatePackageJsonFile
 });
