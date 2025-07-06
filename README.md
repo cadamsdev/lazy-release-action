@@ -12,6 +12,8 @@ If you enjoy this tool, please consider giving it a star ⭐️ on GitHub! Also 
 
 [see docs](/how-does-it-work)
 
+![diagram](/media/diagram.png)
+
 ## 📝 Setup
 
 1. Update pull request settings
