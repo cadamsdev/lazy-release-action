@@ -20,4 +20,3 @@
 | CI/CD integration            | ✅           | ✅                                                     | ✅                                                                       | ✅                                                     |
 | Pre-release support          | 🚧           | ✅                                                     | ✅                                                                       | ✅                                                     |
 | Conventional Commits         | ✅           | ✅                                                     | ✅                                                                       | ❌                                                     |
-| Zero configuration           | ✅           | ❌                                                     | ✅                                                                       | ❌                                                     |
