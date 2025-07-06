@@ -12499,13 +12499,13 @@ var require_headers = __commonJS({
     var HeadersList = class _HeadersList {
       /** @type {[string, string][]|null} */
       cookies = null;
-      constructor(init) {
-        if (init instanceof _HeadersList) {
-          this[kHeadersMap] = new Map(init[kHeadersMap]);
-          this[kHeadersSortedMap] = init[kHeadersSortedMap];
-          this.cookies = init.cookies === null ? null : [...init.cookies];
+      constructor(init2) {
+        if (init2 instanceof _HeadersList) {
+          this[kHeadersMap] = new Map(init2[kHeadersMap]);
+          this[kHeadersSortedMap] = init2[kHeadersSortedMap];
+          this.cookies = init2.cookies === null ? null : [...init2.cookies];
         } else {
-          this[kHeadersMap] = new Map(init);
+          this[kHeadersMap] = new Map(init2);
           this[kHeadersSortedMap] = null;
         }
       }
@@ -12577,15 +12577,15 @@ var require_headers = __commonJS({
       }
     };
     var Headers = class _Headers {
-      constructor(init = void 0) {
-        if (init === kConstruct) {
+      constructor(init2 = void 0) {
+        if (init2 === kConstruct) {
           return;
         }
         this[kHeadersList] = new HeadersList();
         this[kGuard] = "none";
-        if (init !== void 0) {
-          init = webidl.converters.HeadersInit(init);
-          fill(this, init);
+        if (init2 !== void 0) {
+          init2 = webidl.converters.HeadersInit(init2);
+          fill(this, init2);
         }
       }
       // https://fetch.spec.whatwg.org/#dom-headers-append
@@ -12855,10 +12855,10 @@ var require_response = __commonJS({
         return responseObject;
       }
       // https://fetch.spec.whatwg.org/#dom-response-json
-      static json(data, init = {}) {
+      static json(data, init2 = {}) {
         webidl.argumentLengthCheck(arguments, 1, { header: "Response.json" });
-        if (init !== null) {
-          init = webidl.converters.ResponseInit(init);
+        if (init2 !== null) {
+          init2 = webidl.converters.ResponseInit(init2);
         }
         const bytes = textEncoder.encode(
           serializeJavascriptValueToJSONString(data)
@@ -12869,7 +12869,7 @@ var require_response = __commonJS({
         responseObject[kRealm] = relevantRealm;
         responseObject[kHeaders][kGuard] = "response";
         responseObject[kHeaders][kRealm] = relevantRealm;
-        initializeResponse(responseObject, init, { body: body[0], type: "application/json" });
+        initializeResponse(responseObject, init2, { body: body[0], type: "application/json" });
         return responseObject;
       }
       // Creates a redirect Response that redirects to url with status status.
@@ -12899,11 +12899,11 @@ var require_response = __commonJS({
         return responseObject;
       }
       // https://fetch.spec.whatwg.org/#dom-response
-      constructor(body = null, init = {}) {
+      constructor(body = null, init2 = {}) {
         if (body !== null) {
           body = webidl.converters.BodyInit(body);
         }
-        init = webidl.converters.ResponseInit(init);
+        init2 = webidl.converters.ResponseInit(init2);
         this[kRealm] = { settingsObject: {} };
         this[kState] = makeResponse({});
         this[kHeaders] = new Headers(kConstruct);
@@ -12915,7 +12915,7 @@ var require_response = __commonJS({
           const [extractedBody, type] = extractBody(body);
           bodyWithType = { body: extractedBody, type };
         }
-        initializeResponse(this, init, bodyWithType);
+        initializeResponse(this, init2, bodyWithType);
       }
       // Returns response’s type, e.g., "cors".
       get type() {
@@ -13019,7 +13019,7 @@ var require_response = __commonJS({
       }
       return newResponse;
     }
-    function makeResponse(init) {
+    function makeResponse(init2) {
       return {
         aborted: false,
         rangeRequested: false,
@@ -13030,9 +13030,9 @@ var require_response = __commonJS({
         timingInfo: null,
         cacheState: "",
         statusText: "",
-        ...init,
-        headersList: init.headersList ? new HeadersList(init.headersList) : new HeadersList(),
-        urlList: init.urlList ? [...init.urlList] : []
+        ...init2,
+        headersList: init2.headersList ? new HeadersList(init2.headersList) : new HeadersList(),
+        urlList: init2.urlList ? [...init2.urlList] : []
       };
     }
     function makeNetworkError(reason) {
@@ -13095,23 +13095,23 @@ var require_response = __commonJS({
       assert(isCancelled(fetchParams));
       return isAborted(fetchParams) ? makeNetworkError(Object.assign(new DOMException2("The operation was aborted.", "AbortError"), { cause: err })) : makeNetworkError(Object.assign(new DOMException2("Request was cancelled."), { cause: err }));
     }
-    function initializeResponse(response, init, body) {
-      if (init.status !== null && (init.status < 200 || init.status > 599)) {
+    function initializeResponse(response, init2, body) {
+      if (init2.status !== null && (init2.status < 200 || init2.status > 599)) {
         throw new RangeError('init["status"] must be in the range of 200 to 599, inclusive.');
       }
-      if ("statusText" in init && init.statusText != null) {
-        if (!isValidReasonPhrase(String(init.statusText))) {
+      if ("statusText" in init2 && init2.statusText != null) {
+        if (!isValidReasonPhrase(String(init2.statusText))) {
           throw new TypeError("Invalid statusText");
         }
       }
-      if ("status" in init && init.status != null) {
-        response[kState].status = init.status;
+      if ("status" in init2 && init2.status != null) {
+        response[kState].status = init2.status;
       }
-      if ("statusText" in init && init.statusText != null) {
-        response[kState].statusText = init.statusText;
+      if ("statusText" in init2 && init2.statusText != null) {
+        response[kState].statusText = init2.statusText;
       }
-      if ("headers" in init && init.headers != null) {
-        fill(response[kHeaders], init.headers);
+      if ("headers" in init2 && init2.headers != null) {
+        fill(response[kHeaders], init2.headers);
       }
       if (body) {
         if (nullBodyStatus.includes(response.status)) {
@@ -13229,13 +13229,13 @@ var require_request2 = __commonJS({
     });
     var Request = class _Request {
       // https://fetch.spec.whatwg.org/#dom-request
-      constructor(input, init = {}) {
+      constructor(input, init2 = {}) {
         if (input === kConstruct) {
           return;
         }
         webidl.argumentLengthCheck(arguments, 1, { header: "Request constructor" });
         input = webidl.converters.RequestInfo(input);
-        init = webidl.converters.RequestInit(init);
+        init2 = webidl.converters.RequestInit(init2);
         this[kRealm] = {
           settingsObject: {
             baseUrl: getGlobalOrigin(),
@@ -13273,10 +13273,10 @@ var require_request2 = __commonJS({
         if (request.window?.constructor?.name === "EnvironmentSettingsObject" && sameOrigin(request.window, origin)) {
           window = request.window;
         }
-        if (init.window != null) {
+        if (init2.window != null) {
           throw new TypeError(`'window' option '${window}' must be null`);
         }
-        if ("window" in init) {
+        if ("window" in init2) {
           window = "no-window";
         }
         request = makeRequest({
@@ -13322,7 +13322,7 @@ var require_request2 = __commonJS({
           // URL list A clone of request’s URL list.
           urlList: [...request.urlList]
         });
-        const initHasKey = Object.keys(init).length !== 0;
+        const initHasKey = Object.keys(init2).length !== 0;
         if (initHasKey) {
           if (request.mode === "navigate") {
             request.mode = "same-origin";
@@ -13335,8 +13335,8 @@ var require_request2 = __commonJS({
           request.url = request.urlList[request.urlList.length - 1];
           request.urlList = [request.url];
         }
-        if (init.referrer !== void 0) {
-          const referrer = init.referrer;
+        if (init2.referrer !== void 0) {
+          const referrer = init2.referrer;
           if (referrer === "") {
             request.referrer = "no-referrer";
           } else {
@@ -13353,12 +13353,12 @@ var require_request2 = __commonJS({
             }
           }
         }
-        if (init.referrerPolicy !== void 0) {
-          request.referrerPolicy = init.referrerPolicy;
+        if (init2.referrerPolicy !== void 0) {
+          request.referrerPolicy = init2.referrerPolicy;
         }
         let mode;
-        if (init.mode !== void 0) {
-          mode = init.mode;
+        if (init2.mode !== void 0) {
+          mode = init2.mode;
         } else {
           mode = fallbackMode;
         }
@@ -13371,28 +13371,28 @@ var require_request2 = __commonJS({
         if (mode != null) {
           request.mode = mode;
         }
-        if (init.credentials !== void 0) {
-          request.credentials = init.credentials;
+        if (init2.credentials !== void 0) {
+          request.credentials = init2.credentials;
         }
-        if (init.cache !== void 0) {
-          request.cache = init.cache;
+        if (init2.cache !== void 0) {
+          request.cache = init2.cache;
         }
         if (request.cache === "only-if-cached" && request.mode !== "same-origin") {
           throw new TypeError(
             "'only-if-cached' can be set only with 'same-origin' mode"
           );
         }
-        if (init.redirect !== void 0) {
-          request.redirect = init.redirect;
+        if (init2.redirect !== void 0) {
+          request.redirect = init2.redirect;
         }
-        if (init.integrity != null) {
-          request.integrity = String(init.integrity);
+        if (init2.integrity != null) {
+          request.integrity = String(init2.integrity);
         }
-        if (init.keepalive !== void 0) {
-          request.keepalive = Boolean(init.keepalive);
+        if (init2.keepalive !== void 0) {
+          request.keepalive = Boolean(init2.keepalive);
         }
-        if (init.method !== void 0) {
-          let method = init.method;
+        if (init2.method !== void 0) {
+          let method = init2.method;
           if (!isValidHTTPToken(method)) {
             throw new TypeError(`'${method}' is not a valid HTTP method.`);
           }
@@ -13402,8 +13402,8 @@ var require_request2 = __commonJS({
           method = normalizeMethodRecord[method] ?? normalizeMethod(method);
           request.method = method;
         }
-        if (init.signal !== void 0) {
-          signal = init.signal;
+        if (init2.signal !== void 0) {
+          signal = init2.signal;
         }
         this[kState] = request;
         const ac = new AbortController();
@@ -13452,7 +13452,7 @@ var require_request2 = __commonJS({
         }
         if (initHasKey) {
           const headersList = this[kHeaders][kHeadersList];
-          const headers = init.headers !== void 0 ? init.headers : new HeadersList(headersList);
+          const headers = init2.headers !== void 0 ? init2.headers : new HeadersList(headersList);
           headersList.clear();
           if (headers instanceof HeadersList) {
             for (const [key, val] of headers) {
@@ -13464,13 +13464,13 @@ var require_request2 = __commonJS({
           }
         }
         const inputBody = input instanceof _Request ? input[kState].body : null;
-        if ((init.body != null || inputBody != null) && (request.method === "GET" || request.method === "HEAD")) {
+        if ((init2.body != null || inputBody != null) && (request.method === "GET" || request.method === "HEAD")) {
           throw new TypeError("Request with GET/HEAD method cannot have body.");
         }
         let initBody = null;
-        if (init.body != null) {
+        if (init2.body != null) {
           const [extractedBody, contentType] = extractBody(
-            init.body,
+            init2.body,
             request.keepalive
           );
           initBody = extractedBody;
@@ -13480,7 +13480,7 @@ var require_request2 = __commonJS({
         }
         const inputOrInitBody = initBody ?? inputBody;
         if (inputOrInitBody != null && inputOrInitBody.source == null) {
-          if (initBody != null && init.duplex == null) {
+          if (initBody != null && init2.duplex == null) {
             throw new TypeError("RequestInit: duplex option is required when sending a body.");
           }
           if (request.mode !== "same-origin" && request.mode !== "cors") {
@@ -13657,7 +13657,7 @@ var require_request2 = __commonJS({
       }
     };
     mixinBody(Request);
-    function makeRequest(init) {
+    function makeRequest(init2) {
       const request = {
         method: "GET",
         localURLsOnly: false,
@@ -13694,8 +13694,8 @@ var require_request2 = __commonJS({
         preventNoCacheCacheControlHeaderModification: false,
         done: false,
         timingAllowFailed: false,
-        ...init,
-        headersList: init.headersList ? new HeadersList(init.headersList) : new HeadersList()
+        ...init2,
+        headersList: init2.headersList ? new HeadersList(init2.headersList) : new HeadersList()
       };
       request.url = request.urlList[0];
       return request;
@@ -13926,12 +13926,12 @@ var require_fetch = __commonJS({
         this.emit("terminated", error);
       }
     };
-    function fetch(input, init = {}) {
+    function fetch(input, init2 = {}) {
       webidl.argumentLengthCheck(arguments, 1, { header: "globalThis.fetch" });
       const p = createDeferredPromise();
       let requestObject;
       try {
-        requestObject = new Request(input, init);
+        requestObject = new Request(input, init2);
       } catch (e) {
         p.reject(e);
         return p.promise;
@@ -13985,7 +13985,7 @@ var require_fetch = __commonJS({
         request,
         processResponseEndOfBody: handleFetchDone,
         processResponse,
-        dispatcher: init.dispatcher ?? getGlobalDispatcher()
+        dispatcher: init2.dispatcher ?? getGlobalDispatcher()
         // undici
       });
       return p.promise;
@@ -28072,6 +28072,7 @@ var import_child_process = require("child_process");
 var GITHUB_TOKEN = process.env["INPUT_GITHUB-TOKEN"] || "";
 var SNAPSHOTS_ENABLED = process.env["INPUT_SNAPSHOTS"] ? process.env["INPUT_SNAPSHOTS"] === "true" : false;
 var DEFAULT_BRANCH = process.env["INPUT_DEFAULT-BRANCH"] || "main";
+var NPM_TOKEN = process.env["INPUT_NPM-TOKEN"] || "";
 
 // src/api/git.ts
 function setupGitConfig() {
@@ -29202,7 +29203,7 @@ var RELEASE_BRANCH = "lazy-release/main";
 var PR_COMMENT_STATUS_ID = "b3da20ce-59b6-4bbd-a6e3-6d625f45d008";
 var RELEASE_PR_TITLE = "Version Packages";
 (async () => {
-  preRun();
+  init();
   if (import_github3.context.payload.pull_request?.merged) {
     checkoutBranch(DEFAULT_BRANCH);
     console.log(
@@ -29225,13 +29226,24 @@ var RELEASE_PR_TITLE = "Version Packages";
     await createOrUpdatePRStatusComment(true);
   }
 })();
-function preRun() {
+function init() {
   const version = (0, import_child_process2.execSync)("git --version")?.toString().trim();
   console.log(`git: ${version.replace("git version ", "")}`);
   const nodeVersion = (0, import_child_process2.execSync)("node --version")?.toString().trim();
   console.log(`node: ${nodeVersion}`);
   setupGitConfig();
+  setNpmConfig();
+}
+function setNpmConfig() {
+  console.log("Setting npm config...");
+  if (NPM_TOKEN) {
+    console.log("Setting npm token...");
+    (0, import_child_process2.execSync)(`npm config set //registry.npmjs.org/:_authToken=${NPM_TOKEN}`, {
+      stdio: "inherit"
+    });
+  }
   if (GITHUB_TOKEN) {
+    console.log("Setting GitHub token...");
     (0, import_child_process2.execSync)(
       `npm config set //npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}`,
       {

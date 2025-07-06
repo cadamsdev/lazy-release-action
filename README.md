@@ -139,6 +139,7 @@ jobs:
 | Input            | Type    | Default Value | Description                 |
 | ---------------- | ------- | ------------- | --------------------------- |
 | `github-token`   | string  | `''`          | GitHub authentication token |
+| `npm-token`      | string  | `''`          | NPM authentication token    |
 | `default-branch` | string  | `main`        | The repo's default branch   |
 | `snapshots`      | boolean | `false`       | Whether to create snapshots |
 

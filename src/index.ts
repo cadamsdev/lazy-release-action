@@ -8,7 +8,7 @@ import {
   hasUnstagedChanges,
   setupGitConfig,
 } from './api/git';
-import { DEFAULT_BRANCH, GITHUB_TOKEN, SNAPSHOTS_ENABLED } from './constants';
+import { DEFAULT_BRANCH, GITHUB_TOKEN, NPM_TOKEN, SNAPSHOTS_ENABLED } from './constants';
 import {
   appendReleaseIdToMarkdown,
   Changelog,
@@ -47,7 +47,7 @@ const PR_COMMENT_STATUS_ID = 'b3da20ce-59b6-4bbd-a6e3-6d625f45d008';
 const RELEASE_PR_TITLE = 'Version Packages';
 
 (async () => {
-  preRun();
+  init();
 
   if (context.payload.pull_request?.merged) {
     // checkout git branch
@@ -84,7 +84,7 @@ const RELEASE_PR_TITLE = 'Version Packages';
   }
 })();
 
-function preRun() {
+function init() {
   // print git version
   const version = execSync('git --version')?.toString().trim();
   console.log(`git: ${version.replace('git version ', '')}`);
@@ -94,8 +94,22 @@ function preRun() {
   console.log(`node: ${nodeVersion}`);
 
   setupGitConfig();
+  setNpmConfig();
+}
+
+function setNpmConfig() {
+  console.log('Setting npm config...');
+
+  if (NPM_TOKEN) {
+    // publish to npm
+    console.log('Setting npm token...');
+    execSync(`npm config set //registry.npmjs.org/:_authToken=${NPM_TOKEN}`, {
+      stdio: 'inherit',
+    });
+  }
 
   if (GITHUB_TOKEN) {
+    console.log('Setting GitHub token...');
     execSync(
       `npm config set //npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}`,
       {
