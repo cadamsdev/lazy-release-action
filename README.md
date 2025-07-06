@@ -122,24 +122,25 @@ jobs:
 | ------------- | ------------------------------------------------- |
 | 🚀 `feat`     | A new feature                                     |
 | 🐛 `fix`      | A bug fix                                         |
-| ⚡️ `perf`    | A code change that improves performance            |
+| ⚡️ `perf`    | A code change that improves performance           |
 | 🏠 `chore`    | Routine tasks and maintenance                     |
 | 📚 `docs`     | Documentation changes                             |
 | 🎨 `style`    | CSS changes                                       |
 | ♻️ `refactor` | A code refactor                                   |
 | ✅ `test`     | Adding missing tests or correcting existing tests |
 | 📦 `build`    | Changes that affect the build system              |
-| 🤖 `ci`       | Changes to CI configuration files                  |
+| 🤖 `ci`       | Changes to CI configuration files                 |
 | ⏪ `revert`   | Reverts a previous commit                         |
 
 ## 🔧 Customization
 
 ### Inputs
 
-| Input          | Type    | Default Value | Description                 |
-| -------------- | ------- | ------------- | --------------------------- |
-| `github-token` | string  | `''`          | GitHub authentication token |
-| `snapshots`    | boolean | `false`       | Whether to create snapshots |
+| Input          | Type    | Default Value | Description                  |
+| -------------- | ------- | ------------- | ---------------------------- |
+| `github-token` | string  | `''`          | GitHub authentication token  |
+| `base-branch`  | string  | `main`        | The base branch to sync with |
+| `snapshots`    | boolean | `false`       | Whether to create snapshots  |
 
 examples
 
