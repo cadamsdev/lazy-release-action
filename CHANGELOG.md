@@ -1,3 +1,19 @@
+## 0.4.0 (2025-07-06)
+
+### 🚀 New Features
+- Added outputs for the new package versions ([#16](https://github.com/cadamsdev/lazy-release-action/pull/16))
+
+### 🐛 Bug Fixes
+- Updating package.json dependency versions ([#15](https://github.com/cadamsdev/lazy-release-action/pull/15))
+- Versioning breaking changes for v0 ([#13](https://github.com/cadamsdev/lazy-release-action/pull/13))
+
+### 🏠 Chores
+- Added license ([#18](https://github.com/cadamsdev/lazy-release-action/pull/18))
+
+### 📖 Documentation
+- Updated README ([#17](https://github.com/cadamsdev/lazy-release-action/pull/17))
+
+
 ## 0.3.0 (2025-07-04)
 
 ### 🚀 New Features
