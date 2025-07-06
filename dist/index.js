@@ -18898,7 +18898,7 @@ var require_dist_node = __commonJS({
   "node_modules/universal-user-agent/dist-node/index.js"(exports2) {
     "use strict";
     Object.defineProperty(exports2, "__esModule", { value: true });
-    function getUserAgent() {
+    function getUserAgent2() {
       if (typeof navigator === "object" && "userAgent" in navigator) {
         return navigator.userAgent;
       }
@@ -18907,7 +18907,7 @@ var require_dist_node = __commonJS({
       }
       return "<environment undetectable>";
     }
-    exports2.getUserAgent = getUserAgent;
+    exports2.getUserAgent = getUserAgent2;
   }
 });
 
@@ -28057,11 +28057,13 @@ __export(index_exports, {
   getChangedPackages: () => getChangedPackages,
   getNewVersion: () => getNewVersion,
   getPackagePaths: () => getPackagePaths,
-  updatePackageJsonFile: () => updatePackageJsonFile
+  updateIndirectPackageJsonFile: () => updateIndirectPackageJsonFile,
+  updatePackageJsonFile: () => updatePackageJsonFile,
+  updatePackageLockFiles: () => updatePackageLockFiles
 });
 module.exports = __toCommonJS(index_exports);
 var import_exec = __toESM(require_exec());
-var import_child_process2 = require("child_process");
+var import_child_process3 = require("child_process");
 
 // src/api/git.ts
 var import_child_process = require("child_process");
@@ -28737,7 +28739,7 @@ function globSync(patternsOrOptions, options) {
 }
 
 // src/index.ts
-var import_fs2 = require("fs");
+var import_fs3 = require("fs");
 var import_semver = __toESM(require_semver2());
 
 // src/api/github.ts
@@ -28838,7 +28840,7 @@ async function createPRComment(markdown) {
 }
 
 // src/index.ts
-var import_path2 = require("path");
+var import_path3 = require("path");
 
 // node_modules/package-manager-detector/dist/detect.mjs
 var import_promises = __toESM(require("node:fs/promises"), 1);
@@ -29250,73 +29252,10 @@ function isPRTitleValid(prTitle) {
   return CONVENTIONAL_COMMITS_PATTERN.test(prTitle);
 }
 
-// src/index.ts
-var RELEASE_BRANCH = "lazy-release/main";
-var PR_COMMENT_STATUS_ID = "b3da20ce-59b6-4bbd-a6e3-6d625f45d008";
-var RELEASE_PR_TITLE = "Version Packages";
-(async () => {
-  init();
-  if (import_github3.context.payload.pull_request?.merged) {
-    checkoutBranch(DEFAULT_BRANCH);
-    console.log(
-      `Pull request #${import_github3.context.payload.pull_request.number} has been merged.`
-    );
-    const isRelease = await isLastCommitAReleaseCommit();
-    if (isRelease) {
-      await publish();
-      return;
-    }
-    await createOrUpdateReleasePR();
-  } else if (!import_github3.context.payload.pull_request?.merged) {
-    console.log(
-      `Pull request #${import_github3.context.payload.pull_request?.number} is not merged yet.`
-    );
-    if (!isPRTitleValid(PR_TITLE) && PR_TITLE !== RELEASE_PR_TITLE) {
-      await createOrUpdatePRStatusComment(false);
-      throw new Error(`Invalid pull request title: ${PR_TITLE}`);
-    }
-    await createOrUpdatePRStatusComment(true);
-  }
-})();
-function init() {
-  const version = (0, import_child_process2.execSync)("git --version")?.toString().trim();
-  console.log(`git: ${version.replace("git version ", "")}`);
-  const nodeVersion = (0, import_child_process2.execSync)("node --version")?.toString().trim();
-  console.log(`node: ${nodeVersion}`);
-  setupGitConfig();
-  setNpmConfig();
-}
-function setNpmConfig() {
-  console.log("Setting npm config...");
-  if (NPM_TOKEN) {
-    console.log("Setting npm token...");
-    (0, import_child_process2.execSync)(`npm config set //registry.npmjs.org/:_authToken=${NPM_TOKEN}`, {
-      stdio: "inherit"
-    });
-  }
-  if (GITHUB_TOKEN) {
-    console.log("Setting GitHub token...");
-    (0, import_child_process2.execSync)(
-      `npm config set //npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}`,
-      {
-        stdio: "inherit"
-      }
-    );
-  }
-}
-async function isLastCommitAReleaseCommit() {
-  let lastCommit = "";
-  await (0, import_exec.exec)("git", ["log", "-1", "--pretty=format:%B"], {
-    listeners: {
-      stdout: (data) => {
-        lastCommit = data.toString().trim();
-      }
-    },
-    silent: true
-  });
-  console.log(`lastCommit=${lastCommit}`);
-  return lastCommit.includes(RELEASE_ID);
-}
+// src/core/snapshots.ts
+var import_fs2 = require("fs");
+var import_path2 = require("path");
+var import_child_process2 = require("child_process");
 async function createSnapshot(changedPkgInfos) {
   if (!SNAPSHOTS_ENABLED) {
     console.log("Snapshots are disabled, skipping snapshot creation.");
@@ -29368,6 +29307,74 @@ async function createPackageSnapshot(pkgInfo, allPkgInfos) {
     packageName: pkgInfo.name,
     newVersion
   };
+}
+
+// src/index.ts
+var RELEASE_BRANCH = "lazy-release/main";
+var PR_COMMENT_STATUS_ID = "b3da20ce-59b6-4bbd-a6e3-6d625f45d008";
+var RELEASE_PR_TITLE = "Version Packages";
+(async () => {
+  init();
+  if (import_github3.context.payload.pull_request?.merged) {
+    checkoutBranch(DEFAULT_BRANCH);
+    console.log(
+      `Pull request #${import_github3.context.payload.pull_request.number} has been merged.`
+    );
+    const isRelease = await isLastCommitAReleaseCommit();
+    if (isRelease) {
+      await publish();
+      return;
+    }
+    await createOrUpdateReleasePR();
+  } else if (!import_github3.context.payload.pull_request?.merged) {
+    console.log(
+      `Pull request #${import_github3.context.payload.pull_request?.number} is not merged yet.`
+    );
+    if (!isPRTitleValid(PR_TITLE) && PR_TITLE !== RELEASE_PR_TITLE) {
+      await createOrUpdatePRStatusComment(false);
+      throw new Error(`Invalid pull request title: ${PR_TITLE}`);
+    }
+    await createOrUpdatePRStatusComment(true);
+  }
+})();
+function init() {
+  const version = (0, import_child_process3.execSync)("git --version")?.toString().trim();
+  console.log(`git: ${version.replace("git version ", "")}`);
+  const nodeVersion = (0, import_child_process3.execSync)("node --version")?.toString().trim();
+  console.log(`node: ${nodeVersion}`);
+  setupGitConfig();
+  setNpmConfig();
+}
+function setNpmConfig() {
+  console.log("Setting npm config...");
+  if (NPM_TOKEN) {
+    console.log("Setting npm token...");
+    (0, import_child_process3.execSync)(`npm config set //registry.npmjs.org/:_authToken=${NPM_TOKEN}`, {
+      stdio: "inherit"
+    });
+  }
+  if (GITHUB_TOKEN) {
+    console.log("Setting GitHub token...");
+    (0, import_child_process3.execSync)(
+      `npm config set //npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}`,
+      {
+        stdio: "inherit"
+      }
+    );
+  }
+}
+async function isLastCommitAReleaseCommit() {
+  let lastCommit = "";
+  await (0, import_exec.exec)("git", ["log", "-1", "--pretty=format:%B"], {
+    listeners: {
+      stdout: (data) => {
+        lastCommit = data.toString().trim();
+      }
+    },
+    silent: true
+  });
+  console.log(`lastCommit=${lastCommit}`);
+  return lastCommit.includes(RELEASE_ID);
 }
 async function createOrUpdatePRStatusComment(shouldCreateSnapshot = false) {
   console.log("Creating or updating PR status comment...");
@@ -29564,7 +29571,7 @@ async function publishPackages(changedPkgInfos) {
     const fullPublishCommand = [pm.agent, "publish"].join(" ");
     try {
       console.log(`Running package manager command: ${fullPublishCommand}`);
-      (0, import_child_process2.execSync)(fullPublishCommand, {
+      (0, import_child_process3.execSync)(fullPublishCommand, {
         stdio: "inherit",
         cwd: dirPath
       });
@@ -29605,7 +29612,7 @@ function createTags(packageInfos) {
     }
     console.log(`Creating tag: ${tagName}`);
     try {
-      (0, import_child_process2.execSync)(`git tag -a ${tagName} -m "Release ${tagName}"`, {
+      (0, import_child_process3.execSync)(`git tag -a ${tagName} -m "Release ${tagName}"`, {
         stdio: "inherit"
       });
       tagsToCreate.push(tagName);
@@ -29620,7 +29627,7 @@ function createTags(packageInfos) {
   }
   console.log(`Pushing ${tagsToCreate.length} new tags...`);
   try {
-    (0, import_child_process2.execFileSync)("git", ["push", "--tags"], { stdio: "inherit" });
+    (0, import_child_process3.execFileSync)("git", ["push", "--tags"], { stdio: "inherit" });
     console.log("Tags pushed successfully.");
   } catch (error) {
     console.error("Failed to push tags:", error);
@@ -29786,7 +29793,7 @@ function updateIndirectPackageJsonFile(pkgInfo, allPackageInfos) {
     return;
   }
   const packageJsonPath = pkgInfo.path;
-  let packageJsonString = (0, import_fs2.readFileSync)(packageJsonPath, "utf-8");
+  let packageJsonString = (0, import_fs3.readFileSync)(packageJsonPath, "utf-8");
   const packageJson = JSON.parse(packageJsonString);
   packageJson.version = pkgInfo.newVersion;
   const dependencyFields = [
@@ -29817,7 +29824,7 @@ function updateIndirectPackageJsonFile(pkgInfo, allPackageInfos) {
   allPackageInfos.forEach((otherPkg) => {
     updateDependentPackages(pkgInfo, otherPkg);
   });
-  (0, import_fs2.writeFileSync)(
+  (0, import_fs3.writeFileSync)(
     packageJsonPath,
     JSON.stringify(packageJson, null, 2) + "\n",
     "utf-8"
@@ -29831,7 +29838,7 @@ function updateDependentPackages(indirectPkgInfo, otherPkg) {
     `Updating dependent package ${otherPkg.name} for indirect package ${indirectPkgInfo.name}`
   );
   const otherPackageJsonPath = otherPkg.path;
-  let otherPackageJsonString = (0, import_fs2.readFileSync)(otherPackageJsonPath, "utf-8");
+  let otherPackageJsonString = (0, import_fs3.readFileSync)(otherPackageJsonPath, "utf-8");
   const otherPackageJson = JSON.parse(otherPackageJsonString);
   const dependencyFields = [
     "dependencies",
@@ -29858,7 +29865,7 @@ function updateDependentPackages(indirectPkgInfo, otherPkg) {
       }
     }
   }
-  (0, import_fs2.writeFileSync)(
+  (0, import_fs3.writeFileSync)(
     otherPackageJsonPath,
     JSON.stringify(otherPackageJson, null, 2) + "\n",
     "utf-8"
@@ -29878,7 +29885,7 @@ async function updatePackageLockFiles(dirPath = "") {
   }
   const fullCommand = [rc.command, ...rc.args || []].join(" ");
   console.log(`Running package manager command: ${fullCommand}`);
-  (0, import_child_process2.execSync)(fullCommand, {
+  (0, import_child_process3.execSync)(fullCommand, {
     cwd: dirPath ? dirPath : void 0,
     stdio: "inherit"
   });
@@ -29888,14 +29895,14 @@ function createOrUpdateChangelog(packageInfo, changelogs) {
   console.log(
     `Creating or updating changelog for package: ${packageInfo.name} at ${dirPath}`
   );
-  const changelogFilePath = (0, import_path2.join)(dirPath, "CHANGELOG.md");
+  const changelogFilePath = (0, import_path3.join)(dirPath, "CHANGELOG.md");
   const changelogContent = generateChangelogContent(packageInfo, changelogs);
   console.log(
     `Generated changelog content for ${packageInfo.name}:
 ${changelogContent}`
   );
-  if ((0, import_fs2.existsSync)(changelogFilePath)) {
-    const existingChangelogContent = (0, import_fs2.readFileSync)(changelogFilePath, "utf-8");
+  if ((0, import_fs3.existsSync)(changelogFilePath)) {
+    const existingChangelogContent = (0, import_fs3.readFileSync)(changelogFilePath, "utf-8");
     console.log(
       `Existing changelog content for ${packageInfo.name}:
 ${existingChangelogContent}`
@@ -29908,12 +29915,12 @@ ${existingChangelogContent}`
     console.log(`Updating changelog file at ${changelogFilePath}`);
     console.log(`Updated changelog content:
 ${updatedChangelogContent}`);
-    (0, import_fs2.writeFileSync)(changelogFilePath, updatedChangelogContent, "utf-8");
+    (0, import_fs3.writeFileSync)(changelogFilePath, updatedChangelogContent, "utf-8");
   } else {
     console.log(
       `Changelog file does not exist at ${changelogFilePath}, creating new one.`
     );
-    (0, import_fs2.writeFileSync)(changelogFilePath, changelogContent, "utf-8");
+    (0, import_fs3.writeFileSync)(changelogFilePath, changelogContent, "utf-8");
   }
 }
 function updatePackageJsonFile(pkgInfo, allPkgInfos) {
@@ -29921,7 +29928,7 @@ function updatePackageJsonFile(pkgInfo, allPkgInfos) {
     return;
   }
   const packageJsonPath = pkgInfo.path;
-  let packageJsonString = (0, import_fs2.readFileSync)(packageJsonPath, "utf-8");
+  let packageJsonString = (0, import_fs3.readFileSync)(packageJsonPath, "utf-8");
   const packageJson = JSON.parse(packageJsonString);
   packageJson.version = pkgInfo.newVersion;
   const dependencyFields = [
@@ -29951,7 +29958,7 @@ function updatePackageJsonFile(pkgInfo, allPkgInfos) {
   console.log(
     `Updating ${pkgInfo.name} to version ${pkgInfo.newVersion}`
   );
-  (0, import_fs2.writeFileSync)(
+  (0, import_fs3.writeFileSync)(
     packageJsonPath,
     JSON.stringify(packageJson, null, 2) + "\n",
     "utf-8"
@@ -30054,7 +30061,9 @@ function getPackagePaths() {
   getChangedPackages,
   getNewVersion,
   getPackagePaths,
-  updatePackageJsonFile
+  updateIndirectPackageJsonFile,
+  updatePackageJsonFile,
+  updatePackageLockFiles
 });
 /*! Bundled license information:
 
