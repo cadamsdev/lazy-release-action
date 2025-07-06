@@ -3,6 +3,7 @@
 | Symbol | Description                                |
 | :----: | ------------------------------------------ |
 |   ✅   | Feature is supported                       |
+|   ❌   | Feature is not supported                   |
 |   🚧   | Feature is planned but not yet implemented |
 
 | Feature                      | Lazy Release | [Release It](https://github.com/release-it/release-it) |
