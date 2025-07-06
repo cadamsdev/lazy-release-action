@@ -406,6 +406,8 @@ const heading2Regex =
   /^## ((@[a-z]+)?(\/)?([\w-]+)@)?(\d+\.\d+\.\d+)➡️(\d+\.\d+\.\d+)(\n\n)?/;
 
   export function parseReleasePRBody(prBody: string): PackageChangelogEntry[] {
+    prBody = removeReleasePRComment(prBody);
+
     const changelogEntries: PackageChangelogEntry[] = [];
     const headings = Array.from(
       prBody.matchAll(new RegExp(heading2Regex, 'gm'))
@@ -429,6 +431,11 @@ const heading2Regex =
 
     return changelogEntries;
   };
+
+export function removeReleasePRComment(markdown: string): string {
+  const releaseIdComment = `<!-- Release PR: ${RELEASE_ID} -->`;
+  return markdown.replace(releaseIdComment, '').trim();
+}
 
 export function parseHeading2(heading: string): {
   packageName: string;
