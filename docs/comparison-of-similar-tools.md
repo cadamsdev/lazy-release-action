@@ -12,4 +12,5 @@
 | Publish packages to NPM      | 🚧           | ✅                                                     |
 | Creates GitHub Releases      | ✅           | ✅                                                     |
 | Creates changelogs           | ✅           | ✅                                                     |
-| Supports monorepos           | ✅           | ❌                                                     |
+| Supports multi-package repos | ✅           | ❌                                                     |
+| Creates snapshots            | ✅           | ❌                                                     |
