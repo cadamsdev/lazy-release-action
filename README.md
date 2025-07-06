@@ -118,19 +118,19 @@ jobs:
 
 ## 🏷️ Types
 
-| Type          | Description                                                   |
-| ------------- | ------------------------------------------------------------- |
-| 🚀 `feat`     | A new feature                                                 |
-| 🐛 `fix`      | A bug fix                                                     |
-| ⚡️ `perf`    | A code change that improves performance                       |
-| 🏠 `chore`    | Routine tasks and maintenance                                 |
-| 📚 `docs`     | Documentation changes                                         |
-| 🎨 `style`    | CSS changes                                                   |
-| ♻️ `refactor` | A code refactor                                               |
-| ✅ `test`     | Adding missing tests or correcting existing tests             |
-| 📦 `build`    | Changes that affect the build system or external dependencies |
-| 🤖 `ci`       | Changes to CI configuration files and scripts                 |
-| ⏪ `revert`   | Reverts a previous commit                                     |
+| Type          | Description                                       |
+| ------------- | ------------------------------------------------- |
+| 🚀 `feat`     | A new feature                                     |
+| 🐛 `fix`      | A bug fix                                         |
+| ⚡️ `perf`    | A code change that improves performance            |
+| 🏠 `chore`    | Routine tasks and maintenance                     |
+| 📚 `docs`     | Documentation changes                             |
+| 🎨 `style`    | CSS changes                                       |
+| ♻️ `refactor` | A code refactor                                   |
+| ✅ `test`     | Adding missing tests or correcting existing tests |
+| 📦 `build`    | Changes that affect the build system              |
+| 🤖 `ci`       | Changes to CI configuration files                  |
+| ⏪ `revert`   | Reverts a previous commit                         |
 
 ## 🔧 Customization
 
