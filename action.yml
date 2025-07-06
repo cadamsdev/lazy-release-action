@@ -9,9 +9,16 @@ inputs:
   github-token:
     description: "GitHub Token"
     required: true
+  npm-token:
+    description: "NPM Token"
+    required: false
   snapshots:
     description: "Create a snapshot release"
     required: false
+  default-branch:
+    description: "Default branch to use for the release"
+    required: false
+    default: 'main'
 
 runs:
   using: 'node20'
