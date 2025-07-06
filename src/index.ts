@@ -24,23 +24,22 @@ import {
   RELEASE_ID,
   ReleasePackageInfo,
   toDirectoryPath,
-  updateChangelog,
 } from './utils';
 import { globSync } from 'tinyglobby';
-import { existsSync, readFileSync, writeFileSync } from 'fs';
+import { readFileSync, writeFileSync } from 'fs';
 import * as githubApi from './api/github';
-import { join } from 'path';
 import { detect } from 'package-manager-detector/detect';
 import { resolveCommand } from 'package-manager-detector/commands';
 import { setOutput } from '@actions/core';
 import { context } from '@actions/github';
-import { generateChangelogContent, getChangelogFromCommits } from './utils/changelog';
+import { getChangelogFromCommits } from './utils/changelog';
 import { PackageInfo } from './types';
 import { getPackageInfos } from './utils/package';
 import { generateMarkdown } from './utils/markdown';
 import { CONVENTIONAL_COMMITS_PATTERN, isPRTitleValid } from './utils/validation';
 import { createSnapshot } from './core/snapshots';
 import { applyNewVersion, getNewVersion, updatePackageJsonFile } from './core/version';
+import { createOrUpdateChangelog } from './core/changelog';
 
 const RELEASE_BRANCH = 'lazy-release/main';
 const PR_COMMENT_STATUS_ID = 'b3da20ce-59b6-4bbd-a6e3-6d625f45d008';
@@ -843,50 +842,6 @@ export async function updatePackageLockFiles(dirPath = ''): Promise<void> {
     cwd: dirPath ? dirPath : undefined,
     stdio: 'inherit',
   });
-}
-
-function createOrUpdateChangelog(
-  packageInfo: PackageInfo,
-  changelogs: Changelog[]
-): void {
-  const dirPath = toDirectoryPath(packageInfo.path);
-
-  console.log(
-    `Creating or updating changelog for package: ${packageInfo.name} at ${dirPath}`
-  );
-
-  const changelogFilePath = join(dirPath, 'CHANGELOG.md');
-
-  // generate changelog content
-  const changelogContent = generateChangelogContent(packageInfo, changelogs);
-  console.log(
-    `Generated changelog content for ${packageInfo.name}:\n${changelogContent}`
-  );
-
-  // check if changelog file exists
-  if (existsSync(changelogFilePath)) {
-    // update changelog file
-    const existingChangelogContent = readFileSync(changelogFilePath, 'utf-8');
-    console.log(
-      `Existing changelog content for ${packageInfo.name}:\n${existingChangelogContent}`
-    );
-
-    const updatedChangelogContent = updateChangelog(
-      existingChangelogContent,
-      changelogContent,
-      packageInfo.newVersion
-    );
-    console.log(`Updating changelog file at ${changelogFilePath}`);
-    console.log(`Updated changelog content:\n${updatedChangelogContent}`);
-
-    writeFileSync(changelogFilePath, updatedChangelogContent, 'utf-8');
-  } else {
-    console.log(
-      `Changelog file does not exist at ${changelogFilePath}, creating new one.`
-    );
-    // create changelog file
-    writeFileSync(changelogFilePath, changelogContent, 'utf-8');
-  }
 }
 
 export function getChangedPackages(

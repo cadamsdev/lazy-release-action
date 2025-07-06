@@ -28736,7 +28736,7 @@ function globSync(patternsOrOptions, options) {
 }
 
 // src/index.ts
-var import_fs4 = require("fs");
+var import_fs5 = require("fs");
 
 // src/api/github.ts
 var import_github2 = __toESM(require_github());
@@ -28834,9 +28834,6 @@ async function createPRComment(markdown) {
     body: markdown
   });
 }
-
-// src/index.ts
-var import_path3 = require("path");
 
 // node_modules/package-manager-detector/dist/detect.mjs
 var import_promises = __toESM(require("node:fs/promises"), 1);
@@ -29384,6 +29381,43 @@ function updatePackageJsonFile(pkgInfo, allPkgInfos) {
   );
 }
 
+// src/core/changelog.ts
+var import_path3 = require("path");
+var import_fs4 = require("fs");
+function createOrUpdateChangelog(packageInfo, changelogs) {
+  const dirPath = toDirectoryPath(packageInfo.path);
+  console.log(
+    `Creating or updating changelog for package: ${packageInfo.name} at ${dirPath}`
+  );
+  const changelogFilePath = (0, import_path3.join)(dirPath, "CHANGELOG.md");
+  const changelogContent = generateChangelogContent(packageInfo, changelogs);
+  console.log(
+    `Generated changelog content for ${packageInfo.name}:
+${changelogContent}`
+  );
+  if ((0, import_fs4.existsSync)(changelogFilePath)) {
+    const existingChangelogContent = (0, import_fs4.readFileSync)(changelogFilePath, "utf-8");
+    console.log(
+      `Existing changelog content for ${packageInfo.name}:
+${existingChangelogContent}`
+    );
+    const updatedChangelogContent = updateChangelog(
+      existingChangelogContent,
+      changelogContent,
+      packageInfo.newVersion
+    );
+    console.log(`Updating changelog file at ${changelogFilePath}`);
+    console.log(`Updated changelog content:
+${updatedChangelogContent}`);
+    (0, import_fs4.writeFileSync)(changelogFilePath, updatedChangelogContent, "utf-8");
+  } else {
+    console.log(
+      `Changelog file does not exist at ${changelogFilePath}, creating new one.`
+    );
+    (0, import_fs4.writeFileSync)(changelogFilePath, changelogContent, "utf-8");
+  }
+}
+
 // src/index.ts
 var RELEASE_BRANCH = "lazy-release/main";
 var PR_COMMENT_STATUS_ID = "b3da20ce-59b6-4bbd-a6e3-6d625f45d008";
@@ -29868,7 +29902,7 @@ function updateIndirectPackageJsonFile(pkgInfo, allPackageInfos) {
     return;
   }
   const packageJsonPath = pkgInfo.path;
-  let packageJsonString = (0, import_fs4.readFileSync)(packageJsonPath, "utf-8");
+  let packageJsonString = (0, import_fs5.readFileSync)(packageJsonPath, "utf-8");
   const packageJson = JSON.parse(packageJsonString);
   packageJson.version = pkgInfo.newVersion;
   const dependencyFields = [
@@ -29899,7 +29933,7 @@ function updateIndirectPackageJsonFile(pkgInfo, allPackageInfos) {
   allPackageInfos.forEach((otherPkg) => {
     updateDependentPackages(pkgInfo, otherPkg);
   });
-  (0, import_fs4.writeFileSync)(
+  (0, import_fs5.writeFileSync)(
     packageJsonPath,
     JSON.stringify(packageJson, null, 2) + "\n",
     "utf-8"
@@ -29913,7 +29947,7 @@ function updateDependentPackages(indirectPkgInfo, otherPkg) {
     `Updating dependent package ${otherPkg.name} for indirect package ${indirectPkgInfo.name}`
   );
   const otherPackageJsonPath = otherPkg.path;
-  let otherPackageJsonString = (0, import_fs4.readFileSync)(otherPackageJsonPath, "utf-8");
+  let otherPackageJsonString = (0, import_fs5.readFileSync)(otherPackageJsonPath, "utf-8");
   const otherPackageJson = JSON.parse(otherPackageJsonString);
   const dependencyFields = [
     "dependencies",
@@ -29940,7 +29974,7 @@ function updateDependentPackages(indirectPkgInfo, otherPkg) {
       }
     }
   }
-  (0, import_fs4.writeFileSync)(
+  (0, import_fs5.writeFileSync)(
     otherPackageJsonPath,
     JSON.stringify(otherPackageJson, null, 2) + "\n",
     "utf-8"
@@ -29964,39 +29998,6 @@ async function updatePackageLockFiles(dirPath = "") {
     cwd: dirPath ? dirPath : void 0,
     stdio: "inherit"
   });
-}
-function createOrUpdateChangelog(packageInfo, changelogs) {
-  const dirPath = toDirectoryPath(packageInfo.path);
-  console.log(
-    `Creating or updating changelog for package: ${packageInfo.name} at ${dirPath}`
-  );
-  const changelogFilePath = (0, import_path3.join)(dirPath, "CHANGELOG.md");
-  const changelogContent = generateChangelogContent(packageInfo, changelogs);
-  console.log(
-    `Generated changelog content for ${packageInfo.name}:
-${changelogContent}`
-  );
-  if ((0, import_fs4.existsSync)(changelogFilePath)) {
-    const existingChangelogContent = (0, import_fs4.readFileSync)(changelogFilePath, "utf-8");
-    console.log(
-      `Existing changelog content for ${packageInfo.name}:
-${existingChangelogContent}`
-    );
-    const updatedChangelogContent = updateChangelog(
-      existingChangelogContent,
-      changelogContent,
-      packageInfo.newVersion
-    );
-    console.log(`Updating changelog file at ${changelogFilePath}`);
-    console.log(`Updated changelog content:
-${updatedChangelogContent}`);
-    (0, import_fs4.writeFileSync)(changelogFilePath, updatedChangelogContent, "utf-8");
-  } else {
-    console.log(
-      `Changelog file does not exist at ${changelogFilePath}, creating new one.`
-    );
-    (0, import_fs4.writeFileSync)(changelogFilePath, changelogContent, "utf-8");
-  }
 }
 function getChangedPackages(changelogs, rootPackageName) {
   const changedPackages = /* @__PURE__ */ new Set();
