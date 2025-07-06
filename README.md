@@ -10,7 +10,7 @@ If you enjoy this tool, please consider giving it a star ⭐️ on GitHub! Also 
 
 ## How does it work?
 
-[see docs](/how-does-it-work)
+[see docs](/docs/how-does-it-work.md)
 
 ![diagram](/media/diagram.png)
 
