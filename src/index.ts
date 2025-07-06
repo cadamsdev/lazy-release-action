@@ -7,7 +7,7 @@ import {
   hasUnstagedChanges,
   setupGitConfig,
 } from './api/git';
-import { DEFAULT_BRANCH, GITHUB_TOKEN, NPM_TOKEN } from './constants';
+import { DEFAULT_BRANCH, GITHUB_TOKEN, NPM_TOKEN, PR_COMMENT_STATUS_ID, RELEASE_BRANCH, RELEASE_PR_TITLE } from './constants';
 import {
   appendReleaseIdToMarkdown,
   Changelog,
@@ -37,10 +37,6 @@ import { applyNewVersion, getNewVersion, updatePackageJsonFile } from './core/ve
 import { createOrUpdateChangelog } from './core/changelog';
 import { createTags, publishPackages } from './core/publish';
 import { createGitHubRelease } from './core/release';
-
-const RELEASE_BRANCH = 'lazy-release/main';
-const PR_COMMENT_STATUS_ID = 'b3da20ce-59b6-4bbd-a6e3-6d625f45d008';
-const RELEASE_PR_TITLE = 'Version Packages';
 
 (async () => {
   init();

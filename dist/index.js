@@ -28070,6 +28070,9 @@ var GITHUB_TOKEN = process.env["INPUT_GITHUB-TOKEN"] || "";
 var SNAPSHOTS_ENABLED = process.env["INPUT_SNAPSHOTS"] ? process.env["INPUT_SNAPSHOTS"] === "true" : false;
 var DEFAULT_BRANCH = process.env["INPUT_DEFAULT-BRANCH"] || "main";
 var NPM_TOKEN = process.env["INPUT_NPM-TOKEN"] || "";
+var RELEASE_BRANCH = "lazy-release/main";
+var PR_COMMENT_STATUS_ID = "b3da20ce-59b6-4bbd-a6e3-6d625f45d008";
+var RELEASE_PR_TITLE = "Version Packages";
 
 // src/api/git.ts
 function setupGitConfig() {
@@ -29545,9 +29548,6 @@ function getGitHubReleaseName(pkgInfo) {
 }
 
 // src/index.ts
-var RELEASE_BRANCH = "lazy-release/main";
-var PR_COMMENT_STATUS_ID = "b3da20ce-59b6-4bbd-a6e3-6d625f45d008";
-var RELEASE_PR_TITLE = "Version Packages";
 (async () => {
   init();
   if (import_github3.context.payload.pull_request?.merged) {
