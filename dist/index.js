@@ -28071,7 +28071,7 @@ var import_child_process = require("child_process");
 // src/constants.ts
 var GITHUB_TOKEN = process.env["INPUT_GITHUB-TOKEN"] || "";
 var SNAPSHOTS_ENABLED = process.env["INPUT_SNAPSHOTS"] ? process.env["INPUT_SNAPSHOTS"] === "true" : false;
-var BASE_BRANCH = process.env["INPUT_BASE_BRANCH"] || "main";
+var BASE_BRANCH = process.env["INPUT_BASE-BRANCH"] || "main";
 
 // src/api/git.ts
 function setupGitConfig() {
