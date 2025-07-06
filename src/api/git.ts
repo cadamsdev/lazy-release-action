@@ -1,7 +1,5 @@
-import { exec, execFileSync, execSync } from 'child_process';
+import { execFileSync, execSync } from 'child_process';
 import { DEFAULT_BRANCH } from '../constants';
-import { getPackagePaths } from '..';
-import { toDirectoryPath } from '../utils';
 
 export function setupGitConfig() {
   console.log('Setting up git config');
@@ -61,7 +59,11 @@ export function createOrCheckoutBranch(branchName: string) {
 
     // commit and push
     execFileSync('git', ['add', '.'], { stdio: 'inherit' });
-    execFileSync('git', ['commit', '-m', `sync ${branchName} with ${DEFAULT_BRANCH}`], { stdio: 'inherit' });
+    execFileSync(
+      'git',
+      ['commit', '-m', `sync ${branchName} with ${DEFAULT_BRANCH}`],
+      { stdio: 'inherit' }
+    );
     execFileSync('git', ['push', 'origin', branchName], { stdio: 'inherit' });
     console.log(`Committed and pushed changes to ${branchName}`);
   } catch (error) {
