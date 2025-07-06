@@ -28444,6 +28444,7 @@ function getGitHubReleaseName(pkgInfo) {
 }
 var heading2Regex = /^## ((@[a-z]+)?(\/)?([\w-]+)@)?(\d+\.\d+\.\d+)➡️(\d+\.\d+\.\d+)(\n\n)?/;
 function parseReleasePRBody(prBody) {
+  prBody = removeReleasePRComment(prBody);
   const changelogEntries = [];
   const headings = Array.from(
     prBody.matchAll(new RegExp(heading2Regex, "gm"))
@@ -28461,6 +28462,10 @@ function parseReleasePRBody(prBody) {
     });
   }
   return changelogEntries;
+}
+function removeReleasePRComment(markdown) {
+  const releaseIdComment = `<!-- Release PR: ${RELEASE_ID} -->`;
+  return markdown.replace(releaseIdComment, "").trim();
 }
 function parseHeading2(heading) {
   const match = heading.match(heading2Regex);
