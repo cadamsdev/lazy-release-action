@@ -8,6 +8,10 @@ If you enjoy this tool, please consider giving it a star ⭐️ on GitHub! Also 
 
 [!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/cadamsdev)
 
+## How does it work?
+
+[see docs](/how-does-it-work)
+
 ## 📝 Setup
 
 1. Update pull request settings
