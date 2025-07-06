@@ -155,3 +155,8 @@ example
   run: |
     echo "Package versions: ${{ steps.lazy-release.outputs.my-package_version }}"
 ```
+
+## Links
+
+- [Comparison of Similar Tools](docs/comparison-of-similar-tools.md)
+
