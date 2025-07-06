@@ -17,6 +17,7 @@ import {
   getPullRequestUrl,
   getTagName,
   RELEASE_ID,
+  removeReleasePRComment,
   replaceChangelogSection,
   replaceVersionInPackageJson,
   toDirectoryPath,
@@ -677,4 +678,19 @@ describe('generateMarkdown', () => {
     };
     expect(changelog).toEqual(expectedChangelog);
   }); 
+
+  it('should remove Release PR comment from markdown', () => {
+    const markdown = `## Changelog
+
+### 🚀 New Features
+- Added new feature
+
+### 🐛 Bug Fixes
+- Fixed a bug
+
+<!-- Release PR: ${RELEASE_ID} -->`;
+
+    const result = removeReleasePRComment(markdown);
+    expect(result).not.toContain(`<!-- Release PR: ${RELEASE_ID} -->`);
+  });
 });
