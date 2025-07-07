@@ -1,9 +1,9 @@
-import { exec } from '@actions/exec';
 import { execSync } from 'child_process';
 import {
   checkoutBranch,
   commitAndPushChanges,
   createOrCheckoutBranch,
+  getRecentCommits,
   hasUnstagedChanges,
   isLastCommitAReleaseCommit,
   setupGitConfig,
@@ -13,7 +13,6 @@ import {
   appendReleaseIdToMarkdown,
   getPackageNameWithoutScope,
   parseReleasePRBody,
-  RELEASE_ID,
   ReleasePackageInfo,
 } from './utils';
 import * as githubApi from './api/github';
@@ -21,7 +20,7 @@ import { context } from '@actions/github';
 import { getChangelogFromCommits } from './utils/changelog';
 import { bumpIndirectPackageVersion, getChangedPackageInfos, getPackageInfos, getPackagePaths, updateIndirectPackageJsonFile, updatePackageJsonFile, updatePackageLockFiles } from './utils/package';
 import { generateMarkdown } from './utils/markdown';
-import { CONVENTIONAL_COMMITS_PATTERN, isPRTitleValid } from './utils/validation';
+import { isPRTitleValid } from './utils/validation';
 import { applyNewVersion } from './core/version';
 import { createOrUpdateChangelog } from './core/changelog';
 import { createTags, publishPackages } from './core/publish';
@@ -179,123 +178,6 @@ async function publish(): Promise<void> {
   createTags(changedPkgInfos);
   await publishPackages(changedPkgInfos);
   await createGitHubRelease(releasePkgInfos);
-}
-
-export interface Commit {
-  hash: string;
-  message: string;
-}
-
-async function getRecentCommits(
-  ignoreLastest: boolean = false
-): Promise<Commit[]> {
-  console.log('Getting recent commits...');
-
-  let stdoutBuffer = '';
-
-  console.log('Fetching commits since last release commit...');
-  await exec(
-    'git',
-    [
-      'log',
-      '--pretty=format:%h:%B%n<COMMIT_SEPARATOR>', // Add a custom separator between commits
-    ],
-    {
-      listeners: {
-        stdout: (data: Buffer) => {
-          stdoutBuffer += data.toString();
-        },
-      },
-      silent: true,
-    }
-  );
-
-  const gitLogItems = stdoutBuffer
-    .split('<COMMIT_SEPARATOR>')
-    .map((msg) => msg.trim())
-    .filter((msg) => msg !== '');
-
-  const commits: Commit[] = [];
-
-  console.log(`Found ${gitLogItems.length} commit items.`);
-
-  for (let i = 0; i < gitLogItems.length; i++) {
-    const item = gitLogItems[i];
-
-    if (ignoreLastest && i === 0) {
-      continue;
-    }
-
-    const hash = item.substring(0, item.indexOf(':'));
-    if (!hash) {
-      console.warn('No commit hash found in item:', item);
-      continue;
-    }
-
-    const message = item.substring(item.indexOf(':') + 1);
-    if (!message) {
-      console.warn('No commit message found in item:', item);
-      continue;
-    }
-
-    if (message.includes(RELEASE_ID)) {
-      // get PR number from message
-      const prMatch = message.match(/#(\d+)/);
-
-      if (!prMatch) {
-        console.warn(
-          `Skipping release commit ${hash} because it does not contain a PR number.`
-        );
-        continue;
-      }
-
-      const prNumberWithHash = prMatch[0];
-      const prevIndex = i - 1;
-
-      if (prevIndex < 0) {
-        console.warn(
-          `Skipping release commit ${hash} because it is the first commit.`
-        );
-        continue;
-      }
-
-      const prevItem = gitLogItems[prevIndex];
-      const prevItemmMsg = prevItem.substring(prevItem.indexOf(':') + 1);
-
-      const owner = context.repo.owner;
-      const repo = context.repo.repo;
-      const repoNameWithOwner = `${owner}/${repo}`;
-
-      if (
-        prevItemmMsg &&
-        prevItemmMsg.includes(`Reverts ${repoNameWithOwner}${prNumberWithHash}`)
-      ) {
-        console.warn(
-          `Skipping release commit ${hash} because it is reverted by the next commit.`
-        );
-        continue;
-      }
-
-      break; // Stop processing further commits if we found a release commit
-    }
-
-    commits.push({ hash, message: message.trim() });
-  }
-
-  console.log('Commits since last release:');
-  console.log(commits);
-
-  // Filter for commits containing "## Changelog"
-  const filteredCommits = commits.filter(
-    (commit) =>
-      CONVENTIONAL_COMMITS_PATTERN.test(commit.message) ||
-      commit.message.includes('## Changelog')
-  );
-
-  console.log('Filtered commits:');
-  console.log(filteredCommits);
-
-  return filteredCommits;
 }
 
 async function createOrUpdateReleasePR() {

@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { generateChangelogContent, getChangelogFromCommits, getChangelogSectionFromCommitMessage } from "./changelog";
 import { Changelog, createChangelogFromChangelogItem, getChangelogItems } from "../utils";
-import { Commit } from "..";
 import { PackageInfo } from "../types";
+import { Commit } from "../api/git";
 
 describe('getChangelogSectionFromCommitMessage', () => {
   it('should generate markdown for a given changeset map', async () => {

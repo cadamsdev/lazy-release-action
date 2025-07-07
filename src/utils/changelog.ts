@@ -1,4 +1,4 @@
-import { Commit } from "..";
+import { Commit } from "../api/git";
 import { PackageInfo } from "../types";
 import { Changelog, createChangelogFromChangelogItem, getChangelogDate, getChangelogItems, getDirectoryNameFromPath, getPackageNameWithoutScope, TYPE_TO_CHANGELOG_TYPE } from "../utils";
 
