@@ -8,31 +8,25 @@ import {
   isLastCommitAReleaseCommit,
   setupGitConfig,
 } from './api/git';
-import { DEFAULT_BRANCH, GITHUB_TOKEN, NPM_TOKEN, PR_COMMENT_STATUS_ID, RELEASE_BRANCH, RELEASE_PR_TITLE } from './constants';
+import { DEFAULT_BRANCH, GITHUB_TOKEN, NPM_TOKEN, RELEASE_BRANCH, RELEASE_PR_TITLE } from './constants';
 import {
   appendReleaseIdToMarkdown,
-  Changelog,
-  createChangelogFromChangelogItem,
-  getChangelogFromMarkdown,
   getPackageNameWithoutScope,
-  increaseHeadingLevel,
   parseReleasePRBody,
   RELEASE_ID,
   ReleasePackageInfo,
 } from './utils';
 import * as githubApi from './api/github';
-import { detect } from 'package-manager-detector/detect';
-import { resolveCommand } from 'package-manager-detector/commands';
 import { context } from '@actions/github';
 import { getChangelogFromCommits } from './utils/changelog';
 import { bumpIndirectPackageVersion, getChangedPackageInfos, getPackageInfos, getPackagePaths, updateIndirectPackageJsonFile, updatePackageJsonFile, updatePackageLockFiles } from './utils/package';
 import { generateMarkdown } from './utils/markdown';
 import { CONVENTIONAL_COMMITS_PATTERN, isPRTitleValid } from './utils/validation';
-import { createSnapshot } from './core/snapshots';
 import { applyNewVersion } from './core/version';
 import { createOrUpdateChangelog } from './core/changelog';
 import { createTags, publishPackages } from './core/publish';
 import { createGitHubRelease } from './core/release';
+import { createOrUpdatePRStatusComment } from './core/comments';
 
 (async () => {
   init();
@@ -104,152 +98,6 @@ function setNpmConfig() {
         stdio: 'inherit',
       }
     );
-  }
-}
-
-async function createOrUpdatePRStatusComment(shouldCreateSnapshot = false) {
-  console.log('Creating or updating PR status comment...');
-
-  let markdown = '## 🚀 Lazy Release Action\n';
-  const prBody = context.payload.pull_request?.body;
-  console.log('Pull request body');
-  console.log(prBody);
-
-  let changelogs: Changelog[] = [];
-
-  // get all package infos
-  const packagePaths = getPackagePaths();
-  if (packagePaths.length === 0) {
-    console.log('No package.json files found, skipping...');
-    return;
-  }
-
-  console.log(`Found ${packagePaths.length} package.json files.`);
-
-  const allPkgInfos = getPackageInfos(packagePaths);
-  if (allPkgInfos.length === 0) {
-    console.log('No packages found, skipping...');
-    return;
-  }
-
-  console.log(`Found ${allPkgInfos.length} packages.`);
-
-  const rootPackageName = allPkgInfos.find((pkg) => pkg.isRoot)?.name;
-
-  if (prBody) {
-    changelogs = getChangelogFromMarkdown(prBody, rootPackageName);
-  } else if (githubApi.PR_TITLE) {
-    const changelog = createChangelogFromChangelogItem(githubApi.PR_TITLE, rootPackageName);
-    if (changelog) {
-      changelogs.push(changelog);
-    }
-  }
-
-  console.log(`Found ${changelogs.length} changelog entries.`);
-  console.log(changelogs);
-
-  if (changelogs.length) {
-    markdown += '✅ Changelogs found.\n';
-  } else if (changelogs.length === 0) {
-    markdown += '⚠️ No changelogs found.\n';
-  }
-
-  const { changedPackageInfos, indirectPackageInfos } = getChangedPackageInfos(
-    changelogs,
-    allPkgInfos
-  );
-
-  const pkgUpdateCount = changedPackageInfos.length + indirectPackageInfos.length;
-  if (pkgUpdateCount) {
-    markdown += `📦 ${pkgUpdateCount} ${
-      pkgUpdateCount ? "package's" : 'package'
-    } will be updated.\n`;
-  } else {
-    markdown += '⚠️ No packages changed.\n';
-  }
-
-  const latestCommitHash = context.payload.pull_request?.head.sha;
-  if (latestCommitHash) {
-    console.log(`Latest commit hash: ${latestCommitHash}`);
-    markdown += `Latest commit: ${latestCommitHash}\n\n`;
-  }
-
-  if (changedPackageInfos.length) {
-    console.log(`Found ${changedPackageInfos.length} changed packages.`);
-
-    changedPackageInfos.forEach((pkgInfo) => {
-      // apply the new version based on the changelogs
-      applyNewVersion(pkgInfo, changelogs);
-    });
-
-    changedPackageInfos.forEach((pkgInfo) => {
-      // update the package.json version with the new version
-      // bump any dependency versions that reference other packages in the workspace
-      updatePackageJsonFile(pkgInfo, allPkgInfos);
-    });
-
-    // update indirect packages based on the changed packages
-    indirectPackageInfos.forEach((pkgInfo) => {
-      bumpIndirectPackageVersion(pkgInfo);
-
-      updateIndirectPackageJsonFile(pkgInfo, allPkgInfos);
-    });
-
-    // generate markdown from changelogs
-    const content = generateMarkdown(
-      changedPackageInfos,
-      indirectPackageInfos,
-      changelogs
-    );
-
-    markdown += increaseHeadingLevel(content.trim());
-  }
-
-  if (shouldCreateSnapshot) {
-    const pm = await detect();
-    if (!pm) {
-      throw new Error('No package manager detected');
-    }
-
-    const rc = resolveCommand(pm.agent, 'install', []);
-    if (!rc) {
-      throw new Error(`Could not resolve command for ${pm.agent}`);
-    }
-
-    const allChangedPkgs = [...changedPackageInfos, ...indirectPackageInfos];
-    const snapshotResults = await createSnapshot(allChangedPkgs);
-
-    if (snapshotResults.length) {
-      markdown += `\n\n## 📸 Snapshots\n`;
-
-      snapshotResults.forEach((result, index) => {
-        markdown += `\`\`\`\n`;
-        markdown += `${rc.command} ${rc.args.join(' ')} ${result.packageName}${result.newVersion}\n`;
-        markdown += `\`\`\``;
-
-        if (index < snapshotResults.length - 1) {
-          markdown += '\n\n';
-        } 
-      });
-    }
-  }
-
-  markdown += `\n\n<!-- ${PR_COMMENT_STATUS_ID} -->`;
-
-  const prComments = await githubApi.getPRComments();
-  const existingComment = prComments.find((comment) =>
-    comment.body?.includes(PR_COMMENT_STATUS_ID)
-  );
-
-  console.log('markdown');
-  console.log(markdown);
-
-  if (existingComment) {
-    console.log('Updating existing PR status comment with ID');
-    await githubApi.updatePRComment(existingComment.id, markdown);
-  } else {
-    console.log('Creating new PR status comment');
-    await githubApi.createPRComment(markdown);
   }
 }
 

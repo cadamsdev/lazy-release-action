@@ -5149,18 +5149,18 @@ var require_webidl = __commonJS({
     webidl.errors.exception = function(message) {
       return new TypeError(`${message.header}: ${message.message}`);
     };
-    webidl.errors.conversionFailed = function(context4) {
-      const plural = context4.types.length === 1 ? "" : " one of";
-      const message = `${context4.argument} could not be converted to${plural}: ${context4.types.join(", ")}.`;
+    webidl.errors.conversionFailed = function(context5) {
+      const plural = context5.types.length === 1 ? "" : " one of";
+      const message = `${context5.argument} could not be converted to${plural}: ${context5.types.join(", ")}.`;
       return webidl.errors.exception({
-        header: context4.prefix,
+        header: context5.prefix,
         message
       });
     };
-    webidl.errors.invalidArgument = function(context4) {
+    webidl.errors.invalidArgument = function(context5) {
       return webidl.errors.exception({
-        header: context4.prefix,
-        message: `"${context4.value}" is an invalid ${context4.type}.`
+        header: context5.prefix,
+        message: `"${context5.value}" is an invalid ${context5.type}.`
       });
     };
     webidl.brandCheck = function(V, I, opts = void 0) {
@@ -10478,15 +10478,15 @@ var require_api_request = __commonJS({
         }
         addSignal(this, signal);
       }
-      onConnect(abort, context4) {
+      onConnect(abort, context5) {
         if (!this.callback) {
           throw new RequestAbortedError();
         }
         this.abort = abort;
-        this.context = context4;
+        this.context = context5;
       }
       onHeaders(statusCode, rawHeaders, resume, statusMessage) {
-        const { callback, opaque, abort, context: context4, responseHeaders, highWaterMark } = this;
+        const { callback, opaque, abort, context: context5, responseHeaders, highWaterMark } = this;
         const headers = responseHeaders === "raw" ? util.parseRawHeaders(rawHeaders) : util.parseHeaders(rawHeaders);
         if (statusCode < 200) {
           if (this.onInfo) {
@@ -10513,7 +10513,7 @@ var require_api_request = __commonJS({
               trailers: this.trailers,
               opaque,
               body,
-              context: context4
+              context: context5
             });
           }
         }
@@ -10633,15 +10633,15 @@ var require_api_stream = __commonJS({
         }
         addSignal(this, signal);
       }
-      onConnect(abort, context4) {
+      onConnect(abort, context5) {
         if (!this.callback) {
           throw new RequestAbortedError();
         }
         this.abort = abort;
-        this.context = context4;
+        this.context = context5;
       }
       onHeaders(statusCode, rawHeaders, resume, statusMessage) {
-        const { factory, opaque, context: context4, callback, responseHeaders } = this;
+        const { factory, opaque, context: context5, callback, responseHeaders } = this;
         const headers = responseHeaders === "raw" ? util.parseRawHeaders(rawHeaders) : util.parseHeaders(rawHeaders);
         if (statusCode < 200) {
           if (this.onInfo) {
@@ -10669,7 +10669,7 @@ var require_api_stream = __commonJS({
             statusCode,
             headers,
             opaque,
-            context: context4
+            context: context5
           });
           if (!res || typeof res.write !== "function" || typeof res.end !== "function" || typeof res.on !== "function") {
             throw new InvalidReturnValueError("expected Writable");
@@ -10861,17 +10861,17 @@ var require_api_pipeline = __commonJS({
         this.res = null;
         addSignal(this, signal);
       }
-      onConnect(abort, context4) {
+      onConnect(abort, context5) {
         const { ret, res } = this;
         assert(!res, "pipeline cannot be retried");
         if (ret.destroyed) {
           throw new RequestAbortedError();
         }
         this.abort = abort;
-        this.context = context4;
+        this.context = context5;
       }
       onHeaders(statusCode, rawHeaders, resume) {
-        const { opaque, handler, context: context4 } = this;
+        const { opaque, handler, context: context5 } = this;
         if (statusCode < 200) {
           if (this.onInfo) {
             const headers = this.responseHeaders === "raw" ? util.parseRawHeaders(rawHeaders) : util.parseHeaders(rawHeaders);
@@ -10889,7 +10889,7 @@ var require_api_pipeline = __commonJS({
             headers,
             opaque,
             body: this.res,
-            context: context4
+            context: context5
           });
         } catch (err) {
           this.res.on("error", util.nop);
@@ -10973,7 +10973,7 @@ var require_api_upgrade = __commonJS({
         this.context = null;
         addSignal(this, signal);
       }
-      onConnect(abort, context4) {
+      onConnect(abort, context5) {
         if (!this.callback) {
           throw new RequestAbortedError();
         }
@@ -10984,7 +10984,7 @@ var require_api_upgrade = __commonJS({
         throw new SocketError("bad upgrade", null);
       }
       onUpgrade(statusCode, rawHeaders, socket) {
-        const { callback, opaque, context: context4 } = this;
+        const { callback, opaque, context: context5 } = this;
         assert.strictEqual(statusCode, 101);
         removeSignal(this);
         this.callback = null;
@@ -10993,7 +10993,7 @@ var require_api_upgrade = __commonJS({
           headers,
           socket,
           opaque,
-          context: context4
+          context: context5
         });
       }
       onError(err) {
@@ -11061,18 +11061,18 @@ var require_api_connect = __commonJS({
         this.abort = null;
         addSignal(this, signal);
       }
-      onConnect(abort, context4) {
+      onConnect(abort, context5) {
         if (!this.callback) {
           throw new RequestAbortedError();
         }
         this.abort = abort;
-        this.context = context4;
+        this.context = context5;
       }
       onHeaders() {
         throw new SocketError("bad connect", null);
       }
       onUpgrade(statusCode, rawHeaders, socket) {
-        const { callback, opaque, context: context4 } = this;
+        const { callback, opaque, context: context5 } = this;
         removeSignal(this);
         this.callback = null;
         let headers = rawHeaders;
@@ -11084,7 +11084,7 @@ var require_api_connect = __commonJS({
           headers,
           socket,
           opaque,
-          context: context4
+          context: context5
         });
       }
       onError(err) {
@@ -19213,8 +19213,8 @@ var require_dist_node2 = __commonJS({
     function isKeyOperator(operator) {
       return operator === ";" || operator === "&" || operator === "?";
     }
-    function getValues(context4, operator, key, modifier) {
-      var value = context4[key], result = [];
+    function getValues(context5, operator, key, modifier) {
+      var value = context5[key], result = [];
       if (isDefined(value) && value !== "") {
         if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
           value = value.toString();
@@ -19278,7 +19278,7 @@ var require_dist_node2 = __commonJS({
         expand: expand.bind(null, template)
       };
     }
-    function expand(template, context4) {
+    function expand(template, context5) {
       var operators = ["+", "#", ".", "/", ";", "?", "&"];
       template = template.replace(
         /\{([^\{\}]+)\}|([^\{\}]+)/g,
@@ -19292,7 +19292,7 @@ var require_dist_node2 = __commonJS({
             }
             expression.split(/,/g).forEach(function(variable) {
               var tmp = /([^:\*]*)(?::(\d+)|(\*))?/.exec(variable);
-              values.push(getValues(context4, operator, tmp[1], tmp[2] || tmp[3]));
+              values.push(getValues(context5, operator, tmp[1], tmp[2] || tmp[3]));
             });
             if (operator && operator !== "+") {
               var separator = ",";
@@ -28603,164 +28603,51 @@ async function createPRComment(markdown) {
   });
 }
 
-// node_modules/package-manager-detector/dist/detect.mjs
-var import_promises = __toESM(require("node:fs/promises"), 1);
-var import_node_path = __toESM(require("node:path"), 1);
-var import_node_process = __toESM(require("node:process"), 1);
+// src/index.ts
+var import_github4 = __toESM(require_github());
 
-// node_modules/package-manager-detector/dist/constants.mjs
-var AGENTS = [
-  "npm",
-  "yarn",
-  "yarn@berry",
-  "pnpm",
-  "pnpm@6",
-  "bun",
-  "deno"
-];
-var LOCKS = {
-  "bun.lock": "bun",
-  "bun.lockb": "bun",
-  "deno.lock": "deno",
-  "pnpm-lock.yaml": "pnpm",
-  "pnpm-workspace.yaml": "pnpm",
-  "yarn.lock": "yarn",
-  "package-lock.json": "npm",
-  "npm-shrinkwrap.json": "npm"
-};
-var INSTALL_METADATA = {
-  "node_modules/.deno/": "deno",
-  "node_modules/.pnpm/": "pnpm",
-  "node_modules/.yarn-state.yml": "yarn",
-  // yarn v2+ (node-modules)
-  "node_modules/.yarn_integrity": "yarn",
-  // yarn v1
-  "node_modules/.package-lock.json": "npm",
-  ".pnp.cjs": "yarn",
-  // yarn v3+ (pnp)
-  ".pnp.js": "yarn",
-  // yarn v2 (pnp)
-  "bun.lock": "bun",
-  "bun.lockb": "bun"
-};
+// src/utils/package.ts
+var import_fs = require("fs");
 
-// node_modules/package-manager-detector/dist/detect.mjs
-async function pathExists(path22, type) {
-  try {
-    const stat = await import_promises.default.stat(path22);
-    return type === "file" ? stat.isFile() : stat.isDirectory();
-  } catch {
-    return false;
-  }
-}
-function* lookup(cwd = import_node_process.default.cwd()) {
-  let directory = import_node_path.default.resolve(cwd);
-  const { root } = import_node_path.default.parse(directory);
-  while (directory && directory !== root) {
-    yield directory;
-    directory = import_node_path.default.dirname(directory);
-  }
-}
-async function parsePackageJson(filepath, onUnknown) {
-  return !filepath || !pathExists(filepath, "file") ? null : await handlePackageManager(filepath, onUnknown);
-}
-async function detect(options = {}) {
-  const {
-    cwd,
-    strategies = ["lockfile", "packageManager-field", "devEngines-field"],
-    onUnknown
-  } = options;
-  let stopDir;
-  if (typeof options.stopDir === "string") {
-    const resolved = import_node_path.default.resolve(options.stopDir);
-    stopDir = (dir) => dir === resolved;
-  } else {
-    stopDir = options.stopDir;
-  }
-  for (const directory of lookup(cwd)) {
-    for (const strategy of strategies) {
-      switch (strategy) {
-        case "lockfile": {
-          for (const lock of Object.keys(LOCKS)) {
-            if (await pathExists(import_node_path.default.join(directory, lock), "file")) {
-              const name = LOCKS[lock];
-              const result = await parsePackageJson(import_node_path.default.join(directory, "package.json"), onUnknown);
-              if (result)
-                return result;
-              else
-                return { name, agent: name };
-            }
-          }
-          break;
-        }
-        case "packageManager-field":
-        case "devEngines-field": {
-          const result = await parsePackageJson(import_node_path.default.join(directory, "package.json"), onUnknown);
-          if (result)
-            return result;
-          break;
-        }
-        case "install-metadata": {
-          for (const metadata of Object.keys(INSTALL_METADATA)) {
-            const fileOrDir = metadata.endsWith("/") ? "dir" : "file";
-            if (await pathExists(import_node_path.default.join(directory, metadata), fileOrDir)) {
-              const name = INSTALL_METADATA[metadata];
-              const agent = name === "yarn" ? isMetadataYarnClassic(metadata) ? "yarn" : "yarn@berry" : name;
-              return { name, agent };
-            }
-          }
-          break;
-        }
-      }
+// src/core/version.ts
+var import_semver = __toESM(require_semver2());
+function applyNewVersion(packageInfo, changelogs) {
+  const isV0 = packageInfo.version.startsWith("0.");
+  const packageNameWithoutScope = getPackageNameWithoutScope(packageInfo.name);
+  const directoryName = getDirectoryNameFromPath(packageInfo.path);
+  let semver = "patch";
+  for (const changelog of changelogs) {
+    const isRelevant = changelog.packages.length > 0 && changelog.packages.some(
+      (pkgName) => pkgName === packageNameWithoutScope || pkgName === directoryName
+    ) || packageInfo.isRoot && changelog.packages.length === 0;
+    if (!isRelevant) {
+      continue;
     }
-    if (stopDir?.(directory))
+    if (changelog.isBreakingChange && isV0) {
+      semver = "minor";
+    } else if (changelog.isBreakingChange) {
+      semver = "major";
+      break;
+    } else if (changelog.semverBump === "minor" && semver !== "major") {
+      semver = "minor";
+    }
+  }
+  packageInfo.newVersion = getNewVersion(packageInfo.version, semver);
+}
+function getNewVersion(currentVersion, semverBump) {
+  let newVersion = currentVersion;
+  switch (semverBump) {
+    case "major":
+      newVersion = (0, import_semver.inc)(newVersion, "major") || "";
+      break;
+    case "minor":
+      newVersion = (0, import_semver.inc)(newVersion, "minor") || "";
+      break;
+    default:
+      newVersion = (0, import_semver.inc)(newVersion, "patch") || "";
       break;
   }
-  return null;
-}
-function getNameAndVer(pkg) {
-  const handelVer = (version) => version?.match(/\d+(\.\d+){0,2}/)?.[0] ?? version;
-  if (typeof pkg.packageManager === "string") {
-    const [name, ver] = pkg.packageManager.replace(/^\^/, "").split("@");
-    return { name, ver: handelVer(ver) };
-  }
-  if (typeof pkg.devEngines?.packageManager?.name === "string") {
-    return {
-      name: pkg.devEngines.packageManager.name,
-      ver: handelVer(pkg.devEngines.packageManager.version)
-    };
-  }
-  return void 0;
-}
-async function handlePackageManager(filepath, onUnknown) {
-  try {
-    const pkg = JSON.parse(await import_promises.default.readFile(filepath, "utf8"));
-    let agent;
-    const nameAndVer = getNameAndVer(pkg);
-    if (nameAndVer) {
-      const name = nameAndVer.name;
-      const ver = nameAndVer.ver;
-      let version = ver;
-      if (name === "yarn" && ver && Number.parseInt(ver) > 1) {
-        agent = "yarn@berry";
-        version = "berry";
-        return { name, agent, version };
-      } else if (name === "pnpm" && ver && Number.parseInt(ver) < 7) {
-        agent = "pnpm@6";
-        return { name, agent, version };
-      } else if (AGENTS.includes(name)) {
-        agent = name;
-        return { name, agent, version };
-      } else {
-        return onUnknown?.(pkg.packageManager) ?? null;
-      }
-    }
-  } catch {
-  }
-  return null;
-}
-function isMetadataYarnClassic(metadataPath) {
-  return metadataPath.endsWith(".yarn_integrity");
+  return newVersion;
 }
 
 // node_modules/package-manager-detector/dist/commands.mjs
@@ -28890,51 +28777,162 @@ function constructCommand(value, args) {
   };
 }
 
-// src/index.ts
-var import_github3 = __toESM(require_github());
+// node_modules/package-manager-detector/dist/constants.mjs
+var AGENTS = [
+  "npm",
+  "yarn",
+  "yarn@berry",
+  "pnpm",
+  "pnpm@6",
+  "bun",
+  "deno"
+];
+var LOCKS = {
+  "bun.lock": "bun",
+  "bun.lockb": "bun",
+  "deno.lock": "deno",
+  "pnpm-lock.yaml": "pnpm",
+  "pnpm-workspace.yaml": "pnpm",
+  "yarn.lock": "yarn",
+  "package-lock.json": "npm",
+  "npm-shrinkwrap.json": "npm"
+};
+var INSTALL_METADATA = {
+  "node_modules/.deno/": "deno",
+  "node_modules/.pnpm/": "pnpm",
+  "node_modules/.yarn-state.yml": "yarn",
+  // yarn v2+ (node-modules)
+  "node_modules/.yarn_integrity": "yarn",
+  // yarn v1
+  "node_modules/.package-lock.json": "npm",
+  ".pnp.cjs": "yarn",
+  // yarn v3+ (pnp)
+  ".pnp.js": "yarn",
+  // yarn v2 (pnp)
+  "bun.lock": "bun",
+  "bun.lockb": "bun"
+};
 
-// src/utils/package.ts
-var import_fs = require("fs");
-
-// src/core/version.ts
-var import_semver = __toESM(require_semver2());
-function applyNewVersion(packageInfo, changelogs) {
-  const isV0 = packageInfo.version.startsWith("0.");
-  const packageNameWithoutScope = getPackageNameWithoutScope(packageInfo.name);
-  const directoryName = getDirectoryNameFromPath(packageInfo.path);
-  let semver = "patch";
-  for (const changelog of changelogs) {
-    const isRelevant = changelog.packages.length > 0 && changelog.packages.some(
-      (pkgName) => pkgName === packageNameWithoutScope || pkgName === directoryName
-    ) || packageInfo.isRoot && changelog.packages.length === 0;
-    if (!isRelevant) {
-      continue;
-    }
-    if (changelog.isBreakingChange && isV0) {
-      semver = "minor";
-    } else if (changelog.isBreakingChange) {
-      semver = "major";
-      break;
-    } else if (changelog.semverBump === "minor" && semver !== "major") {
-      semver = "minor";
-    }
+// node_modules/package-manager-detector/dist/detect.mjs
+var import_promises = __toESM(require("node:fs/promises"), 1);
+var import_node_path = __toESM(require("node:path"), 1);
+var import_node_process = __toESM(require("node:process"), 1);
+async function pathExists(path22, type) {
+  try {
+    const stat = await import_promises.default.stat(path22);
+    return type === "file" ? stat.isFile() : stat.isDirectory();
+  } catch {
+    return false;
   }
-  packageInfo.newVersion = getNewVersion(packageInfo.version, semver);
 }
-function getNewVersion(currentVersion, semverBump) {
-  let newVersion = currentVersion;
-  switch (semverBump) {
-    case "major":
-      newVersion = (0, import_semver.inc)(newVersion, "major") || "";
-      break;
-    case "minor":
-      newVersion = (0, import_semver.inc)(newVersion, "minor") || "";
-      break;
-    default:
-      newVersion = (0, import_semver.inc)(newVersion, "patch") || "";
+function* lookup(cwd = import_node_process.default.cwd()) {
+  let directory = import_node_path.default.resolve(cwd);
+  const { root } = import_node_path.default.parse(directory);
+  while (directory && directory !== root) {
+    yield directory;
+    directory = import_node_path.default.dirname(directory);
+  }
+}
+async function parsePackageJson(filepath, onUnknown) {
+  return !filepath || !pathExists(filepath, "file") ? null : await handlePackageManager(filepath, onUnknown);
+}
+async function detect(options = {}) {
+  const {
+    cwd,
+    strategies = ["lockfile", "packageManager-field", "devEngines-field"],
+    onUnknown
+  } = options;
+  let stopDir;
+  if (typeof options.stopDir === "string") {
+    const resolved = import_node_path.default.resolve(options.stopDir);
+    stopDir = (dir) => dir === resolved;
+  } else {
+    stopDir = options.stopDir;
+  }
+  for (const directory of lookup(cwd)) {
+    for (const strategy of strategies) {
+      switch (strategy) {
+        case "lockfile": {
+          for (const lock of Object.keys(LOCKS)) {
+            if (await pathExists(import_node_path.default.join(directory, lock), "file")) {
+              const name = LOCKS[lock];
+              const result = await parsePackageJson(import_node_path.default.join(directory, "package.json"), onUnknown);
+              if (result)
+                return result;
+              else
+                return { name, agent: name };
+            }
+          }
+          break;
+        }
+        case "packageManager-field":
+        case "devEngines-field": {
+          const result = await parsePackageJson(import_node_path.default.join(directory, "package.json"), onUnknown);
+          if (result)
+            return result;
+          break;
+        }
+        case "install-metadata": {
+          for (const metadata of Object.keys(INSTALL_METADATA)) {
+            const fileOrDir = metadata.endsWith("/") ? "dir" : "file";
+            if (await pathExists(import_node_path.default.join(directory, metadata), fileOrDir)) {
+              const name = INSTALL_METADATA[metadata];
+              const agent = name === "yarn" ? isMetadataYarnClassic(metadata) ? "yarn" : "yarn@berry" : name;
+              return { name, agent };
+            }
+          }
+          break;
+        }
+      }
+    }
+    if (stopDir?.(directory))
       break;
   }
-  return newVersion;
+  return null;
+}
+function getNameAndVer(pkg) {
+  const handelVer = (version) => version?.match(/\d+(\.\d+){0,2}/)?.[0] ?? version;
+  if (typeof pkg.packageManager === "string") {
+    const [name, ver] = pkg.packageManager.replace(/^\^/, "").split("@");
+    return { name, ver: handelVer(ver) };
+  }
+  if (typeof pkg.devEngines?.packageManager?.name === "string") {
+    return {
+      name: pkg.devEngines.packageManager.name,
+      ver: handelVer(pkg.devEngines.packageManager.version)
+    };
+  }
+  return void 0;
+}
+async function handlePackageManager(filepath, onUnknown) {
+  try {
+    const pkg = JSON.parse(await import_promises.default.readFile(filepath, "utf8"));
+    let agent;
+    const nameAndVer = getNameAndVer(pkg);
+    if (nameAndVer) {
+      const name = nameAndVer.name;
+      const ver = nameAndVer.ver;
+      let version = ver;
+      if (name === "yarn" && ver && Number.parseInt(ver) > 1) {
+        agent = "yarn@berry";
+        version = "berry";
+        return { name, agent, version };
+      } else if (name === "pnpm" && ver && Number.parseInt(ver) < 7) {
+        agent = "pnpm@6";
+        return { name, agent, version };
+      } else if (AGENTS.includes(name)) {
+        agent = name;
+        return { name, agent, version };
+      } else {
+        return onUnknown?.(pkg.packageManager) ?? null;
+      }
+    }
+  } catch {
+  }
+  return null;
+}
+function isMetadataYarnClassic(metadataPath) {
+  return metadataPath.endsWith(".yarn_integrity");
 }
 
 // src/utils/package.ts
@@ -29470,79 +29468,22 @@ function isPRTitleValid(prTitle) {
   return CONVENTIONAL_COMMITS_PATTERN.test(prTitle);
 }
 
-// src/core/snapshots.ts
-var import_fs2 = require("fs");
-var import_path2 = require("path");
-var import_child_process3 = require("child_process");
-async function createSnapshot(changedPkgInfos) {
-  if (!SNAPSHOTS_ENABLED) {
-    console.log("Snapshots are disabled, skipping snapshot creation.");
-    return [];
-  }
-  const allPkgInfos = getPackageInfos(getPackagePaths());
-  const snapshotResults = [];
-  for (const pkgInfo of changedPkgInfos) {
-    const snapshotResult = await createPackageSnapshot(pkgInfo, allPkgInfos);
-    if (snapshotResult) {
-      snapshotResults.push(snapshotResult);
-    }
-  }
-  return snapshotResults;
-}
-async function createPackageSnapshot(pkgInfo, allPkgInfos) {
-  console.log(`Creating snapshot for package: ${pkgInfo.name}`);
-  const dirPath = toDirectoryPath(pkgInfo.path);
-  if (!pkgInfo.isRoot && !(0, import_fs2.existsSync)(dirPath)) {
-    console.warn(`Directory ${dirPath} does not exist, skipping snapshot.`);
-    return;
-  }
-  const pm = await detect();
-  if (!pm) {
-    throw new Error("No package manager detected");
-  }
-  const packageJsonPath = (0, import_path2.join)(dirPath, "package.json");
-  if (!(0, import_fs2.existsSync)(packageJsonPath)) {
-    console.warn(`Package.json file not found in ${dirPath}, skipping snapshot.`);
-    return;
-  }
-  const packageJson = JSON.parse((0, import_fs2.readFileSync)(packageJsonPath, "utf-8"));
-  if (packageJson.private) {
-    console.warn(`Package ${pkgInfo.name} is private, skipping snapshot.`);
-    return;
-  }
-  if (!packageJson.version) {
-    console.warn(`No version found in package.json for ${pkgInfo.name}, skipping snapshot.`);
-    return;
-  }
-  const newVersion = `${packageJson.version}-snapshot-${(/* @__PURE__ */ new Date()).getTime()}`;
-  pkgInfo.newVersion = newVersion;
-  updateIndirectPackageJsonFile(pkgInfo, allPkgInfos);
-  await updatePackageLockFiles(dirPath);
-  const fullPublishCommand = [pm.agent, "publish", "--tag", "snapshot"].join(" ");
-  (0, import_child_process3.execSync)(fullPublishCommand, { cwd: dirPath ? dirPath : void 0, stdio: "inherit" });
-  console.log(`Snapshot created for package: ${pkgInfo.name}`);
-  return {
-    packageName: pkgInfo.name,
-    newVersion
-  };
-}
-
 // src/core/changelog.ts
-var import_path3 = require("path");
-var import_fs3 = require("fs");
+var import_path2 = require("path");
+var import_fs2 = require("fs");
 function createOrUpdateChangelog(packageInfo, changelogs) {
   const dirPath = toDirectoryPath(packageInfo.path);
   console.log(
     `Creating or updating changelog for package: ${packageInfo.name} at ${dirPath}`
   );
-  const changelogFilePath = (0, import_path3.join)(dirPath, "CHANGELOG.md");
+  const changelogFilePath = (0, import_path2.join)(dirPath, "CHANGELOG.md");
   const changelogContent = generateChangelogContent(packageInfo, changelogs);
   console.log(
     `Generated changelog content for ${packageInfo.name}:
 ${changelogContent}`
   );
-  if ((0, import_fs3.existsSync)(changelogFilePath)) {
-    const existingChangelogContent = (0, import_fs3.readFileSync)(changelogFilePath, "utf-8");
+  if ((0, import_fs2.existsSync)(changelogFilePath)) {
+    const existingChangelogContent = (0, import_fs2.readFileSync)(changelogFilePath, "utf-8");
     console.log(
       `Existing changelog content for ${packageInfo.name}:
 ${existingChangelogContent}`
@@ -29555,17 +29496,17 @@ ${existingChangelogContent}`
     console.log(`Updating changelog file at ${changelogFilePath}`);
     console.log(`Updated changelog content:
 ${updatedChangelogContent}`);
-    (0, import_fs3.writeFileSync)(changelogFilePath, updatedChangelogContent, "utf-8");
+    (0, import_fs2.writeFileSync)(changelogFilePath, updatedChangelogContent, "utf-8");
   } else {
     console.log(
       `Changelog file does not exist at ${changelogFilePath}, creating new one.`
     );
-    (0, import_fs3.writeFileSync)(changelogFilePath, changelogContent, "utf-8");
+    (0, import_fs2.writeFileSync)(changelogFilePath, changelogContent, "utf-8");
   }
 }
 
 // src/core/publish.ts
-var import_child_process4 = require("child_process");
+var import_child_process3 = require("child_process");
 var import_core = __toESM(require_core());
 
 // src/utils/tag.ts
@@ -29603,7 +29544,7 @@ async function publishPackages(changedPkgInfos) {
     const fullPublishCommand = [pm.agent, "publish"].join(" ");
     try {
       console.log(`Running package manager command: ${fullPublishCommand}`);
-      (0, import_child_process4.execSync)(fullPublishCommand, {
+      (0, import_child_process3.execSync)(fullPublishCommand, {
         stdio: "inherit",
         cwd: dirPath
       });
@@ -29644,7 +29585,7 @@ function createTags(packageInfos) {
     }
     console.log(`Creating tag: ${tagName}`);
     try {
-      (0, import_child_process4.execSync)(`git tag -a ${tagName} -m "Release ${tagName}"`, {
+      (0, import_child_process3.execSync)(`git tag -a ${tagName} -m "Release ${tagName}"`, {
         stdio: "inherit"
       });
       tagsToCreate.push(tagName);
@@ -29659,7 +29600,7 @@ function createTags(packageInfos) {
   }
   console.log(`Pushing ${tagsToCreate.length} new tags...`);
   try {
-    (0, import_child_process4.execFileSync)("git", ["push", "--tags"], { stdio: "inherit" });
+    (0, import_child_process3.execFileSync)("git", ["push", "--tags"], { stdio: "inherit" });
     console.log("Tags pushed successfully.");
   } catch (error) {
     console.error("Failed to push tags:", error);
@@ -29709,57 +29650,67 @@ function getGitHubReleaseName(pkgInfo) {
   return releaseName;
 }
 
-// src/index.ts
-(async () => {
-  init();
-  if (import_github3.context.payload.pull_request?.merged) {
-    checkoutBranch(DEFAULT_BRANCH);
-    console.log(
-      `Pull request #${import_github3.context.payload.pull_request.number} has been merged.`
-    );
-    const isRelease = await isLastCommitAReleaseCommit();
-    if (isRelease) {
-      await publish();
-      return;
+// src/core/comments.ts
+var import_github3 = __toESM(require_github());
+
+// src/core/snapshots.ts
+var import_fs3 = require("fs");
+var import_path3 = require("path");
+var import_child_process4 = require("child_process");
+async function createSnapshot(changedPkgInfos) {
+  if (!SNAPSHOTS_ENABLED) {
+    console.log("Snapshots are disabled, skipping snapshot creation.");
+    return [];
+  }
+  const allPkgInfos = getPackageInfos(getPackagePaths());
+  const snapshotResults = [];
+  for (const pkgInfo of changedPkgInfos) {
+    const snapshotResult = await createPackageSnapshot(pkgInfo, allPkgInfos);
+    if (snapshotResult) {
+      snapshotResults.push(snapshotResult);
     }
-    await createOrUpdateReleasePR();
-  } else if (!import_github3.context.payload.pull_request?.merged) {
-    console.log(
-      `Pull request #${import_github3.context.payload.pull_request?.number} is not merged yet.`
-    );
-    if (!isPRTitleValid(PR_TITLE) && PR_TITLE !== RELEASE_PR_TITLE) {
-      await createOrUpdatePRStatusComment(false);
-      throw new Error(`Invalid pull request title: ${PR_TITLE}`);
-    }
-    await createOrUpdatePRStatusComment(true);
   }
-})();
-function init() {
-  const version = (0, import_child_process5.execSync)("git --version")?.toString().trim();
-  console.log(`git: ${version.replace("git version ", "")}`);
-  const nodeVersion = (0, import_child_process5.execSync)("node --version")?.toString().trim();
-  console.log(`node: ${nodeVersion}`);
-  setupGitConfig();
-  setNpmConfig();
+  return snapshotResults;
 }
-function setNpmConfig() {
-  console.log("Setting npm config...");
-  if (NPM_TOKEN) {
-    console.log("Setting npm token...");
-    (0, import_child_process5.execSync)(`npm config set //registry.npmjs.org/:_authToken=${NPM_TOKEN}`, {
-      stdio: "inherit"
-    });
+async function createPackageSnapshot(pkgInfo, allPkgInfos) {
+  console.log(`Creating snapshot for package: ${pkgInfo.name}`);
+  const dirPath = toDirectoryPath(pkgInfo.path);
+  if (!pkgInfo.isRoot && !(0, import_fs3.existsSync)(dirPath)) {
+    console.warn(`Directory ${dirPath} does not exist, skipping snapshot.`);
+    return;
   }
-  if (GITHUB_TOKEN) {
-    console.log("Setting GitHub token...");
-    (0, import_child_process5.execSync)(
-      `npm config set //npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}`,
-      {
-        stdio: "inherit"
-      }
-    );
+  const pm = await detect();
+  if (!pm) {
+    throw new Error("No package manager detected");
   }
+  const packageJsonPath = (0, import_path3.join)(dirPath, "package.json");
+  if (!(0, import_fs3.existsSync)(packageJsonPath)) {
+    console.warn(`Package.json file not found in ${dirPath}, skipping snapshot.`);
+    return;
+  }
+  const packageJson = JSON.parse((0, import_fs3.readFileSync)(packageJsonPath, "utf-8"));
+  if (packageJson.private) {
+    console.warn(`Package ${pkgInfo.name} is private, skipping snapshot.`);
+    return;
+  }
+  if (!packageJson.version) {
+    console.warn(`No version found in package.json for ${pkgInfo.name}, skipping snapshot.`);
+    return;
+  }
+  const newVersion = `${packageJson.version}-snapshot-${(/* @__PURE__ */ new Date()).getTime()}`;
+  pkgInfo.newVersion = newVersion;
+  updateIndirectPackageJsonFile(pkgInfo, allPkgInfos);
+  await updatePackageLockFiles(dirPath);
+  const fullPublishCommand = [pm.agent, "publish", "--tag", "snapshot"].join(" ");
+  (0, import_child_process4.execSync)(fullPublishCommand, { cwd: dirPath ? dirPath : void 0, stdio: "inherit" });
+  console.log(`Snapshot created for package: ${pkgInfo.name}`);
+  return {
+    packageName: pkgInfo.name,
+    newVersion
+  };
 }
+
+// src/core/comments.ts
 async function createOrUpdatePRStatusComment(shouldCreateSnapshot = false) {
   console.log("Creating or updating PR status comment...");
   let markdown = "## \u{1F680} Lazy Release Action\n";
@@ -29877,9 +29828,61 @@ async function createOrUpdatePRStatusComment(shouldCreateSnapshot = false) {
     await createPRComment(markdown);
   }
 }
+
+// src/index.ts
+(async () => {
+  init();
+  if (import_github4.context.payload.pull_request?.merged) {
+    checkoutBranch(DEFAULT_BRANCH);
+    console.log(
+      `Pull request #${import_github4.context.payload.pull_request.number} has been merged.`
+    );
+    const isRelease = await isLastCommitAReleaseCommit();
+    if (isRelease) {
+      await publish();
+      return;
+    }
+    await createOrUpdateReleasePR();
+  } else if (!import_github4.context.payload.pull_request?.merged) {
+    console.log(
+      `Pull request #${import_github4.context.payload.pull_request?.number} is not merged yet.`
+    );
+    if (!isPRTitleValid(PR_TITLE) && PR_TITLE !== RELEASE_PR_TITLE) {
+      await createOrUpdatePRStatusComment(false);
+      throw new Error(`Invalid pull request title: ${PR_TITLE}`);
+    }
+    await createOrUpdatePRStatusComment(true);
+  }
+})();
+function init() {
+  const version = (0, import_child_process5.execSync)("git --version")?.toString().trim();
+  console.log(`git: ${version.replace("git version ", "")}`);
+  const nodeVersion = (0, import_child_process5.execSync)("node --version")?.toString().trim();
+  console.log(`node: ${nodeVersion}`);
+  setupGitConfig();
+  setNpmConfig();
+}
+function setNpmConfig() {
+  console.log("Setting npm config...");
+  if (NPM_TOKEN) {
+    console.log("Setting npm token...");
+    (0, import_child_process5.execSync)(`npm config set //registry.npmjs.org/:_authToken=${NPM_TOKEN}`, {
+      stdio: "inherit"
+    });
+  }
+  if (GITHUB_TOKEN) {
+    console.log("Setting GitHub token...");
+    (0, import_child_process5.execSync)(
+      `npm config set //npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}`,
+      {
+        stdio: "inherit"
+      }
+    );
+  }
+}
 async function publish() {
   console.log("Publishing...");
-  const prBody = import_github3.context.payload.pull_request?.body;
+  const prBody = import_github4.context.payload.pull_request?.body;
   if (!prBody) {
     console.log("No pull request body found, skipping release creation.");
     return;
@@ -29988,8 +29991,8 @@ async function getRecentCommits(ignoreLastest = false) {
       }
       const prevItem = gitLogItems[prevIndex];
       const prevItemmMsg = prevItem.substring(prevItem.indexOf(":") + 1);
-      const owner = import_github3.context.repo.owner;
-      const repo = import_github3.context.repo.repo;
+      const owner = import_github4.context.repo.owner;
+      const repo = import_github4.context.repo.repo;
       const repoNameWithOwner = `${owner}/${repo}`;
       if (prevItemmMsg && prevItemmMsg.includes(`Reverts ${repoNameWithOwner}${prNumberWithHash}`)) {
         console.warn(
