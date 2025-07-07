@@ -18,11 +18,6 @@ export function getChangelogItems(changelogSection: string): string[] {
   return items;
 }
 
-export function getVersionPrefix(versionSpec: string): string {
-  const match = versionSpec.match(/^([\^~><=]+)/);
-  return match ? match[1] : '';
-}
-
 export function getChangelogFromMarkdown(
   markdown: string,
   rootPackageName?: string

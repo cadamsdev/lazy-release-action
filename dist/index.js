@@ -28931,6 +28931,12 @@ function globSync(patternsOrOptions, options) {
   return crawl(opts, cwd, true);
 }
 
+// src/utils/version.ts
+function getVersionPrefix(versionSpec) {
+  const match = versionSpec.match(/^([\^~><=]+)/);
+  return match ? match[1] : "";
+}
+
 // src/utils/package.ts
 function getPackagePaths() {
   const packagePaths = globSync("**/package.json", {
@@ -29178,10 +29184,6 @@ function getChangelogItems(changelogSection) {
     }
   }
   return items;
-}
-function getVersionPrefix(versionSpec) {
-  const match = versionSpec.match(/^([\^~><=]+)/);
-  return match ? match[1] : "";
 }
 function getChangelogFromMarkdown(markdown, rootPackageName) {
   const changelogs = [];
