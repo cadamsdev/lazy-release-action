@@ -126,7 +126,7 @@ export async function createOrUpdatePRStatusComment(shouldCreateSnapshot = false
 
       snapshotResults.forEach((result, index) => {
         markdown += `\`\`\`\n`;
-        markdown += `${rc.command} ${rc.args.join(' ')} ${result.packageName}${result.newVersion}\n`;
+        markdown += `${rc.command} ${rc.args.join(' ')} ${result.packageName}@${result.newVersion}\n`;
         markdown += `\`\`\``;
 
         if (index < snapshotResults.length - 1) {
