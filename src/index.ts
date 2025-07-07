@@ -5,6 +5,7 @@ import {
   commitAndPushChanges,
   createOrCheckoutBranch,
   hasUnstagedChanges,
+  isLastCommitAReleaseCommit,
   setupGitConfig,
 } from './api/git';
 import { DEFAULT_BRANCH, GITHUB_TOKEN, NPM_TOKEN, PR_COMMENT_STATUS_ID, RELEASE_BRANCH, RELEASE_PR_TITLE } from './constants';
@@ -104,22 +105,6 @@ function setNpmConfig() {
       }
     );
   }
-}
-
-async function isLastCommitAReleaseCommit(): Promise<boolean> {
-  // check if last commit has the release id in the message
-  let lastCommit = '';
-  await exec('git', ['log', '-1', '--pretty=format:%B'], {
-    listeners: {
-      stdout: (data: Buffer) => {
-        lastCommit = data.toString().trim();
-      },
-    },
-    silent: true,
-  });
-
-  console.log(`lastCommit=${lastCommit}`);
-  return lastCommit.includes(RELEASE_ID);
 }
 
 async function createOrUpdatePRStatusComment(shouldCreateSnapshot = false) {

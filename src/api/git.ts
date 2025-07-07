@@ -1,5 +1,7 @@
 import { execFileSync, execSync } from 'child_process';
 import { DEFAULT_BRANCH } from '../constants';
+import { RELEASE_ID } from '../utils';
+import { exec } from '@actions/exec';
 
 export function setupGitConfig() {
   console.log('Setting up git config');
@@ -115,4 +117,20 @@ export function doesTagExistOnRemote(tagName: string): boolean {
     // If the command exits with a non-zero status, the tag doesn't exist
     return false;
   }
+}
+
+export async function isLastCommitAReleaseCommit(): Promise<boolean> {
+  // check if last commit has the release id in the message
+  let lastCommit = '';
+  await exec('git', ['log', '-1', '--pretty=format:%B'], {
+    listeners: {
+      stdout: (data: Buffer) => {
+        lastCommit = data.toString().trim();
+      },
+    },
+    silent: true,
+  });
+
+  console.log(`lastCommit=${lastCommit}`);
+  return lastCommit.includes(RELEASE_ID);
 }
