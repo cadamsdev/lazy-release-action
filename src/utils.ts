@@ -183,10 +183,6 @@ export function getPackageNameWithoutScope(packageName: string): string {
   return packageName.startsWith('@') ? packageName.split('/')[1] : packageName;
 }
 
-export function increaseHeadingLevel(message: string): string {
-  return message.replace(/(#+)/g, '$1#');
-}
-
 
 export interface PackageRelease {
   pkgInfo: PackageInfo;

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { generateMarkdown } from "./markdown";
+import { generateMarkdown, increaseHeadingLevel } from "./markdown";
 import { PackageInfo } from "../types";
 import { Changelog } from "../utils";
 
@@ -104,4 +104,18 @@ describe('generateMarkdown', () => {
 
     expect(markdown).toEqual(expectedMarkdown);
   });
+});
+
+it('should increase heading level in markdown', () => {
+  const markdown = `
+# Heading 1
+## Heading 2
+### Heading 3
+  `;
+  const result = increaseHeadingLevel(markdown);
+  expect(result).toEqual(`
+## Heading 1
+### Heading 2
+#### Heading 3
+  `);
 });

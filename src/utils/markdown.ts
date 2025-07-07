@@ -100,3 +100,7 @@ export function generateMarkdown(
 
   return markdown;
 }
+
+export function increaseHeadingLevel(message: string): string {
+  return message.replace(/(#+)/g, '$1#');
+}
