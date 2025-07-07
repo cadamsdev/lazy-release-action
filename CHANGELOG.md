@@ -1,3 +1,9 @@
+## 0.4.1 (2025-07-07)
+
+### 🏠 Chores
+- Organize code ([#24](https://github.com/cadamsdev/lazy-release-action/pull/24))
+
+
 ## 0.4.0 (2025-07-06)
 
 ### 🚀 New Features
