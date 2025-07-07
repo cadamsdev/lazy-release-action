@@ -29176,6 +29176,13 @@ function getPackageNameWithoutScope(packageName) {
 
 // src/utils/markdown.ts
 var import_github3 = __toESM(require_github());
+
+// src/utils.ts
+function getPullRequestUrl(owner, repo, prNumber) {
+  return `https://github.com/${owner}/${repo}/pull/${prNumber}`;
+}
+
+// src/utils/markdown.ts
 function generateMarkdown(changedPackageInfos, indirectPackageInfos, changelogs) {
   let markdown = "# \u{1F449} Changelog\n\n";
   changedPackageInfos.forEach((pkg) => {
@@ -29332,78 +29339,6 @@ function uppercaseFirstLetter(str) {
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
-// src/utils.ts
-function getChangelogItems(changelogSection) {
-  const lines = changelogSection.split("- ");
-  const items = [];
-  for (const line of lines) {
-    const trimmedLine = line.trim();
-    if (trimmedLine) {
-      items.push(trimmedLine);
-    }
-  }
-  return items;
-}
-function getChangelogFromMarkdown(markdown, rootPackageName) {
-  const changelogs = [];
-  const changelogSection = getChangelogSectionFromCommitMessage(markdown);
-  const changelogItems = getChangelogItems(changelogSection);
-  for (const item of changelogItems) {
-    const changelog = createChangelogFromChangelogItem(item, rootPackageName);
-    if (!changelog) {
-      continue;
-    }
-    changelogs.push(changelog);
-  }
-  return changelogs;
-}
-function createChangelogFromChangelogItem(item, rootPackageName) {
-  const commitType = extractCommitType(item);
-  const description = extractDescription(item);
-  const typeParts = extractCommitTypeParts(commitType);
-  if (!typeParts.type) {
-    console.warn(
-      `Skipping item with no type: "${item}". Expected format: "type(package): description".`
-    );
-    return;
-  }
-  const semverBump = typeParts.isBreakingChange ? "major" : typeParts.type === "feat" ? "minor" : "patch";
-  let tempPackageNames = typeParts.packageNames || [];
-  if (rootPackageName && tempPackageNames.length) {
-    tempPackageNames = tempPackageNames.filter(
-      (pkgName) => getPackageNameWithoutScope(pkgName) !== getPackageNameWithoutScope(rootPackageName)
-    );
-  }
-  const changelog = {
-    type: typeParts.type,
-    description: transformDescription(description),
-    packages: tempPackageNames,
-    isBreakingChange: typeParts.isBreakingChange,
-    semverBump
-  };
-  return changelog;
-}
-function getPullRequestUrl(owner, repo, prNumber) {
-  return `https://github.com/${owner}/${repo}/pull/${prNumber}`;
-}
-function extractCommitType(changelogItem) {
-  return changelogItem.substring(0, changelogItem.indexOf(":")).trim();
-}
-function extractDescription(changelogItem) {
-  return changelogItem.substring(changelogItem.indexOf(":") + 1).trim();
-}
-function extractCommitTypeParts(commitType) {
-  const typeMatch = commitType.match(COMMIT_TYPE_PATTERN);
-  const type = typeMatch?.[1];
-  const packageNames = typeMatch?.[3] ? typeMatch?.[3].split(",") : [];
-  const isBreakingChange = !!typeMatch?.[4];
-  return {
-    type: type || "",
-    packageNames: packageNames.map((pkg) => pkg.trim()),
-    isBreakingChange
-  };
-}
-
 // src/utils/changelog.ts
 var DATE_NOW = /* @__PURE__ */ new Date();
 function generateChangelogContent(pkgInfo, changelogs, date = DATE_NOW) {
@@ -29549,6 +29484,73 @@ function replaceChangelogSection(newVersion, newChangelogContent, existingChange
     updatedChangelog += existingChangelogContent.slice(endIndex);
   }
   return updatedChangelog;
+}
+function getChangelogItems(changelogSection) {
+  const lines = changelogSection.split("- ");
+  const items = [];
+  for (const line of lines) {
+    const trimmedLine = line.trim();
+    if (trimmedLine) {
+      items.push(trimmedLine);
+    }
+  }
+  return items;
+}
+function getChangelogFromMarkdown(markdown, rootPackageName) {
+  const changelogs = [];
+  const changelogSection = getChangelogSectionFromCommitMessage(markdown);
+  const changelogItems = getChangelogItems(changelogSection);
+  for (const item of changelogItems) {
+    const changelog = createChangelogFromChangelogItem(item, rootPackageName);
+    if (!changelog) {
+      continue;
+    }
+    changelogs.push(changelog);
+  }
+  return changelogs;
+}
+function createChangelogFromChangelogItem(item, rootPackageName) {
+  const commitType = extractCommitType(item);
+  const description = extractDescription(item);
+  const typeParts = extractCommitTypeParts(commitType);
+  if (!typeParts.type) {
+    console.warn(
+      `Skipping item with no type: "${item}". Expected format: "type(package): description".`
+    );
+    return;
+  }
+  const semverBump = typeParts.isBreakingChange ? "major" : typeParts.type === "feat" ? "minor" : "patch";
+  let tempPackageNames = typeParts.packageNames || [];
+  if (rootPackageName && tempPackageNames.length) {
+    tempPackageNames = tempPackageNames.filter(
+      (pkgName) => getPackageNameWithoutScope(pkgName) !== getPackageNameWithoutScope(rootPackageName)
+    );
+  }
+  const changelog = {
+    type: typeParts.type,
+    description: transformDescription(description),
+    packages: tempPackageNames,
+    isBreakingChange: typeParts.isBreakingChange,
+    semverBump
+  };
+  return changelog;
+}
+function extractCommitType(changelogItem) {
+  return changelogItem.substring(0, changelogItem.indexOf(":")).trim();
+}
+function extractDescription(changelogItem) {
+  return changelogItem.substring(changelogItem.indexOf(":") + 1).trim();
+}
+function extractCommitTypeParts(commitType) {
+  const typeMatch = commitType.match(COMMIT_TYPE_PATTERN);
+  const type = typeMatch?.[1];
+  const packageNames = typeMatch?.[3] ? typeMatch?.[3].split(",") : [];
+  const isBreakingChange = !!typeMatch?.[4];
+  return {
+    type: type || "",
+    packageNames: packageNames.map((pkg) => pkg.trim()),
+    isBreakingChange
+  };
 }
 
 // src/core/changelog.ts

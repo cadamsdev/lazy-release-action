@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { generateChangelogContent, getChangelogFromCommits, getChangelogSectionFromCommitMessage, replaceChangelogSection, updateChangelog } from "./changelog";
-import { createChangelogFromChangelogItem, getChangelogItems } from "../utils";
+import { createChangelogFromChangelogItem, extractCommitType, extractCommitTypeParts, extractDescription, generateChangelogContent, getChangelogFromCommits, getChangelogItems, getChangelogSectionFromCommitMessage, replaceChangelogSection, updateChangelog } from "./changelog";
 import { Changelog, PackageInfo } from "../types";
 import { Commit } from "../api/git";
 
@@ -398,4 +397,50 @@ describe('updateChangelog', () => {
     );
     expect(updatedChangelog).toEqual(expectedChangelog);
   });
+});
+
+describe('extractCommitTypeParts', () => {
+  it('should extract single package', () => {
+    const commitType = 'chore(package-a)';
+    const { packageNames } = extractCommitTypeParts(commitType);
+    expect(packageNames).toEqual(['package-a']);
+  });
+
+  it('should extract multiple packages', () => {
+    const commitType = 'chore(package-a, package-b)';
+    const { packageNames } = extractCommitTypeParts(commitType);
+    expect(packageNames).toEqual(['package-a', 'package-b']);
+  });
+
+  it('should extract breaking change', () => {
+    const commitType = 'chore(package-a)!';
+    const { isBreakingChange } = extractCommitTypeParts(commitType);
+    expect(isBreakingChange).toBe(true);
+  });
+
+  it('should extract type and package names', () => {
+    const commitType = 'feat(package-a, package-b)';
+    const { type } = extractCommitTypeParts(commitType);
+    expect(type).toEqual('feat');
+  });
+
+  it('should extract type without scope', () => {
+    const commitType = 'feat';
+    const { type } = extractCommitTypeParts(commitType);
+    expect(type).toEqual('feat');
+  });
+});
+
+it('should extract the commit type from a changlog item', () => {
+  const item = 'feat(ui-components): Added new responsive table component';
+  const commitType = extractCommitType(item);
+
+  expect(commitType).toEqual('feat(ui-components)');
+});
+
+it('should extract the description from a changlog item', () => {
+  const item = 'feat(ui-components): Added new responsive table component';
+  const description = extractDescription(item);
+
+  expect(description).toEqual('Added new responsive table component');
 });

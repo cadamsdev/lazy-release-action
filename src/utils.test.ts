@@ -1,59 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import {
-  extractCommitType,
-  extractCommitTypeParts,
-  extractDescription,
   getPullRequestUrl,
   replaceVersionInPackageJson,
 } from './utils';
 
 describe('generateMarkdown', () => {
-  it('should extract the commit type from a changlog item', () => {
-    const item = 'feat(ui-components): Added new responsive table component';
-    const commitType = extractCommitType(item);
-
-    expect(commitType).toEqual('feat(ui-components)');
-  });
-
-  it('should extract the description from a changlog item', () => {
-    const item = 'feat(ui-components): Added new responsive table component';
-    const description = extractDescription(item);
-
-    expect(description).toEqual('Added new responsive table component');
-  });
-
-  describe('extractCommitTypeParts', () => {
-    it('should extract single package', () => {
-      const commitType = 'chore(package-a)';
-      const { packageNames } = extractCommitTypeParts(commitType);
-      expect(packageNames).toEqual(['package-a']);
-    });
-
-    it('should extract multiple packages', () => {
-      const commitType = 'chore(package-a, package-b)';
-      const { packageNames } = extractCommitTypeParts(commitType);
-      expect(packageNames).toEqual(['package-a', 'package-b']);
-    });
-
-    it('should extract breaking change', () => {
-      const commitType = 'chore(package-a)!';
-      const { isBreakingChange } = extractCommitTypeParts(commitType);
-      expect(isBreakingChange).toBe(true);
-    });
-
-    it('should extract type and package names', () => {
-      const commitType = 'feat(package-a, package-b)';
-      const { type } = extractCommitTypeParts(commitType);
-      expect(type).toEqual('feat');
-    });
-
-    it('should extract type without scope', () => {
-      const commitType = 'feat';
-      const { type } = extractCommitTypeParts(commitType);
-      expect(type).toEqual('feat');
-    });
-  });
-
   it('should replace version in package.json string', () => {
     const packageJsonString = `{
       "name": "test-package",

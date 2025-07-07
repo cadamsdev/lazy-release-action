@@ -1,5 +1,4 @@
 import { context } from "@actions/github";
-import { createChangelogFromChangelogItem, getChangelogFromMarkdown } from "../utils";
 import { bumpIndirectPackageVersion, getChangedPackageInfos, getPackageInfos, getPackagePaths, updateIndirectPackageJsonFile, updatePackageJsonFile } from "../utils/package";
 import * as githubApi from "../api/github";
 import { applyNewVersion } from "./version";
@@ -8,6 +7,7 @@ import { detect, resolveCommand } from "package-manager-detector";
 import { createSnapshot } from "./snapshots";
 import { PR_COMMENT_STATUS_ID } from "../constants";
 import { Changelog } from "../types";
+import { createChangelogFromChangelogItem, getChangelogFromMarkdown } from "../utils/changelog";
 
 export async function createOrUpdatePRStatusComment(shouldCreateSnapshot = false) {
   console.log('Creating or updating PR status comment...');

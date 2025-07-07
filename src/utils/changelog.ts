@@ -1,9 +1,9 @@
 import { Commit } from "../api/git";
-import { TYPE_TO_CHANGELOG_TYPE } from "../constants";
-import { Changelog, PackageInfo } from "../types";
-import { createChangelogFromChangelogItem, getChangelogItems } from "../utils";
+import { COMMIT_TYPE_PATTERN, TYPE_TO_CHANGELOG_TYPE } from "../constants";
+import { Changelog, CommitTypeParts, PackageInfo, SemverBump } from "../types";
 import { getPackageNameWithoutScope } from "./package";
 import { getDirectoryNameFromPath } from "./path";
+import { transformDescription } from "./string";
 
 const DATE_NOW = new Date();
 
@@ -203,4 +203,98 @@ export function replaceChangelogSection(
     updatedChangelog += existingChangelogContent.slice(endIndex);
   }
   return updatedChangelog;
+}
+
+export function getChangelogItems(changelogSection: string): string[] {
+  const lines = changelogSection.split('- ');
+  const items: string[] = [];
+
+  for (const line of lines) {
+    const trimmedLine = line.trim();
+    if (trimmedLine) {
+      items.push(trimmedLine);
+    }
+  }
+
+  return items;
+}
+
+export function getChangelogFromMarkdown(
+  markdown: string,
+  rootPackageName?: string
+): Changelog[] {
+  const changelogs: Changelog[] = [];
+
+  const changelogSection = getChangelogSectionFromCommitMessage(markdown);
+  const changelogItems = getChangelogItems(changelogSection);
+  for (const item of changelogItems) {
+    const changelog = createChangelogFromChangelogItem(item, rootPackageName);
+    if (!changelog) {
+      continue;
+    }
+
+    changelogs.push(changelog);
+  }
+  return changelogs;
+}
+
+export function createChangelogFromChangelogItem(item: string, rootPackageName?: string): Changelog|undefined {
+  const commitType = extractCommitType(item);
+  const description = extractDescription(item);
+  const typeParts = extractCommitTypeParts(commitType);
+
+  if (!typeParts.type) {
+    console.warn(
+      `Skipping item with no type: "${item}". Expected format: "type(package): description".`
+    );
+    return;
+  }
+
+  const semverBump: SemverBump = typeParts.isBreakingChange
+    ? 'major'
+    : typeParts.type === 'feat'
+    ? 'minor'
+    : 'patch';
+
+  let tempPackageNames = typeParts.packageNames || [];
+
+  if (rootPackageName && tempPackageNames.length) {
+    // remove the root package name from the the list if it exists
+    tempPackageNames = tempPackageNames.filter(
+      (pkgName) =>
+        getPackageNameWithoutScope(pkgName) !==
+        getPackageNameWithoutScope(rootPackageName)
+    );
+  }
+
+  const changelog: Changelog = {
+    type: typeParts.type,
+    description: transformDescription(description),
+    packages: tempPackageNames,
+    isBreakingChange: typeParts.isBreakingChange,
+    semverBump,
+  };
+
+  return changelog;
+}
+
+export function extractCommitType(changelogItem: string): string {
+  return changelogItem.substring(0, changelogItem.indexOf(':')).trim();
+}
+
+export function extractDescription(changelogItem: string): string {
+  return changelogItem.substring(changelogItem.indexOf(':') + 1).trim();
+}
+
+export function extractCommitTypeParts(commitType: string): CommitTypeParts {
+  const typeMatch = commitType.match(COMMIT_TYPE_PATTERN);
+  const type = typeMatch?.[1];
+  const packageNames = typeMatch?.[3] ? typeMatch?.[3].split(',') : [];
+  const isBreakingChange = !!typeMatch?.[4];
+
+  return {
+    type: type || '',
+    packageNames: packageNames.map((pkg) => pkg.trim()),
+    isBreakingChange: isBreakingChange,
+  };
 }
