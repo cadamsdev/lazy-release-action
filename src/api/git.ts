@@ -1,5 +1,8 @@
 import { execFileSync, execSync } from 'child_process';
-import { DEFAULT_BRANCH } from '../constants';
+import { DEFAULT_BRANCH, RELEASE_ID } from '../constants';
+import { exec } from '@actions/exec';
+import { CONVENTIONAL_COMMITS_PATTERN } from '../utils/validation';
+import { context } from '@actions/github';
 
 export function setupGitConfig() {
   console.log('Setting up git config');
@@ -115,4 +118,137 @@ export function doesTagExistOnRemote(tagName: string): boolean {
     // If the command exits with a non-zero status, the tag doesn't exist
     return false;
   }
+}
+
+export async function isLastCommitAReleaseCommit(): Promise<boolean> {
+  // check if last commit has the release id in the message
+  let lastCommit = '';
+  await exec('git', ['log', '-1', '--pretty=format:%B'], {
+    listeners: {
+      stdout: (data: Buffer) => {
+        lastCommit = data.toString().trim();
+      },
+    },
+    silent: true,
+  });
+
+  console.log(`lastCommit=${lastCommit}`);
+  return lastCommit.includes(RELEASE_ID);
+}
+
+export interface Commit {
+  hash: string;
+  message: string;
+}
+
+export async function getRecentCommits(
+  ignoreLastest: boolean = false
+): Promise<Commit[]> {
+  console.log('Getting recent commits...');
+
+  let stdoutBuffer = '';
+
+  console.log('Fetching commits since last release commit...');
+  await exec(
+    'git',
+    [
+      'log',
+      '--pretty=format:%h:%B%n<COMMIT_SEPARATOR>', // Add a custom separator between commits
+    ],
+    {
+      listeners: {
+        stdout: (data: Buffer) => {
+          stdoutBuffer += data.toString();
+        },
+      },
+      silent: true,
+    }
+  );
+
+  const gitLogItems = stdoutBuffer
+    .split('<COMMIT_SEPARATOR>')
+    .map((msg) => msg.trim())
+    .filter((msg) => msg !== '');
+
+  const commits: Commit[] = [];
+
+  console.log(`Found ${gitLogItems.length} commit items.`);
+
+  for (let i = 0; i < gitLogItems.length; i++) {
+    const item = gitLogItems[i];
+
+    if (ignoreLastest && i === 0) {
+      continue;
+    }
+
+    const hash = item.substring(0, item.indexOf(':'));
+    if (!hash) {
+      console.warn('No commit hash found in item:', item);
+      continue;
+    }
+
+    const message = item.substring(item.indexOf(':') + 1);
+    if (!message) {
+      console.warn('No commit message found in item:', item);
+      continue;
+    }
+
+    if (message.includes(RELEASE_ID)) {
+      // get PR number from message
+      const prMatch = message.match(/#(\d+)/);
+
+      if (!prMatch) {
+        console.warn(
+          `Skipping release commit ${hash} because it does not contain a PR number.`
+        );
+        continue;
+      }
+
+      const prNumberWithHash = prMatch[0];
+      const prevIndex = i - 1;
+
+      if (prevIndex < 0) {
+        console.warn(
+          `Skipping release commit ${hash} because it is the first commit.`
+        );
+        continue;
+      }
+
+      const prevItem = gitLogItems[prevIndex];
+      const prevItemmMsg = prevItem.substring(prevItem.indexOf(':') + 1);
+
+      const owner = context.repo.owner;
+      const repo = context.repo.repo;
+      const repoNameWithOwner = `${owner}/${repo}`;
+
+      if (
+        prevItemmMsg &&
+        prevItemmMsg.includes(`Reverts ${repoNameWithOwner}${prNumberWithHash}`)
+      ) {
+        console.warn(
+          `Skipping release commit ${hash} because it is reverted by the next commit.`
+        );
+        continue;
+      }
+
+      break; // Stop processing further commits if we found a release commit
+    }
+
+    commits.push({ hash, message: message.trim() });
+  }
+
+  console.log('Commits since last release:');
+  console.log(commits);
+
+  // Filter for commits containing "## Changelog"
+  const filteredCommits = commits.filter(
+    (commit) =>
+      CONVENTIONAL_COMMITS_PATTERN.test(commit.message) ||
+      commit.message.includes('## Changelog')
+  );
+
+  console.log('Filtered commits:');
+  console.log(filteredCommits);
+
+  return filteredCommits;
 }
