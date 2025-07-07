@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getVersionPrefix } from "./version";
+import { getVersionPrefix, replaceVersionInPackageJson } from "./version";
 
 describe('getVersionPrefix', () => {
   it('should return the prefix from a version spec', () => {
@@ -25,4 +25,19 @@ describe('getVersionPrefix', () => {
     const result = getVersionPrefix(versionSpec);
     expect(result).toBe('');
   });
+});
+
+it('should replace version in package.json string', () => {
+  const packageJsonString = `{
+    "name": "test-package",
+    "version": "1.0.0"
+  }`;
+  const newVersion = '1.1.0';
+  const updatedPackageJsonString = `{
+    "name": "test-package",
+    "version": "1.1.0"
+  }`;
+
+  const result = replaceVersionInPackageJson(packageJsonString, newVersion);
+  expect(result).toEqual(updatedPackageJsonString);
 });

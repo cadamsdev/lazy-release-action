@@ -28369,7 +28369,7 @@ async function createPRComment(markdown) {
 }
 
 // src/index.ts
-var import_github5 = __toESM(require_github());
+var import_github6 = __toESM(require_github());
 
 // src/utils/package.ts
 var import_fs = require("fs");
@@ -29177,7 +29177,7 @@ function getPackageNameWithoutScope(packageName) {
 // src/utils/markdown.ts
 var import_github3 = __toESM(require_github());
 
-// src/utils.ts
+// src/utils/github.ts
 function getPullRequestUrl(owner, repo, prNumber) {
   return `https://github.com/${owner}/${repo}/pull/${prNumber}`;
 }
@@ -29736,7 +29736,7 @@ function getGitHubReleaseName(pkgInfo) {
 }
 
 // src/core/comments.ts
-var import_github4 = __toESM(require_github());
+var import_github5 = __toESM(require_github());
 
 // src/core/snapshots.ts
 var import_fs3 = require("fs");
@@ -29799,7 +29799,7 @@ async function createPackageSnapshot(pkgInfo, allPkgInfos) {
 async function createOrUpdatePRStatusComment(shouldCreateSnapshot = false) {
   console.log("Creating or updating PR status comment...");
   let markdown = "## \u{1F680} Lazy Release Action\n";
-  const prBody = import_github4.context.payload.pull_request?.body;
+  const prBody = import_github5.context.payload.pull_request?.body;
   console.log("Pull request body");
   console.log(prBody);
   let changelogs = [];
@@ -29842,7 +29842,7 @@ async function createOrUpdatePRStatusComment(shouldCreateSnapshot = false) {
   } else {
     markdown += "\u26A0\uFE0F No packages changed.\n";
   }
-  const latestCommitHash = import_github4.context.payload.pull_request?.head.sha;
+  const latestCommitHash = import_github5.context.payload.pull_request?.head.sha;
   if (latestCommitHash) {
     console.log(`Latest commit hash: ${latestCommitHash}`);
     markdown += `Latest commit: ${latestCommitHash}
@@ -29917,10 +29917,10 @@ async function createOrUpdatePRStatusComment(shouldCreateSnapshot = false) {
 // src/index.ts
 (async () => {
   init();
-  if (import_github5.context.payload.pull_request?.merged) {
+  if (import_github6.context.payload.pull_request?.merged) {
     checkoutBranch(DEFAULT_BRANCH);
     console.log(
-      `Pull request #${import_github5.context.payload.pull_request.number} has been merged.`
+      `Pull request #${import_github6.context.payload.pull_request.number} has been merged.`
     );
     const isRelease = await isLastCommitAReleaseCommit();
     if (isRelease) {
@@ -29928,9 +29928,9 @@ async function createOrUpdatePRStatusComment(shouldCreateSnapshot = false) {
       return;
     }
     await createOrUpdateReleasePR();
-  } else if (!import_github5.context.payload.pull_request?.merged) {
+  } else if (!import_github6.context.payload.pull_request?.merged) {
     console.log(
-      `Pull request #${import_github5.context.payload.pull_request?.number} is not merged yet.`
+      `Pull request #${import_github6.context.payload.pull_request?.number} is not merged yet.`
     );
     if (!isPRTitleValid(PR_TITLE) && PR_TITLE !== RELEASE_PR_TITLE) {
       await createOrUpdatePRStatusComment(false);
@@ -29967,7 +29967,7 @@ function setNpmConfig() {
 }
 async function publish() {
   console.log("Publishing...");
-  const prBody = import_github5.context.payload.pull_request?.body;
+  const prBody = import_github6.context.payload.pull_request?.body;
   if (!prBody) {
     console.log("No pull request body found, skipping release creation.");
     return;

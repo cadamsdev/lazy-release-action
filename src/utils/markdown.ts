@@ -1,9 +1,9 @@
 import { context } from "@actions/github";
 import { RELEASE_ID, TYPE_TO_CHANGELOG_TYPE } from "../constants";
 import { Changelog, PackageChangelogEntry, PackageInfo } from "../types";
-import { getPullRequestUrl } from "../utils";
 import { getPackageNameWithoutScope } from "./package";
 import { getDirectoryNameFromPath } from "./path";
+import { getPullRequestUrl } from "./github";
 
 export function generateMarkdown(
   changedPackageInfos: PackageInfo[],
