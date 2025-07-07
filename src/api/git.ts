@@ -35,6 +35,7 @@ export function createOrCheckoutBranch(branchName: string) {
         stdio: 'inherit',
       });
       console.log(`Merged ${DEFAULT_BRANCH} into ${branchName}`);
+      // oxlint-disable-next-line no-unused-vars
     } catch (mergeError) {
       console.log(
         `Merge conflicts detected, resolving by taking theirs strategy`
@@ -69,6 +70,7 @@ export function createOrCheckoutBranch(branchName: string) {
     );
     execFileSync('git', ['push', 'origin', branchName], { stdio: 'inherit' });
     console.log(`Committed and pushed changes to ${branchName}`);
+    // oxlint-disable-next-line no-unused-vars
   } catch (error) {
     console.log(`Branch ${branchName} does not exist, creating it.`);
     execFileSync('git', ['checkout', '-b', branchName], { stdio: 'inherit' });
