@@ -1,6 +1,7 @@
+import { context } from "@actions/github";
 import { RELEASE_ID, TYPE_TO_CHANGELOG_TYPE } from "../constants";
 import { PackageInfo } from "../types";
-import { Changelog, PackageChangelogEntry } from "../utils";
+import { Changelog, getPullRequestUrl, PackageChangelogEntry } from "../utils";
 import { getPackageNameWithoutScope } from "./package";
 import { getDirectoryNameFromPath } from "./path";
 
@@ -176,4 +177,26 @@ export function parseHeading2(heading: string): {
     newVersion,
     isRoot,
   };
+}
+
+export function replacePRNumberWithLink(
+  description: string
+): string {
+  if (!description) {
+    return description;
+  }
+
+  const owner = context.repo.owner;
+  const repo = context.repo.repo;
+  const prPattern = /\(#(\d+)\)/;
+  let tempDesc = description;
+  const prNumberMatch = tempDesc.match(prPattern);
+
+  if (prNumberMatch) {
+    const prNumber = parseInt(prNumberMatch[1]);
+    const prUrl = getPullRequestUrl(owner, repo, prNumber);
+    tempDesc = tempDesc.replace(prPattern, `([#${prNumber}](${prUrl}))`);
+  }
+
+  return tempDesc;
 }

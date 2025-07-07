@@ -28371,9 +28371,6 @@ async function createPRComment(markdown) {
 // src/index.ts
 var import_github5 = __toESM(require_github());
 
-// src/utils.ts
-var import_github3 = __toESM(require_github());
-
 // src/utils/package.ts
 var import_fs = require("fs");
 
@@ -29173,6 +29170,164 @@ function getPackageNameWithoutScope(packageName) {
   return packageName.startsWith("@") ? packageName.split("/")[1] : packageName;
 }
 
+// src/utils/markdown.ts
+var import_github3 = __toESM(require_github());
+function generateMarkdown(changedPackageInfos, indirectPackageInfos, changelogs) {
+  let markdown = "# \u{1F449} Changelog\n\n";
+  changedPackageInfos.forEach((pkg) => {
+    const pkgNameWithoutScope = getPackageNameWithoutScope(pkg.name);
+    const packageChangelogs = changelogs.filter(
+      (changelog) => changelog.packages.includes(pkgNameWithoutScope) || changelog.packages.includes(getDirectoryNameFromPath(pkg.path)) || pkg.isRoot && changelog.packages.length === 0
+    );
+    if (packageChangelogs.length === 0) {
+      return;
+    }
+    if (pkg.isRoot) {
+      markdown += `## ${pkg.version}`;
+    } else {
+      markdown += `## ${pkgNameWithoutScope}@${pkg.version}`;
+    }
+    if (pkg.newVersion) {
+      markdown += `\u27A1\uFE0F${pkg.newVersion}`;
+    }
+    markdown += "\n\n";
+    const changelogsWithBreakingChanges = packageChangelogs.filter(
+      (changelog) => changelog.isBreakingChange
+    );
+    if (changelogsWithBreakingChanges.length) {
+      markdown += `### \u26A0\uFE0F Breaking Changes
+`;
+    }
+    for (let i = 0; i < changelogsWithBreakingChanges.length; i++) {
+      const changelog = changelogsWithBreakingChanges[i];
+      markdown += "- ";
+      markdown += changelog.description + "\n";
+    }
+    if (changelogsWithBreakingChanges.length) {
+      markdown += "\n";
+    }
+    const groupedChangelogs = {};
+    for (const changelog of packageChangelogs) {
+      if (changelog.isBreakingChange) {
+        continue;
+      }
+      if (!groupedChangelogs[changelog.type]) {
+        groupedChangelogs[changelog.type] = [];
+      }
+      groupedChangelogs[changelog.type].push(changelog);
+    }
+    const sortedTypes = Object.keys(groupedChangelogs).sort(
+      (a, b) => TYPE_TO_CHANGELOG_TYPE[a].sort - TYPE_TO_CHANGELOG_TYPE[b].sort
+    );
+    for (const sortedType of sortedTypes) {
+      const changelogs2 = groupedChangelogs[sortedType];
+      const changelogType = TYPE_TO_CHANGELOG_TYPE[sortedType];
+      markdown += `### ${changelogType.emoji} ${changelogType.displayName}
+`;
+      for (const changelog of changelogs2) {
+        markdown += `- ${changelog.description}
+`;
+      }
+      markdown += "\n";
+    }
+  });
+  indirectPackageInfos.forEach((pkgInfo) => {
+    const pkgNameWithoutScope = getPackageNameWithoutScope(pkgInfo.name);
+    markdown += `## ${pkgNameWithoutScope}@${pkgInfo.version}`;
+    if (pkgInfo.newVersion) {
+      markdown += `\u27A1\uFE0F${pkgInfo.newVersion}`;
+    }
+    markdown += "\n\n";
+    markdown += `\u{1F4E6} Updated due to dependency changes
+
+`;
+  });
+  return markdown;
+}
+function increaseHeadingLevel(message) {
+  return message.replace(/(#+)/g, "$1#");
+}
+function appendReleaseIdToMarkdown(markdown) {
+  const releaseIdComment = `<!-- Release PR: ${RELEASE_ID} -->`;
+  return markdown + releaseIdComment;
+}
+function removeReleasePRComment(markdown) {
+  const releaseIdComment = `<!-- Release PR: ${RELEASE_ID} -->`;
+  return markdown.replace(releaseIdComment, "").trim();
+}
+var heading2Regex = /^## ((@[a-z]+)?(\/)?([\w-]+)@)?(\d+\.\d+\.\d+)➡️(\d+\.\d+\.\d+)(\n\n)?/;
+function parseReleasePRBody(prBody) {
+  prBody = removeReleasePRComment(prBody);
+  const changelogEntries = [];
+  const headings = Array.from(
+    prBody.matchAll(new RegExp(heading2Regex, "gm"))
+  );
+  console.log(`Found ${headings.length} headings in PR body.`);
+  for (let i = 0; i < headings.length; i++) {
+    const heading = headings[i];
+    const headingData = parseHeading2(heading[0]);
+    const startIndex = heading.index + heading[0].length;
+    const endIndex = i < headings.length - 1 ? headings[i + 1].index : prBody.length;
+    const content = prBody.substring(startIndex, endIndex).trim();
+    changelogEntries.push({
+      heading: headingData,
+      content
+    });
+  }
+  return changelogEntries;
+}
+function parseHeading2(heading) {
+  const match = heading.match(heading2Regex);
+  if (!match) {
+    throw new Error(`Invalid heading format: ${heading}`);
+  }
+  const scope = match[2];
+  const packageName = match[4];
+  const oldVersion = match[5];
+  const newVersion = match[6];
+  const isRoot = !packageName;
+  let fullPackageName = packageName;
+  if (scope) {
+    fullPackageName = `${scope}/${packageName}`;
+  }
+  return {
+    packageName: fullPackageName,
+    oldVersion,
+    newVersion,
+    isRoot
+  };
+}
+function replacePRNumberWithLink(description) {
+  if (!description) {
+    return description;
+  }
+  const owner = import_github3.context.repo.owner;
+  const repo = import_github3.context.repo.repo;
+  const prPattern = /\(#(\d+)\)/;
+  let tempDesc = description;
+  const prNumberMatch = tempDesc.match(prPattern);
+  if (prNumberMatch) {
+    const prNumber = parseInt(prNumberMatch[1]);
+    const prUrl = getPullRequestUrl(owner, repo, prNumber);
+    tempDesc = tempDesc.replace(prPattern, `([#${prNumber}](${prUrl}))`);
+  }
+  return tempDesc;
+}
+
+// src/utils/string.ts
+function transformDescription(description) {
+  if (!description) {
+    return "";
+  }
+  let temp = description.trim();
+  temp = uppercaseFirstLetter(temp);
+  temp = replacePRNumberWithLink(temp);
+  return temp;
+}
+function uppercaseFirstLetter(str) {
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
 // src/utils.ts
 function getChangelogItems(changelogSection) {
   const lines = changelogSection.split("- ");
@@ -29224,36 +29379,8 @@ function createChangelogFromChangelogItem(item, rootPackageName) {
   };
   return changelog;
 }
-function transformDescription(description) {
-  if (!description) {
-    return "";
-  }
-  let temp = description.trim();
-  temp = uppercaseFirstLetter(temp);
-  temp = replacePRNumberWithLink(temp);
-  return temp;
-}
-function replacePRNumberWithLink(description) {
-  if (!description) {
-    return description;
-  }
-  const owner = import_github3.context.repo.owner;
-  const repo = import_github3.context.repo.repo;
-  const prPattern = /\(#(\d+)\)/;
-  let tempDesc = description;
-  const prNumberMatch = tempDesc.match(prPattern);
-  if (prNumberMatch) {
-    const prNumber = parseInt(prNumberMatch[1]);
-    const prUrl = getPullRequestUrl(owner, repo, prNumber);
-    tempDesc = tempDesc.replace(prPattern, `([#${prNumber}](${prUrl}))`);
-  }
-  return tempDesc;
-}
 function getPullRequestUrl(owner, repo, prNumber) {
   return `https://github.com/${owner}/${repo}/pull/${prNumber}`;
-}
-function uppercaseFirstLetter(str) {
-  return str.charAt(0).toUpperCase() + str.slice(1);
 }
 function extractCommitType(changelogItem) {
   return changelogItem.substring(0, changelogItem.indexOf(":")).trim();
@@ -29422,133 +29549,6 @@ function replaceChangelogSection(newVersion, newChangelogContent, existingChange
     updatedChangelog += existingChangelogContent.slice(endIndex);
   }
   return updatedChangelog;
-}
-
-// src/utils/markdown.ts
-function generateMarkdown(changedPackageInfos, indirectPackageInfos, changelogs) {
-  let markdown = "# \u{1F449} Changelog\n\n";
-  changedPackageInfos.forEach((pkg) => {
-    const pkgNameWithoutScope = getPackageNameWithoutScope(pkg.name);
-    const packageChangelogs = changelogs.filter(
-      (changelog) => changelog.packages.includes(pkgNameWithoutScope) || changelog.packages.includes(getDirectoryNameFromPath(pkg.path)) || pkg.isRoot && changelog.packages.length === 0
-    );
-    if (packageChangelogs.length === 0) {
-      return;
-    }
-    if (pkg.isRoot) {
-      markdown += `## ${pkg.version}`;
-    } else {
-      markdown += `## ${pkgNameWithoutScope}@${pkg.version}`;
-    }
-    if (pkg.newVersion) {
-      markdown += `\u27A1\uFE0F${pkg.newVersion}`;
-    }
-    markdown += "\n\n";
-    const changelogsWithBreakingChanges = packageChangelogs.filter(
-      (changelog) => changelog.isBreakingChange
-    );
-    if (changelogsWithBreakingChanges.length) {
-      markdown += `### \u26A0\uFE0F Breaking Changes
-`;
-    }
-    for (let i = 0; i < changelogsWithBreakingChanges.length; i++) {
-      const changelog = changelogsWithBreakingChanges[i];
-      markdown += "- ";
-      markdown += changelog.description + "\n";
-    }
-    if (changelogsWithBreakingChanges.length) {
-      markdown += "\n";
-    }
-    const groupedChangelogs = {};
-    for (const changelog of packageChangelogs) {
-      if (changelog.isBreakingChange) {
-        continue;
-      }
-      if (!groupedChangelogs[changelog.type]) {
-        groupedChangelogs[changelog.type] = [];
-      }
-      groupedChangelogs[changelog.type].push(changelog);
-    }
-    const sortedTypes = Object.keys(groupedChangelogs).sort(
-      (a, b) => TYPE_TO_CHANGELOG_TYPE[a].sort - TYPE_TO_CHANGELOG_TYPE[b].sort
-    );
-    for (const sortedType of sortedTypes) {
-      const changelogs2 = groupedChangelogs[sortedType];
-      const changelogType = TYPE_TO_CHANGELOG_TYPE[sortedType];
-      markdown += `### ${changelogType.emoji} ${changelogType.displayName}
-`;
-      for (const changelog of changelogs2) {
-        markdown += `- ${changelog.description}
-`;
-      }
-      markdown += "\n";
-    }
-  });
-  indirectPackageInfos.forEach((pkgInfo) => {
-    const pkgNameWithoutScope = getPackageNameWithoutScope(pkgInfo.name);
-    markdown += `## ${pkgNameWithoutScope}@${pkgInfo.version}`;
-    if (pkgInfo.newVersion) {
-      markdown += `\u27A1\uFE0F${pkgInfo.newVersion}`;
-    }
-    markdown += "\n\n";
-    markdown += `\u{1F4E6} Updated due to dependency changes
-
-`;
-  });
-  return markdown;
-}
-function increaseHeadingLevel(message) {
-  return message.replace(/(#+)/g, "$1#");
-}
-function appendReleaseIdToMarkdown(markdown) {
-  const releaseIdComment = `<!-- Release PR: ${RELEASE_ID} -->`;
-  return markdown + releaseIdComment;
-}
-function removeReleasePRComment(markdown) {
-  const releaseIdComment = `<!-- Release PR: ${RELEASE_ID} -->`;
-  return markdown.replace(releaseIdComment, "").trim();
-}
-var heading2Regex = /^## ((@[a-z]+)?(\/)?([\w-]+)@)?(\d+\.\d+\.\d+)➡️(\d+\.\d+\.\d+)(\n\n)?/;
-function parseReleasePRBody(prBody) {
-  prBody = removeReleasePRComment(prBody);
-  const changelogEntries = [];
-  const headings = Array.from(
-    prBody.matchAll(new RegExp(heading2Regex, "gm"))
-  );
-  console.log(`Found ${headings.length} headings in PR body.`);
-  for (let i = 0; i < headings.length; i++) {
-    const heading = headings[i];
-    const headingData = parseHeading2(heading[0]);
-    const startIndex = heading.index + heading[0].length;
-    const endIndex = i < headings.length - 1 ? headings[i + 1].index : prBody.length;
-    const content = prBody.substring(startIndex, endIndex).trim();
-    changelogEntries.push({
-      heading: headingData,
-      content
-    });
-  }
-  return changelogEntries;
-}
-function parseHeading2(heading) {
-  const match = heading.match(heading2Regex);
-  if (!match) {
-    throw new Error(`Invalid heading format: ${heading}`);
-  }
-  const scope = match[2];
-  const packageName = match[4];
-  const oldVersion = match[5];
-  const newVersion = match[6];
-  const isRoot = !packageName;
-  let fullPackageName = packageName;
-  if (scope) {
-    fullPackageName = `${scope}/${packageName}`;
-  }
-  return {
-    packageName: fullPackageName,
-    oldVersion,
-    newVersion,
-    isRoot
-  };
 }
 
 // src/core/changelog.ts

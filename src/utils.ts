@@ -3,6 +3,7 @@ import { getChangelogSectionFromCommitMessage } from "./utils/changelog";
 import { PackageInfo } from "./types";
 import { getPackageNameWithoutScope } from "./utils/package";
 import { COMMIT_TYPE_PATTERN } from "./constants";
+import { transformDescription } from "./utils/string";
 
 export function getChangelogItems(changelogSection: string): string[] {
   const lines = changelogSection.split('- ');
@@ -78,50 +79,8 @@ export function createChangelogFromChangelogItem(item: string, rootPackageName?:
   return changelog;
 }
 
-export function transformDescription(description: string): string {
-  if (!description) {
-    return '';
-  }
-
-  // Remove leading and trailing whitespace
-  let temp = description.trim();
-
-  // uppercase the first letter
-  temp = uppercaseFirstLetter(temp);
-
-  // replace PR number
-  temp = replacePRNumberWithLink(temp);
-  return temp;
-}
-
-export function replacePRNumberWithLink(
-  description: string
-): string {
-  if (!description) {
-    return description;
-  }
-
-  const owner = context.repo.owner;
-  const repo = context.repo.repo;
-  const prPattern = /\(#(\d+)\)/;
-  let tempDesc = description;
-  const prNumberMatch = tempDesc.match(prPattern);
-
-  if (prNumberMatch) {
-    const prNumber = parseInt(prNumberMatch[1]);
-    const prUrl = getPullRequestUrl(owner, repo, prNumber);
-    tempDesc = tempDesc.replace(prPattern, `([#${prNumber}](${prUrl}))`);
-  }
-
-  return tempDesc;
-}
-
 export function getPullRequestUrl(owner: string, repo: string, prNumber: number): string {
   return `https://github.com/${owner}/${repo}/pull/${prNumber}`;
-}
-
-export function uppercaseFirstLetter(str: string): string {
-  return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
 export function extractCommitType(changelogItem: string): string {
