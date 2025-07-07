@@ -3,7 +3,6 @@ import {
   extractCommitType,
   extractCommitTypeParts,
   extractDescription,
-  getDirectoryNameFromPath,
   getPullRequestUrl,
   replaceVersionInPackageJson,
 } from './utils';
@@ -82,10 +81,5 @@ describe('generateMarkdown', () => {
     const prNumber = 123;
     const url = getPullRequestUrl(owner, repo, prNumber);
     expect(url).toEqual('https://github.com/test-owner/test-repo/pull/123');
-  });
-
-  it('should get directory name from a file path', () => {
-    const filePath = 'src/packages/components/package.json';
-    expect(getDirectoryNameFromPath(filePath)).toEqual('components');
   });
 });

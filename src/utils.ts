@@ -4,11 +4,6 @@ import { PackageInfo } from "./types";
 import { getPackageNameWithoutScope } from "./utils/package";
 import { COMMIT_TYPE_PATTERN } from "./constants";
 
-export function getDirectoryNameFromPath(filePath: string): string {
-  const parts = filePath.split('/');
-  return parts[parts.length - 2];
-}
-
 export function getChangelogItems(changelogSection: string): string[] {
   const lines = changelogSection.split('- ');
   const items: string[] = [];

@@ -1,8 +1,9 @@
 import { Commit } from "../api/git";
 import { TYPE_TO_CHANGELOG_TYPE } from "../constants";
 import { PackageInfo } from "../types";
-import { Changelog, createChangelogFromChangelogItem, getChangelogItems, getDirectoryNameFromPath } from "../utils";
+import { Changelog, createChangelogFromChangelogItem, getChangelogItems } from "../utils";
 import { getPackageNameWithoutScope } from "./package";
+import { getDirectoryNameFromPath } from "./path";
 
 const DATE_NOW = new Date();
 

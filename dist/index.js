@@ -28379,6 +28379,14 @@ var import_fs = require("fs");
 
 // src/core/version.ts
 var import_semver = __toESM(require_semver2());
+
+// src/utils/path.ts
+function getDirectoryNameFromPath(filePath) {
+  const parts = filePath.split("/");
+  return parts[parts.length - 2];
+}
+
+// src/core/version.ts
 function applyNewVersion(packageInfo, changelogs) {
   const isV0 = packageInfo.version.startsWith("0.");
   const packageNameWithoutScope = getPackageNameWithoutScope(packageInfo.name);
@@ -28707,7 +28715,7 @@ function isMetadataYarnClassic(metadataPath) {
 var import_child_process2 = require("child_process");
 
 // node_modules/tinyglobby/dist/index.mjs
-var import_path = __toESM(require("path"), 1);
+var import_path2 = __toESM(require("path"), 1);
 var import_fdir = __toESM(require_dist(), 1);
 var import_picomatch = __toESM(require_picomatch2(), 1);
 var ONLY_PARENT_DIRECTORIES = /^(\/?\.\.)+$/;
@@ -28773,8 +28781,8 @@ function normalizePattern(pattern, expandDirectories, cwd, props, isIgnore) {
   if (pattern.endsWith("/")) result = pattern.slice(0, -1);
   if (!result.endsWith("*") && expandDirectories) result += "/**";
   const escapedCwd = escapePath(cwd);
-  if (import_path.default.isAbsolute(result.replace(ESCAPING_BACKSLASHES, ""))) result = import_path.posix.relative(escapedCwd, result);
-  else result = import_path.posix.normalize(result);
+  if (import_path2.default.isAbsolute(result.replace(ESCAPING_BACKSLASHES, ""))) result = import_path2.posix.relative(escapedCwd, result);
+  else result = import_path2.posix.normalize(result);
   const parentDirectoryMatch = PARENT_DIRECTORY.exec(result);
   const parts = splitPattern(result);
   if (parentDirectoryMatch === null || parentDirectoryMatch === void 0 ? void 0 : parentDirectoryMatch[0]) {
@@ -28785,7 +28793,7 @@ function normalizePattern(pattern, expandDirectories, cwd, props, isIgnore) {
       result = result.slice(0, (n - i - 1) * 3) + result.slice((n - i) * 3 + parts[i + n].length + 1) || ".";
       i++;
     }
-    const potentialRoot = import_path.posix.join(cwd, parentDirectoryMatch[0].slice(i * 3));
+    const potentialRoot = import_path2.posix.join(cwd, parentDirectoryMatch[0].slice(i * 3));
     if (!potentialRoot.startsWith(".") && props.root.length > potentialRoot.length) {
       props.root = potentialRoot;
       props.depthOffset = -n + i;
@@ -28807,7 +28815,7 @@ function normalizePattern(pattern, expandDirectories, cwd, props, isIgnore) {
     }
     props.depthOffset = newCommonPath.length;
     props.commonPath = newCommonPath;
-    props.root = newCommonPath.length > 0 ? import_path.default.posix.join(cwd, ...newCommonPath) : cwd;
+    props.root = newCommonPath.length > 0 ? import_path2.default.posix.join(cwd, ...newCommonPath) : cwd;
   }
   return result;
 }
@@ -28832,7 +28840,7 @@ function processPatterns({ patterns, ignore = [], expandDirectories = true }, cw
   };
 }
 function getRelativePath(path$1, cwd, root) {
-  return import_path.posix.relative(cwd, `${root}/${path$1}`) || ".";
+  return import_path2.posix.relative(cwd, `${root}/${path$1}`) || ".";
 }
 function processPath(path$1, cwd, root, isDirectory, absolute) {
   const relativePath = absolute ? path$1.slice(root === "/" ? 1 : root.length + 1) || "." : path$1;
@@ -28919,7 +28927,7 @@ function globSync(patternsOrOptions, options) {
     ...options,
     patterns: patternsOrOptions
   } : patternsOrOptions;
-  const cwd = opts.cwd ? import_path.default.resolve(opts.cwd).replace(BACKSLASHES, "/") : process.cwd().replace(BACKSLASHES, "/");
+  const cwd = opts.cwd ? import_path2.default.resolve(opts.cwd).replace(BACKSLASHES, "/") : process.cwd().replace(BACKSLASHES, "/");
   return crawl(opts, cwd, true);
 }
 
@@ -29160,10 +29168,6 @@ function getPackageNameWithoutScope(packageName) {
 }
 
 // src/utils.ts
-function getDirectoryNameFromPath(filePath) {
-  const parts = filePath.split("/");
-  return parts[parts.length - 2];
-}
 function getChangelogItems(changelogSection) {
   const lines = changelogSection.split("- ");
   const items = [];
@@ -29546,14 +29550,14 @@ function parseHeading2(heading) {
 }
 
 // src/core/changelog.ts
-var import_path2 = require("path");
+var import_path6 = require("path");
 var import_fs2 = require("fs");
 function createOrUpdateChangelog(packageInfo, changelogs) {
   const dirPath = toDirectoryPath(packageInfo.path);
   console.log(
     `Creating or updating changelog for package: ${packageInfo.name} at ${dirPath}`
   );
-  const changelogFilePath = (0, import_path2.join)(dirPath, "CHANGELOG.md");
+  const changelogFilePath = (0, import_path6.join)(dirPath, "CHANGELOG.md");
   const changelogContent = generateChangelogContent(packageInfo, changelogs);
   console.log(
     `Generated changelog content for ${packageInfo.name}:
@@ -29732,7 +29736,7 @@ var import_github4 = __toESM(require_github());
 
 // src/core/snapshots.ts
 var import_fs3 = require("fs");
-var import_path3 = require("path");
+var import_path7 = require("path");
 var import_child_process4 = require("child_process");
 async function createSnapshot(changedPkgInfos) {
   if (!SNAPSHOTS_ENABLED) {
@@ -29760,7 +29764,7 @@ async function createPackageSnapshot(pkgInfo, allPkgInfos) {
   if (!pm) {
     throw new Error("No package manager detected");
   }
-  const packageJsonPath = (0, import_path3.join)(dirPath, "package.json");
+  const packageJsonPath = (0, import_path7.join)(dirPath, "package.json");
   if (!(0, import_fs3.existsSync)(packageJsonPath)) {
     console.warn(`Package.json file not found in ${dirPath}, skipping snapshot.`);
     return;

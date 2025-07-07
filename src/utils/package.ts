@@ -1,10 +1,11 @@
 import { readFileSync, writeFileSync } from "fs";
 import { PackageInfo } from "../types";
-import { Changelog, getDirectoryNameFromPath, getVersionPrefix } from "../utils";
+import { Changelog, getVersionPrefix } from "../utils";
 import { getNewVersion } from "../core/version";
 import { detect, resolveCommand } from "package-manager-detector";
 import { execSync } from "child_process";
 import { globSync } from "tinyglobby";
+import { getDirectoryNameFromPath } from "./path";
 
 export function getPackagePaths(): string[] {
   const packagePaths = globSync('**/package.json', {

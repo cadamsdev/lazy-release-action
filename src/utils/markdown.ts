@@ -1,7 +1,8 @@
 import { RELEASE_ID, TYPE_TO_CHANGELOG_TYPE } from "../constants";
 import { PackageInfo } from "../types";
-import { Changelog, getDirectoryNameFromPath, PackageChangelogEntry } from "../utils";
+import { Changelog, PackageChangelogEntry } from "../utils";
 import { getPackageNameWithoutScope } from "./package";
+import { getDirectoryNameFromPath } from "./path";
 
 export function generateMarkdown(
   changedPackageInfos: PackageInfo[],

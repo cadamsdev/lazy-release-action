@@ -1,7 +1,8 @@
 import { inc } from "semver";
-import { Changelog, getDirectoryNameFromPath, SemverBump } from "../utils";
+import { Changelog, SemverBump } from "../utils";
 import { PackageInfo } from "../types";
 import { getPackageNameWithoutScope } from "../utils/package";
+import { getDirectoryNameFromPath } from "../utils/path";
 
 
 export function applyNewVersion(
