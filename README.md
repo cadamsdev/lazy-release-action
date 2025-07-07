@@ -67,7 +67,7 @@ jobs:
         run: npm ci
 
       - name: Create Release PR or Release
-        uses: cadamsdev/lazy-release-action@1d39de4bc90775fe01ee2f29f70dc7362eacf0fa # v0.1.0
+        uses: cadamsdev/lazy-release-action@a42c92f017d915146778c111d988f16d732cc395 # v0.4.0
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 ```
@@ -111,7 +111,7 @@ jobs:
         run: npm run build
 
       - name: Create Release PR or Release
-        uses: cadamsdev/lazy-release-action@1d39de4bc90775fe01ee2f29f70dc7362eacf0fa # v0.1.0
+        uses: cadamsdev/lazy-release-action@a42c92f017d915146778c111d988f16d732cc395 # v0.4.0
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 ```
@@ -147,7 +147,7 @@ examples
 
 ```yaml
 - name: Create Release PR or Publish Release
-  uses: cadamsdev/lazy-release-action@1d39de4bc90775fe01ee2f29f70dc7362eacf0fa # v0.1.0
+  uses: cadamsdev/lazy-release-action@a42c92f017d915146778c111d988f16d732cc395 # v0.4.0
   with:
     github-token: ${{ secrets.GITHUB_TOKEN }}
     snapshots: true
@@ -165,7 +165,7 @@ example
 ```yaml
 - name: Create Release PR or Publish Release
   id: lazy-release
-  uses: cadamsdev/lazy-release-action@1d39de4bc90775fe01ee2f29f70dc7362eacf0fa # v0.1.0
+  uses: cadamsdev/lazy-release-action@a42c92f017d915146778c111d988f16d732cc395 # v0.4.0
   with:
     github-token: ${{ secrets.GITHUB_TOKEN }}
 
