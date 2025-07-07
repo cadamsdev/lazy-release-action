@@ -1,4 +1,3 @@
-import { describe, expect, it } from "vitest";
 import { getVersionPrefix, replaceVersionInPackageJson } from "./version";
 
 describe('getVersionPrefix', () => {

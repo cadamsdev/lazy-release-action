@@ -1,4 +1,3 @@
-import { describe, expect, it, vi } from "vitest";
 import { transformDescription, uppercaseFirstLetter } from "./string";
 
 vi.mock('@actions/github', () => ({

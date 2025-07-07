@@ -1,4 +1,3 @@
-import { describe, expect, it } from "vitest";
 import { CONVENTIONAL_COMMITS_PATTERN } from "./validation";
 
 describe('CONVENTIONAL_COMMITS_PATTERN', () => {

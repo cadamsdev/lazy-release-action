@@ -1,4 +1,3 @@
-import { expect, it } from "vitest";
 import { getDirectoryNameFromPath, toDirectoryPath } from "./path";
 
 it('should get directory name from a file path', () => {
