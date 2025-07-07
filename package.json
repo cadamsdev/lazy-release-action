@@ -7,7 +7,8 @@
     "type-check": "tsc --noEmit",
     "start": "tsx src/index.ts",
     "build": "npm run type-check && esbuild src/index.ts --bundle --platform=node --outfile=dist/index.js",
-    "test": "vitest"
+    "test": "vitest",
+    "lint": "oxlint src/**/*.ts"
   },
   "publishConfig": {
     "registry": "https://npm.pkg.github.com/"
@@ -25,6 +26,7 @@
     "@types/node": "^22.13.0",
     "@types/semver": "^7.5.8",
     "esbuild": "^0.24.2",
+    "oxlint": "^1.5.0",
     "tsx": "^4.19.2",
     "typescript": "^5.7.3",
     "vitest": "^3.2.4"
