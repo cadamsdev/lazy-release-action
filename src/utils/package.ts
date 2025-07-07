@@ -1,6 +1,6 @@
 import { readFileSync, writeFileSync } from "fs";
 import { PackageInfo } from "../types";
-import { Changelog, getDirectoryNameFromPath, getPackageNameWithoutScope, getVersionPrefix } from "../utils";
+import { Changelog, getDirectoryNameFromPath, getVersionPrefix } from "../utils";
 import { getNewVersion } from "../core/version";
 import { detect, resolveCommand } from "package-manager-detector";
 import { execSync } from "child_process";
@@ -333,4 +333,9 @@ export function getChangedPackageInfos(
     changedPackageInfos: directlyChangedPackageInfos,
     indirectPackageInfos: indirectlyChangedPackageInfos,
   };
+}
+
+export function getPackageNameWithoutScope(packageName: string): string {
+  // Remove the scope if it exists (e.g., @scope/package-name)
+  return packageName.startsWith('@') ? packageName.split('/')[1] : packageName;
 }

@@ -1,8 +1,9 @@
 import { doesTagExistOnRemote } from "../api/git";
 import { PackageInfo } from "../types";
-import { getPackageNameWithoutScope, ReleasePackageInfo } from "../utils";
+import { ReleasePackageInfo } from "../utils";
 import { getTagName } from "../utils/tag";
 import * as githubApi from "../api/github";
+import { getPackageNameWithoutScope } from "../utils/package";
 
 export async function createGitHubRelease(
   releasePkgInfos: ReleasePackageInfo[]

@@ -1,5 +1,6 @@
 import { PackageInfo } from "../types";
-import { Changelog, getDirectoryNameFromPath, getPackageNameWithoutScope, TYPE_TO_CHANGELOG_TYPE } from "../utils";
+import { Changelog, getDirectoryNameFromPath, TYPE_TO_CHANGELOG_TYPE } from "../utils";
+import { getPackageNameWithoutScope } from "./package";
 
 export function generateMarkdown(
   changedPackageInfos: PackageInfo[],

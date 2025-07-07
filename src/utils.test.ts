@@ -5,7 +5,6 @@ import {
   extractCommitTypeParts,
   extractDescription,
   getDirectoryNameFromPath,
-  getPackageNameWithoutScope,
   getPullRequestUrl,
   RELEASE_ID,
   removeReleasePRComment,
@@ -67,14 +66,6 @@ describe('generateMarkdown', () => {
     expect(TYPE_TO_CHANGELOG_TYPE['fix'].emoji).toEqual('🐛');
     expect(TYPE_TO_CHANGELOG_TYPE['feat'].emoji).toEqual('🚀');
     expect(TYPE_TO_CHANGELOG_TYPE['chore'].emoji).toEqual('🏠');
-  });
-
-  it('should return the package name without scope', () => {
-    const packageNameWithScope = '@scope/package-name';
-    const packageNameWithoutScope = 'package-name';
-    expect(getPackageNameWithoutScope(packageNameWithScope)).toEqual(
-      packageNameWithoutScope
-    );
   });
 
   it('should replace version in package.json string', () => {

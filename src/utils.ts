@@ -1,6 +1,7 @@
 import { context } from "@actions/github";
 import { getChangelogSectionFromCommitMessage } from "./utils/changelog";
 import { PackageInfo } from "./types";
+import { getPackageNameWithoutScope } from "./utils/package";
 
 export const RELEASE_ID = 'ebe18c5c-b9c6-4fca-8b11-90bf80ad229e';
 
@@ -177,12 +178,6 @@ export function extractCommitTypeParts(commitType: string): CommitTypeParts {
     isBreakingChange: isBreakingChange,
   };
 }
-
-export function getPackageNameWithoutScope(packageName: string): string {
-  // Remove the scope if it exists (e.g., @scope/package-name)
-  return packageName.startsWith('@') ? packageName.split('/')[1] : packageName;
-}
-
 
 export interface PackageRelease {
   pkgInfo: PackageInfo;

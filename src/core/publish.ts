@@ -1,10 +1,11 @@
 import { detect } from "package-manager-detector";
 import { PackageInfo } from "../types";
-import { getPackageNameWithoutScope, toDirectoryPath } from "../utils";
+import { toDirectoryPath } from "../utils";
 import { execFileSync, execSync } from "child_process";
 import { setOutput } from "@actions/core";
 import { getTagName } from "../utils/tag";
 import { doesTagExistOnRemote } from "../api/git";
+import { getPackageNameWithoutScope } from "../utils/package";
 
 export async function publishPackages(changedPkgInfos: PackageInfo[]): Promise<void> {
   console.log('Publishing packages...');
