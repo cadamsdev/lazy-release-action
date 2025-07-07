@@ -1,4 +1,3 @@
-import { expect, it } from "vitest";
 import { getPullRequestUrl } from "./github";
 
 it('should return the pull request url', () => {

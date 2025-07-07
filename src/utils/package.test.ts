@@ -1,4 +1,3 @@
-import { describe, expect, it } from "vitest";
 import { getPackageNameWithoutScope } from "./package";
 
 describe('getPackageNameWithoutScope', () => {

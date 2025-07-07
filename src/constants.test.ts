@@ -1,4 +1,3 @@
-import { describe, expect, it } from "vitest";
 import { TYPE_TO_CHANGELOG_TYPE } from "./constants";
 
 describe('TYPE_TO_CHANGELOG_TYPE', () => {
