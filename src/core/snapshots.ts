@@ -1,11 +1,11 @@
 import { existsSync, readFileSync } from "fs";
 import { SNAPSHOTS_ENABLED } from "../constants";
 import { PackageInfo } from "../types";
-import { toDirectoryPath } from "../utils";
 import { getPackageInfos, getPackagePaths, updateIndirectPackageJsonFile, updatePackageLockFiles } from "../utils/package";
 import { detect } from "package-manager-detector";
 import { join } from "path";
 import { execSync } from "child_process";
+import { toDirectoryPath } from "../utils/path";
 
 interface SnapshotResult {
   packageName: string;

@@ -28382,6 +28382,10 @@ function getDirectoryNameFromPath(filePath) {
   const parts = filePath.split("/");
   return parts[parts.length - 2];
 }
+function toDirectoryPath(filePath) {
+  const lastSlashIndex = filePath.lastIndexOf("/");
+  return lastSlashIndex !== -1 ? filePath.substring(0, lastSlashIndex) : "";
+}
 
 // src/core/version.ts
 function applyNewVersion(packageInfo, changelogs) {
@@ -29399,10 +29403,6 @@ function extractCommitTypeParts(commitType) {
     isBreakingChange
   };
 }
-function toDirectoryPath(filePath) {
-  const lastSlashIndex = filePath.lastIndexOf("/");
-  return lastSlashIndex !== -1 ? filePath.substring(0, lastSlashIndex) : "";
-}
 
 // src/utils/changelog.ts
 var DATE_NOW = /* @__PURE__ */ new Date();
@@ -29738,7 +29738,7 @@ var import_github4 = __toESM(require_github());
 
 // src/core/snapshots.ts
 var import_fs3 = require("fs");
-var import_path7 = require("path");
+var import_path9 = require("path");
 var import_child_process4 = require("child_process");
 async function createSnapshot(changedPkgInfos) {
   if (!SNAPSHOTS_ENABLED) {
@@ -29766,7 +29766,7 @@ async function createPackageSnapshot(pkgInfo, allPkgInfos) {
   if (!pm) {
     throw new Error("No package manager detected");
   }
-  const packageJsonPath = (0, import_path7.join)(dirPath, "package.json");
+  const packageJsonPath = (0, import_path9.join)(dirPath, "package.json");
   if (!(0, import_fs3.existsSync)(packageJsonPath)) {
     console.warn(`Package.json file not found in ${dirPath}, skipping snapshot.`);
     return;

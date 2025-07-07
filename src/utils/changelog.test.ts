@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { generateChangelogContent, getChangelogFromCommits, getChangelogSectionFromCommitMessage, replaceChangelogSection, updateChangelog } from "./changelog";
-import { Changelog, createChangelogFromChangelogItem, getChangelogItems, toDirectoryPath } from "../utils";
+import { Changelog, createChangelogFromChangelogItem, getChangelogItems } from "../utils";
 import { PackageInfo } from "../types";
 import { Commit } from "../api/git";
 
@@ -281,12 +281,6 @@ describe('replaceChangelogSection', () => {
       existingChangelog
     );
     expect(updatedChangelog).toEqual(expectedChangelog);
-  });
-
-  it('should return the directory path from a file path', () => {
-    const filePath = '/path/to/file.txt';
-    const directoryPath = '/path/to';
-    expect(toDirectoryPath(filePath)).toEqual(directoryPath);
   });
 
   it('should replace a section in the changelog file', () => {

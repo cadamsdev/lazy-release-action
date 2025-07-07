@@ -1,4 +1,3 @@
-import { context } from "@actions/github";
 import { getChangelogSectionFromCommitMessage } from "./utils/changelog";
 import { PackageInfo } from "./types";
 import { getPackageNameWithoutScope } from "./utils/package";
@@ -126,11 +125,6 @@ export interface PackageChangelogEntry {
 
 export function replaceVersionInPackageJson(packageJsonString: string, newVersion: string): string {
   return packageJsonString.replace(/("version":\s*")[^"]*(")/, `$1${newVersion}$2`);
-}
-
-export function toDirectoryPath(filePath: string): string {
-  const lastSlashIndex = filePath.lastIndexOf('/');
-  return lastSlashIndex !== -1 ? filePath.substring(0, lastSlashIndex) : '';
 }
 
 export interface DependencyUpdate {

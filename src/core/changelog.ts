@@ -1,8 +1,9 @@
 import { join } from "path";
 import { PackageInfo } from "../types";
-import { Changelog, toDirectoryPath } from "../utils";
+import { Changelog } from "../utils";
 import { generateChangelogContent, updateChangelog } from "../utils/changelog";
 import { existsSync, readFileSync, writeFileSync } from "fs";
+import { toDirectoryPath } from "../utils/path";
 
 
 export function createOrUpdateChangelog(
