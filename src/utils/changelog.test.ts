@@ -1,4 +1,3 @@
-import { describe, expect, it } from "vitest";
 import { createChangelogFromChangelogItem, extractCommitType, extractCommitTypeParts, extractDescription, generateChangelogContent, getChangelogFromCommits, getChangelogItems, getChangelogSectionFromCommitMessage, replaceChangelogSection, updateChangelog } from "./changelog";
 import { Changelog, PackageInfo } from "../types";
 import { Commit } from "../api/git";
