@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { appendReleaseIdToMarkdown, generateMarkdown, increaseHeadingLevel, removeReleasePRComment } from "./markdown";
-import { PackageInfo } from "../types";
-import { Changelog } from "../utils";
+import { Changelog, PackageInfo } from "../types";
 import { RELEASE_ID } from "../constants";
 
 describe('generateMarkdown', () => {

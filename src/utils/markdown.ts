@@ -1,7 +1,7 @@
 import { context } from "@actions/github";
 import { RELEASE_ID, TYPE_TO_CHANGELOG_TYPE } from "../constants";
-import { PackageInfo } from "../types";
-import { Changelog, getPullRequestUrl, PackageChangelogEntry } from "../utils";
+import { Changelog, PackageChangelogEntry, PackageInfo } from "../types";
+import { getPullRequestUrl } from "../utils";
 import { getPackageNameWithoutScope } from "./package";
 import { getDirectoryNameFromPath } from "./path";
 

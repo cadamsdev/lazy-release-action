@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { generateChangelogContent, getChangelogFromCommits, getChangelogSectionFromCommitMessage, replaceChangelogSection, updateChangelog } from "./changelog";
-import { Changelog, createChangelogFromChangelogItem, getChangelogItems } from "../utils";
-import { PackageInfo } from "../types";
+import { createChangelogFromChangelogItem, getChangelogItems } from "../utils";
+import { Changelog, PackageInfo } from "../types";
 import { Commit } from "../api/git";
 
 describe('getChangelogSectionFromCommitMessage', () => {

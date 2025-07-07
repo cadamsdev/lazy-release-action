@@ -1,8 +1,8 @@
 import { getChangelogSectionFromCommitMessage } from "./utils/changelog";
-import { PackageInfo } from "./types";
 import { getPackageNameWithoutScope } from "./utils/package";
 import { COMMIT_TYPE_PATTERN } from "./constants";
 import { transformDescription } from "./utils/string";
+import { Changelog, CommitTypeParts, SemverBump } from "./types";
 
 export function getChangelogItems(changelogSection: string): string[] {
   const lines = changelogSection.split('- ');
@@ -103,48 +103,6 @@ export function extractCommitTypeParts(commitType: string): CommitTypeParts {
   };
 }
 
-export interface PackageRelease {
-  pkgInfo: PackageInfo;
-  changelog: PackageChangelogEntry;
-}
-
-export interface ReleasePackageInfo {
-  pkgInfo: PackageInfo;
-  changelogEntry: PackageChangelogEntry;
-}
-
-export interface PackageChangelogEntry {
-  heading: {
-    packageName: string;
-    oldVersion: string;
-    newVersion: string;
-    isRoot: boolean;
-  };
-  content: string;
-}
-
 export function replaceVersionInPackageJson(packageJsonString: string, newVersion: string): string {
   return packageJsonString.replace(/("version":\s*")[^"]*(")/, `$1${newVersion}$2`);
 }
-
-export interface DependencyUpdate {
-  dependencyName: string;
-  oldVersion: string;
-  newVersion: string;
-}
-
-export interface CommitTypeParts {
-  type: string;
-  packageNames: string[];
-  isBreakingChange: boolean;
-}
-
-export interface Changelog {
-  type: string;
-  description: string;
-  packages: string[];
-  isBreakingChange: boolean;
-  semverBump: SemverBump;
-}
-
-export type SemverBump = 'major' | 'minor' | 'patch';

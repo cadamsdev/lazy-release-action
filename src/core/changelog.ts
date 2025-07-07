@@ -1,6 +1,5 @@
 import { join } from "path";
-import { PackageInfo } from "../types";
-import { Changelog } from "../utils";
+import { Changelog, PackageInfo } from "../types";
 import { generateChangelogContent, updateChangelog } from "../utils/changelog";
 import { existsSync, readFileSync, writeFileSync } from "fs";
 import { toDirectoryPath } from "../utils/path";

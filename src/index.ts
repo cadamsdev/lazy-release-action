@@ -9,9 +9,6 @@ import {
   setupGitConfig,
 } from './api/git';
 import { DEFAULT_BRANCH, GITHUB_TOKEN, NPM_TOKEN, RELEASE_BRANCH, RELEASE_PR_TITLE } from './constants';
-import {
-  ReleasePackageInfo,
-} from './utils';
 import * as githubApi from './api/github';
 import { context } from '@actions/github';
 import { getChangelogFromCommits } from './utils/changelog';
@@ -23,6 +20,7 @@ import { createOrUpdateChangelog } from './core/changelog';
 import { createTags, publishPackages } from './core/publish';
 import { createGitHubRelease } from './core/release';
 import { createOrUpdatePRStatusComment } from './core/comments';
+import { ReleasePackageInfo } from './types';
 
 (async () => {
   init();

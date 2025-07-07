@@ -1,6 +1,5 @@
 import { readFileSync, writeFileSync } from "fs";
-import { PackageInfo } from "../types";
-import { Changelog } from "../utils";
+import { Changelog, PackageInfo } from "../types";
 import { getNewVersion } from "../core/version";
 import { detect, resolveCommand } from "package-manager-detector";
 import { execSync } from "child_process";

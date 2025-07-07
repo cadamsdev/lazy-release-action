@@ -1,6 +1,5 @@
 import { doesTagExistOnRemote } from "../api/git";
-import { PackageInfo } from "../types";
-import { ReleasePackageInfo } from "../utils";
+import { PackageInfo, ReleasePackageInfo } from "../types";
 import { getTagName } from "../utils/tag";
 import * as githubApi from "../api/github";
 import { getPackageNameWithoutScope } from "../utils/package";

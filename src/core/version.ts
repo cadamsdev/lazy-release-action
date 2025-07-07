@@ -1,6 +1,5 @@
 import { inc } from "semver";
-import { Changelog, SemverBump } from "../utils";
-import { PackageInfo } from "../types";
+import { Changelog, PackageInfo, SemverBump } from "../types";
 import { getPackageNameWithoutScope } from "../utils/package";
 import { getDirectoryNameFromPath } from "../utils/path";
 
