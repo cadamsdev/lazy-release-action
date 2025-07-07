@@ -1,7 +1,7 @@
 import { Commit } from "../api/git";
 import { TYPE_TO_CHANGELOG_TYPE } from "../constants";
 import { PackageInfo } from "../types";
-import { Changelog, createChangelogFromChangelogItem, getChangelogDate, getChangelogItems, getDirectoryNameFromPath } from "../utils";
+import { Changelog, createChangelogFromChangelogItem, getChangelogItems, getDirectoryNameFromPath } from "../utils";
 import { getPackageNameWithoutScope } from "./package";
 
 const DATE_NOW = new Date();
@@ -144,4 +144,62 @@ export function getChangelogFromCommits(
     changelogs
   );
   return changelogs;
+}
+
+export function updateChangelog(
+  existingChangelogContent: string,
+  newChangelogContent: string,
+  newVersion?: string
+): string {
+  if (!newVersion) {
+    return '';
+  }
+
+  let updatedChangelogContent = existingChangelogContent;
+
+  if (existingChangelogContent.includes(newVersion)) {
+    // replace section with new changelog content
+    updatedChangelogContent = replaceChangelogSection(
+      newVersion,
+      newChangelogContent,
+      existingChangelogContent
+    );
+  } else {
+    updatedChangelogContent =
+      newChangelogContent + '\n\n\n' + existingChangelogContent;
+  }
+
+  return updatedChangelogContent;
+}
+
+export function getChangelogDate(date: Date): string {
+  return date.toISOString().split('T')[0]; // Format: YYYY-MM-DD
+}
+
+export function replaceChangelogSection(
+  newVersion: string,
+  newChangelogContent: string,
+  existingChangelogContent: string
+): string {
+  const versionHeader = `## ${newVersion}\n`;
+  const startIndex = existingChangelogContent.indexOf(versionHeader);
+
+  if (startIndex === -1) {
+    return '';
+  }
+
+  let endIndex = existingChangelogContent.indexOf(
+    '\n## ',
+    startIndex + versionHeader.length
+  );
+
+  // replace text between startIndex and endIndex with newChangelogContent
+  let updatedChangelog = existingChangelogContent.slice(0, startIndex);
+  updatedChangelog += newChangelogContent;
+
+  if (endIndex !== -1) {
+    updatedChangelog += '\n\n';
+    updatedChangelog += existingChangelogContent.slice(endIndex);
+  }
+  return updatedChangelog;
 }

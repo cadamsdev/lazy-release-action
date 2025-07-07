@@ -29266,44 +29266,6 @@ function extractCommitTypeParts(commitType) {
     isBreakingChange
   };
 }
-function updateChangelog(existingChangelogContent, newChangelogContent, newVersion) {
-  if (!newVersion) {
-    return "";
-  }
-  let updatedChangelogContent = existingChangelogContent;
-  if (existingChangelogContent.includes(newVersion)) {
-    updatedChangelogContent = replaceChangelogSection(
-      newVersion,
-      newChangelogContent,
-      existingChangelogContent
-    );
-  } else {
-    updatedChangelogContent = newChangelogContent + "\n\n\n" + existingChangelogContent;
-  }
-  return updatedChangelogContent;
-}
-function getChangelogDate(date) {
-  return date.toISOString().split("T")[0];
-}
-function replaceChangelogSection(newVersion, newChangelogContent, existingChangelogContent) {
-  const versionHeader = `## ${newVersion}
-`;
-  const startIndex = existingChangelogContent.indexOf(versionHeader);
-  if (startIndex === -1) {
-    return "";
-  }
-  let endIndex = existingChangelogContent.indexOf(
-    "\n## ",
-    startIndex + versionHeader.length
-  );
-  let updatedChangelog = existingChangelogContent.slice(0, startIndex);
-  updatedChangelog += newChangelogContent;
-  if (endIndex !== -1) {
-    updatedChangelog += "\n\n";
-    updatedChangelog += existingChangelogContent.slice(endIndex);
-  }
-  return updatedChangelog;
-}
 function toDirectoryPath(filePath) {
   const lastSlashIndex = filePath.lastIndexOf("/");
   return lastSlashIndex !== -1 ? filePath.substring(0, lastSlashIndex) : "";
@@ -29416,6 +29378,44 @@ function getChangelogFromCommits(commits, rootPackageName) {
     changelogs
   );
   return changelogs;
+}
+function updateChangelog(existingChangelogContent, newChangelogContent, newVersion) {
+  if (!newVersion) {
+    return "";
+  }
+  let updatedChangelogContent = existingChangelogContent;
+  if (existingChangelogContent.includes(newVersion)) {
+    updatedChangelogContent = replaceChangelogSection(
+      newVersion,
+      newChangelogContent,
+      existingChangelogContent
+    );
+  } else {
+    updatedChangelogContent = newChangelogContent + "\n\n\n" + existingChangelogContent;
+  }
+  return updatedChangelogContent;
+}
+function getChangelogDate(date) {
+  return date.toISOString().split("T")[0];
+}
+function replaceChangelogSection(newVersion, newChangelogContent, existingChangelogContent) {
+  const versionHeader = `## ${newVersion}
+`;
+  const startIndex = existingChangelogContent.indexOf(versionHeader);
+  if (startIndex === -1) {
+    return "";
+  }
+  let endIndex = existingChangelogContent.indexOf(
+    "\n## ",
+    startIndex + versionHeader.length
+  );
+  let updatedChangelog = existingChangelogContent.slice(0, startIndex);
+  updatedChangelog += newChangelogContent;
+  if (endIndex !== -1) {
+    updatedChangelog += "\n\n";
+    updatedChangelog += existingChangelogContent.slice(endIndex);
+  }
+  return updatedChangelog;
 }
 
 // src/utils/markdown.ts

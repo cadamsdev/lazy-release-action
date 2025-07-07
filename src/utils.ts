@@ -2,7 +2,7 @@ import { context } from "@actions/github";
 import { getChangelogSectionFromCommitMessage } from "./utils/changelog";
 import { PackageInfo } from "./types";
 import { getPackageNameWithoutScope } from "./utils/package";
-import { COMMIT_TYPE_PATTERN, RELEASE_ID } from "./constants";
+import { COMMIT_TYPE_PATTERN } from "./constants";
 
 export function getDirectoryNameFromPath(filePath: string): string {
   const parts = filePath.split('/');
@@ -173,63 +173,6 @@ export interface PackageChangelogEntry {
     isRoot: boolean;
   };
   content: string;
-}
-
-export function updateChangelog(
-  existingChangelogContent: string,
-  newChangelogContent: string,
-  newVersion?: string
-): string {
-  if (!newVersion) {
-    return '';
-  }
-
-  let updatedChangelogContent = existingChangelogContent;
-
-  if (existingChangelogContent.includes(newVersion)) {
-    // replace section with new changelog content
-    updatedChangelogContent = replaceChangelogSection(
-      newVersion,
-      newChangelogContent,
-      existingChangelogContent
-    );
-  } else {
-    updatedChangelogContent = newChangelogContent + '\n\n\n' + existingChangelogContent;
-  }
-
-  return updatedChangelogContent;
-}
-
-export function getChangelogDate(date: Date): string {
-  return date.toISOString().split('T')[0]; // Format: YYYY-MM-DD
-}
-
-export function replaceChangelogSection(
-  newVersion: string,
-  newChangelogContent: string,
-  existingChangelogContent: string
-): string {
-  const versionHeader = `## ${newVersion}\n`;
-  const startIndex = existingChangelogContent.indexOf(versionHeader);
-
-  if (startIndex === -1) {
-    return '';
-  }
-
-  let endIndex = existingChangelogContent.indexOf(
-    '\n## ',
-    startIndex + versionHeader.length
-  );
-
-  // replace text between startIndex and endIndex with newChangelogContent
-  let updatedChangelog = existingChangelogContent.slice(0, startIndex);
-    updatedChangelog += newChangelogContent;
-
-    if (endIndex !== -1) {
-      updatedChangelog += '\n\n';
-      updatedChangelog += existingChangelogContent.slice(endIndex);
-    }
-  return updatedChangelog;
 }
 
 export function replaceVersionInPackageJson(packageJsonString: string, newVersion: string): string {

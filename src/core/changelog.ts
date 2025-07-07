@@ -1,7 +1,7 @@
 import { join } from "path";
 import { PackageInfo } from "../types";
-import { Changelog, toDirectoryPath, updateChangelog } from "../utils";
-import { generateChangelogContent } from "../utils/changelog";
+import { Changelog, toDirectoryPath } from "../utils";
+import { generateChangelogContent, updateChangelog } from "../utils/changelog";
 import { existsSync, readFileSync, writeFileSync } from "fs";
 
 
