@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { generateMarkdown, increaseHeadingLevel } from "./markdown";
+import { appendReleaseIdToMarkdown, generateMarkdown, increaseHeadingLevel, removeReleasePRComment } from "./markdown";
 import { PackageInfo } from "../types";
 import { Changelog } from "../utils";
+import { RELEASE_ID } from "../constants";
 
 describe('generateMarkdown', () => {
   it('should generate markdown for changelog', () => {
@@ -118,4 +119,26 @@ it('should increase heading level in markdown', () => {
 ### Heading 2
 #### Heading 3
   `);
+});
+
+it('should append release id to markdown', () => {
+  const markdown = 'test';
+  const newMarkdown = appendReleaseIdToMarkdown(markdown);
+  const expectedMarkdown = `test<!-- Release PR: ${RELEASE_ID} -->`;
+  expect(newMarkdown).toEqual(expectedMarkdown);
+});
+
+it('should remove Release PR comment from markdown', () => {
+  const markdown = `## Changelog
+
+### 🚀 New Features
+- Added new feature
+
+### 🐛 Bug Fixes
+- Fixed a bug
+
+<!-- Release PR: ${RELEASE_ID} -->`;
+
+  const result = removeReleasePRComment(markdown);
+  expect(result).not.toContain(`<!-- Release PR: ${RELEASE_ID} -->`);
 });

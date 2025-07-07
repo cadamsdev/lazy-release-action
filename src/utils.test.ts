@@ -1,17 +1,13 @@
 import { describe, it, expect } from 'vitest';
 import {
-  appendReleaseIdToMarkdown,
   extractCommitType,
   extractCommitTypeParts,
   extractDescription,
   getDirectoryNameFromPath,
   getPullRequestUrl,
-  RELEASE_ID,
-  removeReleasePRComment,
   replaceChangelogSection,
   replaceVersionInPackageJson,
   toDirectoryPath,
-  TYPE_TO_CHANGELOG_TYPE,
   updateChangelog,
 } from './utils';
 
@@ -60,12 +56,6 @@ describe('generateMarkdown', () => {
       const { type } = extractCommitTypeParts(commitType);
       expect(type).toEqual('feat');
     });
-  });
-
-  it('should return correct emoji for type', () => {
-    expect(TYPE_TO_CHANGELOG_TYPE['fix'].emoji).toEqual('🐛');
-    expect(TYPE_TO_CHANGELOG_TYPE['feat'].emoji).toEqual('🚀');
-    expect(TYPE_TO_CHANGELOG_TYPE['chore'].emoji).toEqual('🏠');
   });
 
   it('should replace version in package.json string', () => {
@@ -197,13 +187,6 @@ describe('generateMarkdown', () => {
     expect(updatedChangelog).toEqual(expectedChangelog);
   });
 
-  it('should append release id to markdown', () => {
-    const markdown = 'test';
-    const newMarkdown = appendReleaseIdToMarkdown(markdown);
-    const expectedMarkdown = `test<!-- Release PR: ${RELEASE_ID} -->`;
-    expect(newMarkdown).toEqual(expectedMarkdown);
-  });
-
   it('should uppercase the first letter of a string', () => {
     const input = 'test';
     const output = input.charAt(0).toUpperCase() + input.slice(1);
@@ -281,20 +264,5 @@ describe('generateMarkdown', () => {
   it('should get directory name from a file path', () => {
     const filePath = 'src/packages/components/package.json';
     expect(getDirectoryNameFromPath(filePath)).toEqual('components');
-  });
-
-  it('should remove Release PR comment from markdown', () => {
-    const markdown = `## Changelog
-
-### 🚀 New Features
-- Added new feature
-
-### 🐛 Bug Fixes
-- Fixed a bug
-
-<!-- Release PR: ${RELEASE_ID} -->`;
-
-    const result = removeReleasePRComment(markdown);
-    expect(result).not.toContain(`<!-- Release PR: ${RELEASE_ID} -->`);
   });
 });

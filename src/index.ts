@@ -10,15 +10,13 @@ import {
 } from './api/git';
 import { DEFAULT_BRANCH, GITHUB_TOKEN, NPM_TOKEN, RELEASE_BRANCH, RELEASE_PR_TITLE } from './constants';
 import {
-  appendReleaseIdToMarkdown,
-  parseReleasePRBody,
   ReleasePackageInfo,
 } from './utils';
 import * as githubApi from './api/github';
 import { context } from '@actions/github';
 import { getChangelogFromCommits } from './utils/changelog';
 import { bumpIndirectPackageVersion, getChangedPackageInfos, getPackageInfos, getPackageNameWithoutScope, getPackagePaths, updateIndirectPackageJsonFile, updatePackageJsonFile, updatePackageLockFiles } from './utils/package';
-import { generateMarkdown } from './utils/markdown';
+import { appendReleaseIdToMarkdown, generateMarkdown, parseReleasePRBody } from './utils/markdown';
 import { isPRTitleValid } from './utils/validation';
 import { applyNewVersion } from './core/version';
 import { createOrUpdateChangelog } from './core/changelog';

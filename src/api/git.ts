@@ -1,6 +1,5 @@
 import { execFileSync, execSync } from 'child_process';
-import { DEFAULT_BRANCH } from '../constants';
-import { RELEASE_ID } from '../utils';
+import { DEFAULT_BRANCH, RELEASE_ID } from '../constants';
 import { exec } from '@actions/exec';
 import { CONVENTIONAL_COMMITS_PATTERN } from '../utils/validation';
 import { context } from '@actions/github';

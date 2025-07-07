@@ -1,5 +1,6 @@
+import { RELEASE_ID, TYPE_TO_CHANGELOG_TYPE } from "../constants";
 import { PackageInfo } from "../types";
-import { Changelog, getDirectoryNameFromPath, TYPE_TO_CHANGELOG_TYPE } from "../utils";
+import { Changelog, getDirectoryNameFromPath, PackageChangelogEntry } from "../utils";
 import { getPackageNameWithoutScope } from "./package";
 
 export function generateMarkdown(
@@ -104,4 +105,74 @@ export function generateMarkdown(
 
 export function increaseHeadingLevel(message: string): string {
   return message.replace(/(#+)/g, '$1#');
+}
+
+export function appendReleaseIdToMarkdown(markdown: string): string {
+  const releaseIdComment = `<!-- Release PR: ${RELEASE_ID} -->`;
+  return markdown + releaseIdComment;
+}
+
+export function removeReleasePRComment(markdown: string): string {
+  const releaseIdComment = `<!-- Release PR: ${RELEASE_ID} -->`;
+  return markdown.replace(releaseIdComment, '').trim();
+}
+
+const heading2Regex =
+  /^## ((@[a-z]+)?(\/)?([\w-]+)@)?(\d+\.\d+\.\d+)➡️(\d+\.\d+\.\d+)(\n\n)?/;
+
+export function parseReleasePRBody(prBody: string): PackageChangelogEntry[] {
+  prBody = removeReleasePRComment(prBody);
+
+  const changelogEntries: PackageChangelogEntry[] = [];
+  const headings = Array.from(
+    prBody.matchAll(new RegExp(heading2Regex, 'gm'))
+  );
+
+  console.log(`Found ${headings.length} headings in PR body.`);
+
+  for (let i = 0; i < headings.length; i++) {
+    const heading = headings[i];
+    const headingData = parseHeading2(heading[0]);
+    const startIndex = heading.index! + heading[0].length;
+    const endIndex =
+      i < headings.length - 1 ? headings[i + 1].index! : prBody.length;
+    const content = prBody.substring(startIndex, endIndex).trim();
+
+    changelogEntries.push({
+      heading: headingData,
+      content: content,
+    });
+  }
+
+  return changelogEntries;
+};
+
+export function parseHeading2(heading: string): {
+  packageName: string;
+  oldVersion: string;
+  newVersion: string;
+  isRoot: boolean;
+} {
+  const match = heading.match(heading2Regex);
+  if (!match) {
+    throw new Error(`Invalid heading format: ${heading}`);
+  }
+
+  const scope = match[2]; // e.g., @scope
+  const packageName = match[4]; // e.g., some-package
+  const oldVersion = match[5]; // e.g., 1.0.0
+  const newVersion = match[6]; // e.g., 1.0.1
+  const isRoot = !packageName;
+
+  let fullPackageName = packageName;
+  if (scope) {
+    fullPackageName = `${scope}/${packageName}`; // e.g., @scope/some-package
+  }
+
+  return {
+    packageName: fullPackageName,
+    oldVersion,
+    newVersion,
+    isRoot,
+  };
 }

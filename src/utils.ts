@@ -2,31 +2,7 @@ import { context } from "@actions/github";
 import { getChangelogSectionFromCommitMessage } from "./utils/changelog";
 import { PackageInfo } from "./types";
 import { getPackageNameWithoutScope } from "./utils/package";
-
-export const RELEASE_ID = 'ebe18c5c-b9c6-4fca-8b11-90bf80ad229e';
-
-interface ChangelogType {
-  emoji: string;
-  displayName: string;
-  sort: number;
-}
-
-export const TYPE_TO_CHANGELOG_TYPE: Record<string, ChangelogType> = {
-  feat: { emoji: '🚀', displayName: 'New Features', sort: 0 },
-  fix: { emoji: '🐛', displayName: 'Bug Fixes', sort: 1 },
-  perf: { emoji: '⚡️', displayName: 'Performance Improvements', sort: 2 },
-  chore: { emoji: '🏠', displayName: 'Chores', sort: 3 },
-  docs: { emoji: '📖', displayName: 'Documentation', sort: 4 },
-  style: { emoji: '🎨', displayName: 'Styles', sort: 5 },
-  refactor: { emoji: '♻️', displayName: 'Refactors', sort: 6 },
-  test: { emoji: '✅', displayName: 'Tests', sort: 7 },
-  build: { emoji: '📦', displayName: 'Build', sort: 8 },
-  ci: { emoji: '🤖', displayName: 'Automation', sort: 9 },
-  revert: { emoji: '⏪', displayName: 'Reverts', sort: 10 },
-};
-
-export const COMMIT_TYPE_PATTERN =
-  /^(feat|fix|perf|chore|docs|style|test|build|ci|revert)(\(([^)]+)\))?(!)?$/;
+import { COMMIT_TYPE_PATTERN, RELEASE_ID } from "./constants";
 
 export function getDirectoryNameFromPath(filePath: string): string {
   const parts = filePath.split('/');
@@ -197,76 +173,6 @@ export interface PackageChangelogEntry {
     isRoot: boolean;
   };
   content: string;
-}
-
-const heading2Regex =
-  /^## ((@[a-z]+)?(\/)?([\w-]+)@)?(\d+\.\d+\.\d+)➡️(\d+\.\d+\.\d+)(\n\n)?/;
-
-  export function parseReleasePRBody(prBody: string): PackageChangelogEntry[] {
-    prBody = removeReleasePRComment(prBody);
-
-    const changelogEntries: PackageChangelogEntry[] = [];
-    const headings = Array.from(
-      prBody.matchAll(new RegExp(heading2Regex, 'gm'))
-    );
-
-    console.log(`Found ${headings.length} headings in PR body.`);
-
-    for (let i = 0; i < headings.length; i++) {
-      const heading = headings[i];
-      const headingData = parseHeading2(heading[0]);
-      const startIndex = heading.index! + heading[0].length;
-      const endIndex =
-        i < headings.length - 1 ? headings[i + 1].index! : prBody.length;
-      const content = prBody.substring(startIndex, endIndex).trim();
-
-      changelogEntries.push({
-        heading: headingData,
-        content: content,
-      });
-    }
-
-    return changelogEntries;
-  };
-
-export function removeReleasePRComment(markdown: string): string {
-  const releaseIdComment = `<!-- Release PR: ${RELEASE_ID} -->`;
-  return markdown.replace(releaseIdComment, '').trim();
-}
-
-export function parseHeading2(heading: string): {
-  packageName: string;
-  oldVersion: string;
-  newVersion: string;
-  isRoot: boolean;
-} {
-  const match = heading.match(heading2Regex);
-  if (!match) {
-    throw new Error(`Invalid heading format: ${heading}`);
-  }
-
-  const scope = match[2]; // e.g., @scope
-  const packageName = match[4]; // e.g., some-package
-  const oldVersion = match[5]; // e.g., 1.0.0
-  const newVersion = match[6]; // e.g., 1.0.1
-  const isRoot = !packageName;
-
-  let fullPackageName = packageName;
-  if (scope) {
-    fullPackageName = `${scope}/${packageName}`; // e.g., @scope/some-package
-  }
-
-  return {
-    packageName: fullPackageName,
-    oldVersion,
-    newVersion,
-    isRoot,
-  };
-}
-
-export function appendReleaseIdToMarkdown(markdown: string): string {
-  const releaseIdComment = `<!-- Release PR: ${RELEASE_ID} -->`;
-  return markdown + releaseIdComment;
 }
 
 export function updateChangelog(

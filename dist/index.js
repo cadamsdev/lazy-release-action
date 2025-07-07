@@ -25,6 +25,1018 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   mod
 ));
 
+// node_modules/@actions/io/lib/io-util.js
+var require_io_util = __commonJS({
+  "node_modules/@actions/io/lib/io-util.js"(exports2) {
+    "use strict";
+    var __createBinding = exports2 && exports2.__createBinding || (Object.create ? function(o, m, k, k2) {
+      if (k2 === void 0) k2 = k;
+      Object.defineProperty(o, k2, { enumerable: true, get: function() {
+        return m[k];
+      } });
+    } : function(o, m, k, k2) {
+      if (k2 === void 0) k2 = k;
+      o[k2] = m[k];
+    });
+    var __setModuleDefault = exports2 && exports2.__setModuleDefault || (Object.create ? function(o, v) {
+      Object.defineProperty(o, "default", { enumerable: true, value: v });
+    } : function(o, v) {
+      o["default"] = v;
+    });
+    var __importStar = exports2 && exports2.__importStar || function(mod) {
+      if (mod && mod.__esModule) return mod;
+      var result = {};
+      if (mod != null) {
+        for (var k in mod) if (k !== "default" && Object.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+      }
+      __setModuleDefault(result, mod);
+      return result;
+    };
+    var __awaiter = exports2 && exports2.__awaiter || function(thisArg, _arguments, P, generator) {
+      function adopt(value) {
+        return value instanceof P ? value : new P(function(resolve) {
+          resolve(value);
+        });
+      }
+      return new (P || (P = Promise))(function(resolve, reject) {
+        function fulfilled(value) {
+          try {
+            step(generator.next(value));
+          } catch (e) {
+            reject(e);
+          }
+        }
+        function rejected(value) {
+          try {
+            step(generator["throw"](value));
+          } catch (e) {
+            reject(e);
+          }
+        }
+        function step(result) {
+          result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected);
+        }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+      });
+    };
+    var _a;
+    Object.defineProperty(exports2, "__esModule", { value: true });
+    exports2.getCmdPath = exports2.tryGetExecutablePath = exports2.isRooted = exports2.isDirectory = exports2.exists = exports2.READONLY = exports2.UV_FS_O_EXLOCK = exports2.IS_WINDOWS = exports2.unlink = exports2.symlink = exports2.stat = exports2.rmdir = exports2.rm = exports2.rename = exports2.readlink = exports2.readdir = exports2.open = exports2.mkdir = exports2.lstat = exports2.copyFile = exports2.chmod = void 0;
+    var fs2 = __importStar(require("fs"));
+    var path3 = __importStar(require("path"));
+    _a = fs2.promises, exports2.chmod = _a.chmod, exports2.copyFile = _a.copyFile, exports2.lstat = _a.lstat, exports2.mkdir = _a.mkdir, exports2.open = _a.open, exports2.readdir = _a.readdir, exports2.readlink = _a.readlink, exports2.rename = _a.rename, exports2.rm = _a.rm, exports2.rmdir = _a.rmdir, exports2.stat = _a.stat, exports2.symlink = _a.symlink, exports2.unlink = _a.unlink;
+    exports2.IS_WINDOWS = process.platform === "win32";
+    exports2.UV_FS_O_EXLOCK = 268435456;
+    exports2.READONLY = fs2.constants.O_RDONLY;
+    function exists(fsPath) {
+      return __awaiter(this, void 0, void 0, function* () {
+        try {
+          yield exports2.stat(fsPath);
+        } catch (err) {
+          if (err.code === "ENOENT") {
+            return false;
+          }
+          throw err;
+        }
+        return true;
+      });
+    }
+    exports2.exists = exists;
+    function isDirectory(fsPath, useStat = false) {
+      return __awaiter(this, void 0, void 0, function* () {
+        const stats = useStat ? yield exports2.stat(fsPath) : yield exports2.lstat(fsPath);
+        return stats.isDirectory();
+      });
+    }
+    exports2.isDirectory = isDirectory;
+    function isRooted(p) {
+      p = normalizeSeparators(p);
+      if (!p) {
+        throw new Error('isRooted() parameter "p" cannot be empty');
+      }
+      if (exports2.IS_WINDOWS) {
+        return p.startsWith("\\") || /^[A-Z]:/i.test(p);
+      }
+      return p.startsWith("/");
+    }
+    exports2.isRooted = isRooted;
+    function tryGetExecutablePath(filePath, extensions) {
+      return __awaiter(this, void 0, void 0, function* () {
+        let stats = void 0;
+        try {
+          stats = yield exports2.stat(filePath);
+        } catch (err) {
+          if (err.code !== "ENOENT") {
+            console.log(`Unexpected error attempting to determine if executable file exists '${filePath}': ${err}`);
+          }
+        }
+        if (stats && stats.isFile()) {
+          if (exports2.IS_WINDOWS) {
+            const upperExt = path3.extname(filePath).toUpperCase();
+            if (extensions.some((validExt) => validExt.toUpperCase() === upperExt)) {
+              return filePath;
+            }
+          } else {
+            if (isUnixExecutable(stats)) {
+              return filePath;
+            }
+          }
+        }
+        const originalFilePath = filePath;
+        for (const extension of extensions) {
+          filePath = originalFilePath + extension;
+          stats = void 0;
+          try {
+            stats = yield exports2.stat(filePath);
+          } catch (err) {
+            if (err.code !== "ENOENT") {
+              console.log(`Unexpected error attempting to determine if executable file exists '${filePath}': ${err}`);
+            }
+          }
+          if (stats && stats.isFile()) {
+            if (exports2.IS_WINDOWS) {
+              try {
+                const directory = path3.dirname(filePath);
+                const upperName = path3.basename(filePath).toUpperCase();
+                for (const actualName of yield exports2.readdir(directory)) {
+                  if (upperName === actualName.toUpperCase()) {
+                    filePath = path3.join(directory, actualName);
+                    break;
+                  }
+                }
+              } catch (err) {
+                console.log(`Unexpected error attempting to determine the actual case of the file '${filePath}': ${err}`);
+              }
+              return filePath;
+            } else {
+              if (isUnixExecutable(stats)) {
+                return filePath;
+              }
+            }
+          }
+        }
+        return "";
+      });
+    }
+    exports2.tryGetExecutablePath = tryGetExecutablePath;
+    function normalizeSeparators(p) {
+      p = p || "";
+      if (exports2.IS_WINDOWS) {
+        p = p.replace(/\//g, "\\");
+        return p.replace(/\\\\+/g, "\\");
+      }
+      return p.replace(/\/\/+/g, "/");
+    }
+    function isUnixExecutable(stats) {
+      return (stats.mode & 1) > 0 || (stats.mode & 8) > 0 && stats.gid === process.getgid() || (stats.mode & 64) > 0 && stats.uid === process.getuid();
+    }
+    function getCmdPath() {
+      var _a2;
+      return (_a2 = process.env["COMSPEC"]) !== null && _a2 !== void 0 ? _a2 : `cmd.exe`;
+    }
+    exports2.getCmdPath = getCmdPath;
+  }
+});
+
+// node_modules/@actions/io/lib/io.js
+var require_io = __commonJS({
+  "node_modules/@actions/io/lib/io.js"(exports2) {
+    "use strict";
+    var __createBinding = exports2 && exports2.__createBinding || (Object.create ? function(o, m, k, k2) {
+      if (k2 === void 0) k2 = k;
+      Object.defineProperty(o, k2, { enumerable: true, get: function() {
+        return m[k];
+      } });
+    } : function(o, m, k, k2) {
+      if (k2 === void 0) k2 = k;
+      o[k2] = m[k];
+    });
+    var __setModuleDefault = exports2 && exports2.__setModuleDefault || (Object.create ? function(o, v) {
+      Object.defineProperty(o, "default", { enumerable: true, value: v });
+    } : function(o, v) {
+      o["default"] = v;
+    });
+    var __importStar = exports2 && exports2.__importStar || function(mod) {
+      if (mod && mod.__esModule) return mod;
+      var result = {};
+      if (mod != null) {
+        for (var k in mod) if (k !== "default" && Object.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+      }
+      __setModuleDefault(result, mod);
+      return result;
+    };
+    var __awaiter = exports2 && exports2.__awaiter || function(thisArg, _arguments, P, generator) {
+      function adopt(value) {
+        return value instanceof P ? value : new P(function(resolve) {
+          resolve(value);
+        });
+      }
+      return new (P || (P = Promise))(function(resolve, reject) {
+        function fulfilled(value) {
+          try {
+            step(generator.next(value));
+          } catch (e) {
+            reject(e);
+          }
+        }
+        function rejected(value) {
+          try {
+            step(generator["throw"](value));
+          } catch (e) {
+            reject(e);
+          }
+        }
+        function step(result) {
+          result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected);
+        }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+      });
+    };
+    Object.defineProperty(exports2, "__esModule", { value: true });
+    exports2.findInPath = exports2.which = exports2.mkdirP = exports2.rmRF = exports2.mv = exports2.cp = void 0;
+    var assert_1 = require("assert");
+    var path3 = __importStar(require("path"));
+    var ioUtil = __importStar(require_io_util());
+    function cp(source, dest, options = {}) {
+      return __awaiter(this, void 0, void 0, function* () {
+        const { force, recursive, copySourceDirectory } = readCopyOptions(options);
+        const destStat = (yield ioUtil.exists(dest)) ? yield ioUtil.stat(dest) : null;
+        if (destStat && destStat.isFile() && !force) {
+          return;
+        }
+        const newDest = destStat && destStat.isDirectory() && copySourceDirectory ? path3.join(dest, path3.basename(source)) : dest;
+        if (!(yield ioUtil.exists(source))) {
+          throw new Error(`no such file or directory: ${source}`);
+        }
+        const sourceStat = yield ioUtil.stat(source);
+        if (sourceStat.isDirectory()) {
+          if (!recursive) {
+            throw new Error(`Failed to copy. ${source} is a directory, but tried to copy without recursive flag.`);
+          } else {
+            yield cpDirRecursive(source, newDest, 0, force);
+          }
+        } else {
+          if (path3.relative(source, newDest) === "") {
+            throw new Error(`'${newDest}' and '${source}' are the same file`);
+          }
+          yield copyFile(source, newDest, force);
+        }
+      });
+    }
+    exports2.cp = cp;
+    function mv(source, dest, options = {}) {
+      return __awaiter(this, void 0, void 0, function* () {
+        if (yield ioUtil.exists(dest)) {
+          let destExists = true;
+          if (yield ioUtil.isDirectory(dest)) {
+            dest = path3.join(dest, path3.basename(source));
+            destExists = yield ioUtil.exists(dest);
+          }
+          if (destExists) {
+            if (options.force == null || options.force) {
+              yield rmRF(dest);
+            } else {
+              throw new Error("Destination already exists");
+            }
+          }
+        }
+        yield mkdirP(path3.dirname(dest));
+        yield ioUtil.rename(source, dest);
+      });
+    }
+    exports2.mv = mv;
+    function rmRF(inputPath) {
+      return __awaiter(this, void 0, void 0, function* () {
+        if (ioUtil.IS_WINDOWS) {
+          if (/[*"<>|]/.test(inputPath)) {
+            throw new Error('File path must not contain `*`, `"`, `<`, `>` or `|` on Windows');
+          }
+        }
+        try {
+          yield ioUtil.rm(inputPath, {
+            force: true,
+            maxRetries: 3,
+            recursive: true,
+            retryDelay: 300
+          });
+        } catch (err) {
+          throw new Error(`File was unable to be removed ${err}`);
+        }
+      });
+    }
+    exports2.rmRF = rmRF;
+    function mkdirP(fsPath) {
+      return __awaiter(this, void 0, void 0, function* () {
+        assert_1.ok(fsPath, "a path argument must be provided");
+        yield ioUtil.mkdir(fsPath, { recursive: true });
+      });
+    }
+    exports2.mkdirP = mkdirP;
+    function which(tool, check) {
+      return __awaiter(this, void 0, void 0, function* () {
+        if (!tool) {
+          throw new Error("parameter 'tool' is required");
+        }
+        if (check) {
+          const result = yield which(tool, false);
+          if (!result) {
+            if (ioUtil.IS_WINDOWS) {
+              throw new Error(`Unable to locate executable file: ${tool}. Please verify either the file path exists or the file can be found within a directory specified by the PATH environment variable. Also verify the file has a valid extension for an executable file.`);
+            } else {
+              throw new Error(`Unable to locate executable file: ${tool}. Please verify either the file path exists or the file can be found within a directory specified by the PATH environment variable. Also check the file mode to verify the file is executable.`);
+            }
+          }
+          return result;
+        }
+        const matches = yield findInPath(tool);
+        if (matches && matches.length > 0) {
+          return matches[0];
+        }
+        return "";
+      });
+    }
+    exports2.which = which;
+    function findInPath(tool) {
+      return __awaiter(this, void 0, void 0, function* () {
+        if (!tool) {
+          throw new Error("parameter 'tool' is required");
+        }
+        const extensions = [];
+        if (ioUtil.IS_WINDOWS && process.env["PATHEXT"]) {
+          for (const extension of process.env["PATHEXT"].split(path3.delimiter)) {
+            if (extension) {
+              extensions.push(extension);
+            }
+          }
+        }
+        if (ioUtil.isRooted(tool)) {
+          const filePath = yield ioUtil.tryGetExecutablePath(tool, extensions);
+          if (filePath) {
+            return [filePath];
+          }
+          return [];
+        }
+        if (tool.includes(path3.sep)) {
+          return [];
+        }
+        const directories = [];
+        if (process.env.PATH) {
+          for (const p of process.env.PATH.split(path3.delimiter)) {
+            if (p) {
+              directories.push(p);
+            }
+          }
+        }
+        const matches = [];
+        for (const directory of directories) {
+          const filePath = yield ioUtil.tryGetExecutablePath(path3.join(directory, tool), extensions);
+          if (filePath) {
+            matches.push(filePath);
+          }
+        }
+        return matches;
+      });
+    }
+    exports2.findInPath = findInPath;
+    function readCopyOptions(options) {
+      const force = options.force == null ? true : options.force;
+      const recursive = Boolean(options.recursive);
+      const copySourceDirectory = options.copySourceDirectory == null ? true : Boolean(options.copySourceDirectory);
+      return { force, recursive, copySourceDirectory };
+    }
+    function cpDirRecursive(sourceDir, destDir, currentDepth, force) {
+      return __awaiter(this, void 0, void 0, function* () {
+        if (currentDepth >= 255)
+          return;
+        currentDepth++;
+        yield mkdirP(destDir);
+        const files = yield ioUtil.readdir(sourceDir);
+        for (const fileName of files) {
+          const srcFile = `${sourceDir}/${fileName}`;
+          const destFile = `${destDir}/${fileName}`;
+          const srcFileStat = yield ioUtil.lstat(srcFile);
+          if (srcFileStat.isDirectory()) {
+            yield cpDirRecursive(srcFile, destFile, currentDepth, force);
+          } else {
+            yield copyFile(srcFile, destFile, force);
+          }
+        }
+        yield ioUtil.chmod(destDir, (yield ioUtil.stat(sourceDir)).mode);
+      });
+    }
+    function copyFile(srcFile, destFile, force) {
+      return __awaiter(this, void 0, void 0, function* () {
+        if ((yield ioUtil.lstat(srcFile)).isSymbolicLink()) {
+          try {
+            yield ioUtil.lstat(destFile);
+            yield ioUtil.unlink(destFile);
+          } catch (e) {
+            if (e.code === "EPERM") {
+              yield ioUtil.chmod(destFile, "0666");
+              yield ioUtil.unlink(destFile);
+            }
+          }
+          const symlinkFull = yield ioUtil.readlink(srcFile);
+          yield ioUtil.symlink(symlinkFull, destFile, ioUtil.IS_WINDOWS ? "junction" : null);
+        } else if (!(yield ioUtil.exists(destFile)) || force) {
+          yield ioUtil.copyFile(srcFile, destFile);
+        }
+      });
+    }
+  }
+});
+
+// node_modules/@actions/exec/lib/toolrunner.js
+var require_toolrunner = __commonJS({
+  "node_modules/@actions/exec/lib/toolrunner.js"(exports2) {
+    "use strict";
+    var __createBinding = exports2 && exports2.__createBinding || (Object.create ? function(o, m, k, k2) {
+      if (k2 === void 0) k2 = k;
+      Object.defineProperty(o, k2, { enumerable: true, get: function() {
+        return m[k];
+      } });
+    } : function(o, m, k, k2) {
+      if (k2 === void 0) k2 = k;
+      o[k2] = m[k];
+    });
+    var __setModuleDefault = exports2 && exports2.__setModuleDefault || (Object.create ? function(o, v) {
+      Object.defineProperty(o, "default", { enumerable: true, value: v });
+    } : function(o, v) {
+      o["default"] = v;
+    });
+    var __importStar = exports2 && exports2.__importStar || function(mod) {
+      if (mod && mod.__esModule) return mod;
+      var result = {};
+      if (mod != null) {
+        for (var k in mod) if (k !== "default" && Object.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+      }
+      __setModuleDefault(result, mod);
+      return result;
+    };
+    var __awaiter = exports2 && exports2.__awaiter || function(thisArg, _arguments, P, generator) {
+      function adopt(value) {
+        return value instanceof P ? value : new P(function(resolve) {
+          resolve(value);
+        });
+      }
+      return new (P || (P = Promise))(function(resolve, reject) {
+        function fulfilled(value) {
+          try {
+            step(generator.next(value));
+          } catch (e) {
+            reject(e);
+          }
+        }
+        function rejected(value) {
+          try {
+            step(generator["throw"](value));
+          } catch (e) {
+            reject(e);
+          }
+        }
+        function step(result) {
+          result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected);
+        }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+      });
+    };
+    Object.defineProperty(exports2, "__esModule", { value: true });
+    exports2.argStringToArray = exports2.ToolRunner = void 0;
+    var os = __importStar(require("os"));
+    var events = __importStar(require("events"));
+    var child = __importStar(require("child_process"));
+    var path3 = __importStar(require("path"));
+    var io = __importStar(require_io());
+    var ioUtil = __importStar(require_io_util());
+    var timers_1 = require("timers");
+    var IS_WINDOWS = process.platform === "win32";
+    var ToolRunner = class extends events.EventEmitter {
+      constructor(toolPath, args, options) {
+        super();
+        if (!toolPath) {
+          throw new Error("Parameter 'toolPath' cannot be null or empty.");
+        }
+        this.toolPath = toolPath;
+        this.args = args || [];
+        this.options = options || {};
+      }
+      _debug(message) {
+        if (this.options.listeners && this.options.listeners.debug) {
+          this.options.listeners.debug(message);
+        }
+      }
+      _getCommandString(options, noPrefix) {
+        const toolPath = this._getSpawnFileName();
+        const args = this._getSpawnArgs(options);
+        let cmd = noPrefix ? "" : "[command]";
+        if (IS_WINDOWS) {
+          if (this._isCmdFile()) {
+            cmd += toolPath;
+            for (const a of args) {
+              cmd += ` ${a}`;
+            }
+          } else if (options.windowsVerbatimArguments) {
+            cmd += `"${toolPath}"`;
+            for (const a of args) {
+              cmd += ` ${a}`;
+            }
+          } else {
+            cmd += this._windowsQuoteCmdArg(toolPath);
+            for (const a of args) {
+              cmd += ` ${this._windowsQuoteCmdArg(a)}`;
+            }
+          }
+        } else {
+          cmd += toolPath;
+          for (const a of args) {
+            cmd += ` ${a}`;
+          }
+        }
+        return cmd;
+      }
+      _processLineBuffer(data, strBuffer, onLine) {
+        try {
+          let s = strBuffer + data.toString();
+          let n = s.indexOf(os.EOL);
+          while (n > -1) {
+            const line = s.substring(0, n);
+            onLine(line);
+            s = s.substring(n + os.EOL.length);
+            n = s.indexOf(os.EOL);
+          }
+          return s;
+        } catch (err) {
+          this._debug(`error processing line. Failed with error ${err}`);
+          return "";
+        }
+      }
+      _getSpawnFileName() {
+        if (IS_WINDOWS) {
+          if (this._isCmdFile()) {
+            return process.env["COMSPEC"] || "cmd.exe";
+          }
+        }
+        return this.toolPath;
+      }
+      _getSpawnArgs(options) {
+        if (IS_WINDOWS) {
+          if (this._isCmdFile()) {
+            let argline = `/D /S /C "${this._windowsQuoteCmdArg(this.toolPath)}`;
+            for (const a of this.args) {
+              argline += " ";
+              argline += options.windowsVerbatimArguments ? a : this._windowsQuoteCmdArg(a);
+            }
+            argline += '"';
+            return [argline];
+          }
+        }
+        return this.args;
+      }
+      _endsWith(str, end) {
+        return str.endsWith(end);
+      }
+      _isCmdFile() {
+        const upperToolPath = this.toolPath.toUpperCase();
+        return this._endsWith(upperToolPath, ".CMD") || this._endsWith(upperToolPath, ".BAT");
+      }
+      _windowsQuoteCmdArg(arg) {
+        if (!this._isCmdFile()) {
+          return this._uvQuoteCmdArg(arg);
+        }
+        if (!arg) {
+          return '""';
+        }
+        const cmdSpecialChars = [
+          " ",
+          "	",
+          "&",
+          "(",
+          ")",
+          "[",
+          "]",
+          "{",
+          "}",
+          "^",
+          "=",
+          ";",
+          "!",
+          "'",
+          "+",
+          ",",
+          "`",
+          "~",
+          "|",
+          "<",
+          ">",
+          '"'
+        ];
+        let needsQuotes = false;
+        for (const char of arg) {
+          if (cmdSpecialChars.some((x) => x === char)) {
+            needsQuotes = true;
+            break;
+          }
+        }
+        if (!needsQuotes) {
+          return arg;
+        }
+        let reverse = '"';
+        let quoteHit = true;
+        for (let i = arg.length; i > 0; i--) {
+          reverse += arg[i - 1];
+          if (quoteHit && arg[i - 1] === "\\") {
+            reverse += "\\";
+          } else if (arg[i - 1] === '"') {
+            quoteHit = true;
+            reverse += '"';
+          } else {
+            quoteHit = false;
+          }
+        }
+        reverse += '"';
+        return reverse.split("").reverse().join("");
+      }
+      _uvQuoteCmdArg(arg) {
+        if (!arg) {
+          return '""';
+        }
+        if (!arg.includes(" ") && !arg.includes("	") && !arg.includes('"')) {
+          return arg;
+        }
+        if (!arg.includes('"') && !arg.includes("\\")) {
+          return `"${arg}"`;
+        }
+        let reverse = '"';
+        let quoteHit = true;
+        for (let i = arg.length; i > 0; i--) {
+          reverse += arg[i - 1];
+          if (quoteHit && arg[i - 1] === "\\") {
+            reverse += "\\";
+          } else if (arg[i - 1] === '"') {
+            quoteHit = true;
+            reverse += "\\";
+          } else {
+            quoteHit = false;
+          }
+        }
+        reverse += '"';
+        return reverse.split("").reverse().join("");
+      }
+      _cloneExecOptions(options) {
+        options = options || {};
+        const result = {
+          cwd: options.cwd || process.cwd(),
+          env: options.env || process.env,
+          silent: options.silent || false,
+          windowsVerbatimArguments: options.windowsVerbatimArguments || false,
+          failOnStdErr: options.failOnStdErr || false,
+          ignoreReturnCode: options.ignoreReturnCode || false,
+          delay: options.delay || 1e4
+        };
+        result.outStream = options.outStream || process.stdout;
+        result.errStream = options.errStream || process.stderr;
+        return result;
+      }
+      _getSpawnOptions(options, toolPath) {
+        options = options || {};
+        const result = {};
+        result.cwd = options.cwd;
+        result.env = options.env;
+        result["windowsVerbatimArguments"] = options.windowsVerbatimArguments || this._isCmdFile();
+        if (options.windowsVerbatimArguments) {
+          result.argv0 = `"${toolPath}"`;
+        }
+        return result;
+      }
+      /**
+       * Exec a tool.
+       * Output will be streamed to the live console.
+       * Returns promise with return code
+       *
+       * @param     tool     path to tool to exec
+       * @param     options  optional exec options.  See ExecOptions
+       * @returns   number
+       */
+      exec() {
+        return __awaiter(this, void 0, void 0, function* () {
+          if (!ioUtil.isRooted(this.toolPath) && (this.toolPath.includes("/") || IS_WINDOWS && this.toolPath.includes("\\"))) {
+            this.toolPath = path3.resolve(process.cwd(), this.options.cwd || process.cwd(), this.toolPath);
+          }
+          this.toolPath = yield io.which(this.toolPath, true);
+          return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
+            this._debug(`exec tool: ${this.toolPath}`);
+            this._debug("arguments:");
+            for (const arg of this.args) {
+              this._debug(`   ${arg}`);
+            }
+            const optionsNonNull = this._cloneExecOptions(this.options);
+            if (!optionsNonNull.silent && optionsNonNull.outStream) {
+              optionsNonNull.outStream.write(this._getCommandString(optionsNonNull) + os.EOL);
+            }
+            const state = new ExecState(optionsNonNull, this.toolPath);
+            state.on("debug", (message) => {
+              this._debug(message);
+            });
+            if (this.options.cwd && !(yield ioUtil.exists(this.options.cwd))) {
+              return reject(new Error(`The cwd: ${this.options.cwd} does not exist!`));
+            }
+            const fileName = this._getSpawnFileName();
+            const cp = child.spawn(fileName, this._getSpawnArgs(optionsNonNull), this._getSpawnOptions(this.options, fileName));
+            let stdbuffer = "";
+            if (cp.stdout) {
+              cp.stdout.on("data", (data) => {
+                if (this.options.listeners && this.options.listeners.stdout) {
+                  this.options.listeners.stdout(data);
+                }
+                if (!optionsNonNull.silent && optionsNonNull.outStream) {
+                  optionsNonNull.outStream.write(data);
+                }
+                stdbuffer = this._processLineBuffer(data, stdbuffer, (line) => {
+                  if (this.options.listeners && this.options.listeners.stdline) {
+                    this.options.listeners.stdline(line);
+                  }
+                });
+              });
+            }
+            let errbuffer = "";
+            if (cp.stderr) {
+              cp.stderr.on("data", (data) => {
+                state.processStderr = true;
+                if (this.options.listeners && this.options.listeners.stderr) {
+                  this.options.listeners.stderr(data);
+                }
+                if (!optionsNonNull.silent && optionsNonNull.errStream && optionsNonNull.outStream) {
+                  const s = optionsNonNull.failOnStdErr ? optionsNonNull.errStream : optionsNonNull.outStream;
+                  s.write(data);
+                }
+                errbuffer = this._processLineBuffer(data, errbuffer, (line) => {
+                  if (this.options.listeners && this.options.listeners.errline) {
+                    this.options.listeners.errline(line);
+                  }
+                });
+              });
+            }
+            cp.on("error", (err) => {
+              state.processError = err.message;
+              state.processExited = true;
+              state.processClosed = true;
+              state.CheckComplete();
+            });
+            cp.on("exit", (code) => {
+              state.processExitCode = code;
+              state.processExited = true;
+              this._debug(`Exit code ${code} received from tool '${this.toolPath}'`);
+              state.CheckComplete();
+            });
+            cp.on("close", (code) => {
+              state.processExitCode = code;
+              state.processExited = true;
+              state.processClosed = true;
+              this._debug(`STDIO streams have closed for tool '${this.toolPath}'`);
+              state.CheckComplete();
+            });
+            state.on("done", (error, exitCode) => {
+              if (stdbuffer.length > 0) {
+                this.emit("stdline", stdbuffer);
+              }
+              if (errbuffer.length > 0) {
+                this.emit("errline", errbuffer);
+              }
+              cp.removeAllListeners();
+              if (error) {
+                reject(error);
+              } else {
+                resolve(exitCode);
+              }
+            });
+            if (this.options.input) {
+              if (!cp.stdin) {
+                throw new Error("child process missing stdin");
+              }
+              cp.stdin.end(this.options.input);
+            }
+          }));
+        });
+      }
+    };
+    exports2.ToolRunner = ToolRunner;
+    function argStringToArray(argString) {
+      const args = [];
+      let inQuotes = false;
+      let escaped = false;
+      let arg = "";
+      function append(c) {
+        if (escaped && c !== '"') {
+          arg += "\\";
+        }
+        arg += c;
+        escaped = false;
+      }
+      for (let i = 0; i < argString.length; i++) {
+        const c = argString.charAt(i);
+        if (c === '"') {
+          if (!escaped) {
+            inQuotes = !inQuotes;
+          } else {
+            append(c);
+          }
+          continue;
+        }
+        if (c === "\\" && escaped) {
+          append(c);
+          continue;
+        }
+        if (c === "\\" && inQuotes) {
+          escaped = true;
+          continue;
+        }
+        if (c === " " && !inQuotes) {
+          if (arg.length > 0) {
+            args.push(arg);
+            arg = "";
+          }
+          continue;
+        }
+        append(c);
+      }
+      if (arg.length > 0) {
+        args.push(arg.trim());
+      }
+      return args;
+    }
+    exports2.argStringToArray = argStringToArray;
+    var ExecState = class _ExecState extends events.EventEmitter {
+      constructor(options, toolPath) {
+        super();
+        this.processClosed = false;
+        this.processError = "";
+        this.processExitCode = 0;
+        this.processExited = false;
+        this.processStderr = false;
+        this.delay = 1e4;
+        this.done = false;
+        this.timeout = null;
+        if (!toolPath) {
+          throw new Error("toolPath must not be empty");
+        }
+        this.options = options;
+        this.toolPath = toolPath;
+        if (options.delay) {
+          this.delay = options.delay;
+        }
+      }
+      CheckComplete() {
+        if (this.done) {
+          return;
+        }
+        if (this.processClosed) {
+          this._setResult();
+        } else if (this.processExited) {
+          this.timeout = timers_1.setTimeout(_ExecState.HandleTimeout, this.delay, this);
+        }
+      }
+      _debug(message) {
+        this.emit("debug", message);
+      }
+      _setResult() {
+        let error;
+        if (this.processExited) {
+          if (this.processError) {
+            error = new Error(`There was an error when attempting to execute the process '${this.toolPath}'. This may indicate the process failed to start. Error: ${this.processError}`);
+          } else if (this.processExitCode !== 0 && !this.options.ignoreReturnCode) {
+            error = new Error(`The process '${this.toolPath}' failed with exit code ${this.processExitCode}`);
+          } else if (this.processStderr && this.options.failOnStdErr) {
+            error = new Error(`The process '${this.toolPath}' failed because one or more lines were written to the STDERR stream`);
+          }
+        }
+        if (this.timeout) {
+          clearTimeout(this.timeout);
+          this.timeout = null;
+        }
+        this.done = true;
+        this.emit("done", error, this.processExitCode);
+      }
+      static HandleTimeout(state) {
+        if (state.done) {
+          return;
+        }
+        if (!state.processClosed && state.processExited) {
+          const message = `The STDIO streams did not close within ${state.delay / 1e3} seconds of the exit event from process '${state.toolPath}'. This may indicate a child process inherited the STDIO streams and has not yet exited.`;
+          state._debug(message);
+        }
+        state._setResult();
+      }
+    };
+  }
+});
+
+// node_modules/@actions/exec/lib/exec.js
+var require_exec = __commonJS({
+  "node_modules/@actions/exec/lib/exec.js"(exports2) {
+    "use strict";
+    var __createBinding = exports2 && exports2.__createBinding || (Object.create ? function(o, m, k, k2) {
+      if (k2 === void 0) k2 = k;
+      Object.defineProperty(o, k2, { enumerable: true, get: function() {
+        return m[k];
+      } });
+    } : function(o, m, k, k2) {
+      if (k2 === void 0) k2 = k;
+      o[k2] = m[k];
+    });
+    var __setModuleDefault = exports2 && exports2.__setModuleDefault || (Object.create ? function(o, v) {
+      Object.defineProperty(o, "default", { enumerable: true, value: v });
+    } : function(o, v) {
+      o["default"] = v;
+    });
+    var __importStar = exports2 && exports2.__importStar || function(mod) {
+      if (mod && mod.__esModule) return mod;
+      var result = {};
+      if (mod != null) {
+        for (var k in mod) if (k !== "default" && Object.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+      }
+      __setModuleDefault(result, mod);
+      return result;
+    };
+    var __awaiter = exports2 && exports2.__awaiter || function(thisArg, _arguments, P, generator) {
+      function adopt(value) {
+        return value instanceof P ? value : new P(function(resolve) {
+          resolve(value);
+        });
+      }
+      return new (P || (P = Promise))(function(resolve, reject) {
+        function fulfilled(value) {
+          try {
+            step(generator.next(value));
+          } catch (e) {
+            reject(e);
+          }
+        }
+        function rejected(value) {
+          try {
+            step(generator["throw"](value));
+          } catch (e) {
+            reject(e);
+          }
+        }
+        function step(result) {
+          result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected);
+        }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+      });
+    };
+    Object.defineProperty(exports2, "__esModule", { value: true });
+    exports2.getExecOutput = exports2.exec = void 0;
+    var string_decoder_1 = require("string_decoder");
+    var tr = __importStar(require_toolrunner());
+    function exec2(commandLine, args, options) {
+      return __awaiter(this, void 0, void 0, function* () {
+        const commandArgs = tr.argStringToArray(commandLine);
+        if (commandArgs.length === 0) {
+          throw new Error(`Parameter 'commandLine' cannot be null or empty.`);
+        }
+        const toolPath = commandArgs[0];
+        args = commandArgs.slice(1).concat(args || []);
+        const runner = new tr.ToolRunner(toolPath, args, options);
+        return runner.exec();
+      });
+    }
+    exports2.exec = exec2;
+    function getExecOutput(commandLine, args, options) {
+      var _a, _b;
+      return __awaiter(this, void 0, void 0, function* () {
+        let stdout = "";
+        let stderr = "";
+        const stdoutDecoder = new string_decoder_1.StringDecoder("utf8");
+        const stderrDecoder = new string_decoder_1.StringDecoder("utf8");
+        const originalStdoutListener = (_a = options === null || options === void 0 ? void 0 : options.listeners) === null || _a === void 0 ? void 0 : _a.stdout;
+        const originalStdErrListener = (_b = options === null || options === void 0 ? void 0 : options.listeners) === null || _b === void 0 ? void 0 : _b.stderr;
+        const stdErrListener = (data) => {
+          stderr += stderrDecoder.write(data);
+          if (originalStdErrListener) {
+            originalStdErrListener(data);
+          }
+        };
+        const stdOutListener = (data) => {
+          stdout += stdoutDecoder.write(data);
+          if (originalStdoutListener) {
+            originalStdoutListener(data);
+          }
+        };
+        const listeners = Object.assign(Object.assign({}, options === null || options === void 0 ? void 0 : options.listeners), { stdout: stdOutListener, stderr: stdErrListener });
+        const exitCode = yield exec2(commandLine, args, Object.assign(Object.assign({}, options), { listeners }));
+        stdout += stdoutDecoder.end();
+        stderr += stderrDecoder.end();
+        return {
+          exitCode,
+          stdout,
+          stderr
+        };
+      });
+    }
+    exports2.getExecOutput = getExecOutput;
+  }
+});
+
 // node_modules/@actions/github/lib/context.js
 var require_context = __commonJS({
   "node_modules/@actions/github/lib/context.js"(exports2) {
@@ -25956,1018 +26968,6 @@ var require_dist = __commonJS({
   }
 });
 
-// node_modules/@actions/io/lib/io-util.js
-var require_io_util = __commonJS({
-  "node_modules/@actions/io/lib/io-util.js"(exports2) {
-    "use strict";
-    var __createBinding = exports2 && exports2.__createBinding || (Object.create ? function(o, m, k, k2) {
-      if (k2 === void 0) k2 = k;
-      Object.defineProperty(o, k2, { enumerable: true, get: function() {
-        return m[k];
-      } });
-    } : function(o, m, k, k2) {
-      if (k2 === void 0) k2 = k;
-      o[k2] = m[k];
-    });
-    var __setModuleDefault = exports2 && exports2.__setModuleDefault || (Object.create ? function(o, v) {
-      Object.defineProperty(o, "default", { enumerable: true, value: v });
-    } : function(o, v) {
-      o["default"] = v;
-    });
-    var __importStar = exports2 && exports2.__importStar || function(mod) {
-      if (mod && mod.__esModule) return mod;
-      var result = {};
-      if (mod != null) {
-        for (var k in mod) if (k !== "default" && Object.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-      }
-      __setModuleDefault(result, mod);
-      return result;
-    };
-    var __awaiter = exports2 && exports2.__awaiter || function(thisArg, _arguments, P, generator) {
-      function adopt(value) {
-        return value instanceof P ? value : new P(function(resolve) {
-          resolve(value);
-        });
-      }
-      return new (P || (P = Promise))(function(resolve, reject) {
-        function fulfilled(value) {
-          try {
-            step(generator.next(value));
-          } catch (e) {
-            reject(e);
-          }
-        }
-        function rejected(value) {
-          try {
-            step(generator["throw"](value));
-          } catch (e) {
-            reject(e);
-          }
-        }
-        function step(result) {
-          result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected);
-        }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-      });
-    };
-    var _a;
-    Object.defineProperty(exports2, "__esModule", { value: true });
-    exports2.getCmdPath = exports2.tryGetExecutablePath = exports2.isRooted = exports2.isDirectory = exports2.exists = exports2.READONLY = exports2.UV_FS_O_EXLOCK = exports2.IS_WINDOWS = exports2.unlink = exports2.symlink = exports2.stat = exports2.rmdir = exports2.rm = exports2.rename = exports2.readlink = exports2.readdir = exports2.open = exports2.mkdir = exports2.lstat = exports2.copyFile = exports2.chmod = void 0;
-    var fs2 = __importStar(require("fs"));
-    var path3 = __importStar(require("path"));
-    _a = fs2.promises, exports2.chmod = _a.chmod, exports2.copyFile = _a.copyFile, exports2.lstat = _a.lstat, exports2.mkdir = _a.mkdir, exports2.open = _a.open, exports2.readdir = _a.readdir, exports2.readlink = _a.readlink, exports2.rename = _a.rename, exports2.rm = _a.rm, exports2.rmdir = _a.rmdir, exports2.stat = _a.stat, exports2.symlink = _a.symlink, exports2.unlink = _a.unlink;
-    exports2.IS_WINDOWS = process.platform === "win32";
-    exports2.UV_FS_O_EXLOCK = 268435456;
-    exports2.READONLY = fs2.constants.O_RDONLY;
-    function exists(fsPath) {
-      return __awaiter(this, void 0, void 0, function* () {
-        try {
-          yield exports2.stat(fsPath);
-        } catch (err) {
-          if (err.code === "ENOENT") {
-            return false;
-          }
-          throw err;
-        }
-        return true;
-      });
-    }
-    exports2.exists = exists;
-    function isDirectory(fsPath, useStat = false) {
-      return __awaiter(this, void 0, void 0, function* () {
-        const stats = useStat ? yield exports2.stat(fsPath) : yield exports2.lstat(fsPath);
-        return stats.isDirectory();
-      });
-    }
-    exports2.isDirectory = isDirectory;
-    function isRooted(p) {
-      p = normalizeSeparators(p);
-      if (!p) {
-        throw new Error('isRooted() parameter "p" cannot be empty');
-      }
-      if (exports2.IS_WINDOWS) {
-        return p.startsWith("\\") || /^[A-Z]:/i.test(p);
-      }
-      return p.startsWith("/");
-    }
-    exports2.isRooted = isRooted;
-    function tryGetExecutablePath(filePath, extensions) {
-      return __awaiter(this, void 0, void 0, function* () {
-        let stats = void 0;
-        try {
-          stats = yield exports2.stat(filePath);
-        } catch (err) {
-          if (err.code !== "ENOENT") {
-            console.log(`Unexpected error attempting to determine if executable file exists '${filePath}': ${err}`);
-          }
-        }
-        if (stats && stats.isFile()) {
-          if (exports2.IS_WINDOWS) {
-            const upperExt = path3.extname(filePath).toUpperCase();
-            if (extensions.some((validExt) => validExt.toUpperCase() === upperExt)) {
-              return filePath;
-            }
-          } else {
-            if (isUnixExecutable(stats)) {
-              return filePath;
-            }
-          }
-        }
-        const originalFilePath = filePath;
-        for (const extension of extensions) {
-          filePath = originalFilePath + extension;
-          stats = void 0;
-          try {
-            stats = yield exports2.stat(filePath);
-          } catch (err) {
-            if (err.code !== "ENOENT") {
-              console.log(`Unexpected error attempting to determine if executable file exists '${filePath}': ${err}`);
-            }
-          }
-          if (stats && stats.isFile()) {
-            if (exports2.IS_WINDOWS) {
-              try {
-                const directory = path3.dirname(filePath);
-                const upperName = path3.basename(filePath).toUpperCase();
-                for (const actualName of yield exports2.readdir(directory)) {
-                  if (upperName === actualName.toUpperCase()) {
-                    filePath = path3.join(directory, actualName);
-                    break;
-                  }
-                }
-              } catch (err) {
-                console.log(`Unexpected error attempting to determine the actual case of the file '${filePath}': ${err}`);
-              }
-              return filePath;
-            } else {
-              if (isUnixExecutable(stats)) {
-                return filePath;
-              }
-            }
-          }
-        }
-        return "";
-      });
-    }
-    exports2.tryGetExecutablePath = tryGetExecutablePath;
-    function normalizeSeparators(p) {
-      p = p || "";
-      if (exports2.IS_WINDOWS) {
-        p = p.replace(/\//g, "\\");
-        return p.replace(/\\\\+/g, "\\");
-      }
-      return p.replace(/\/\/+/g, "/");
-    }
-    function isUnixExecutable(stats) {
-      return (stats.mode & 1) > 0 || (stats.mode & 8) > 0 && stats.gid === process.getgid() || (stats.mode & 64) > 0 && stats.uid === process.getuid();
-    }
-    function getCmdPath() {
-      var _a2;
-      return (_a2 = process.env["COMSPEC"]) !== null && _a2 !== void 0 ? _a2 : `cmd.exe`;
-    }
-    exports2.getCmdPath = getCmdPath;
-  }
-});
-
-// node_modules/@actions/io/lib/io.js
-var require_io = __commonJS({
-  "node_modules/@actions/io/lib/io.js"(exports2) {
-    "use strict";
-    var __createBinding = exports2 && exports2.__createBinding || (Object.create ? function(o, m, k, k2) {
-      if (k2 === void 0) k2 = k;
-      Object.defineProperty(o, k2, { enumerable: true, get: function() {
-        return m[k];
-      } });
-    } : function(o, m, k, k2) {
-      if (k2 === void 0) k2 = k;
-      o[k2] = m[k];
-    });
-    var __setModuleDefault = exports2 && exports2.__setModuleDefault || (Object.create ? function(o, v) {
-      Object.defineProperty(o, "default", { enumerable: true, value: v });
-    } : function(o, v) {
-      o["default"] = v;
-    });
-    var __importStar = exports2 && exports2.__importStar || function(mod) {
-      if (mod && mod.__esModule) return mod;
-      var result = {};
-      if (mod != null) {
-        for (var k in mod) if (k !== "default" && Object.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-      }
-      __setModuleDefault(result, mod);
-      return result;
-    };
-    var __awaiter = exports2 && exports2.__awaiter || function(thisArg, _arguments, P, generator) {
-      function adopt(value) {
-        return value instanceof P ? value : new P(function(resolve) {
-          resolve(value);
-        });
-      }
-      return new (P || (P = Promise))(function(resolve, reject) {
-        function fulfilled(value) {
-          try {
-            step(generator.next(value));
-          } catch (e) {
-            reject(e);
-          }
-        }
-        function rejected(value) {
-          try {
-            step(generator["throw"](value));
-          } catch (e) {
-            reject(e);
-          }
-        }
-        function step(result) {
-          result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected);
-        }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-      });
-    };
-    Object.defineProperty(exports2, "__esModule", { value: true });
-    exports2.findInPath = exports2.which = exports2.mkdirP = exports2.rmRF = exports2.mv = exports2.cp = void 0;
-    var assert_1 = require("assert");
-    var path3 = __importStar(require("path"));
-    var ioUtil = __importStar(require_io_util());
-    function cp(source, dest, options = {}) {
-      return __awaiter(this, void 0, void 0, function* () {
-        const { force, recursive, copySourceDirectory } = readCopyOptions(options);
-        const destStat = (yield ioUtil.exists(dest)) ? yield ioUtil.stat(dest) : null;
-        if (destStat && destStat.isFile() && !force) {
-          return;
-        }
-        const newDest = destStat && destStat.isDirectory() && copySourceDirectory ? path3.join(dest, path3.basename(source)) : dest;
-        if (!(yield ioUtil.exists(source))) {
-          throw new Error(`no such file or directory: ${source}`);
-        }
-        const sourceStat = yield ioUtil.stat(source);
-        if (sourceStat.isDirectory()) {
-          if (!recursive) {
-            throw new Error(`Failed to copy. ${source} is a directory, but tried to copy without recursive flag.`);
-          } else {
-            yield cpDirRecursive(source, newDest, 0, force);
-          }
-        } else {
-          if (path3.relative(source, newDest) === "") {
-            throw new Error(`'${newDest}' and '${source}' are the same file`);
-          }
-          yield copyFile(source, newDest, force);
-        }
-      });
-    }
-    exports2.cp = cp;
-    function mv(source, dest, options = {}) {
-      return __awaiter(this, void 0, void 0, function* () {
-        if (yield ioUtil.exists(dest)) {
-          let destExists = true;
-          if (yield ioUtil.isDirectory(dest)) {
-            dest = path3.join(dest, path3.basename(source));
-            destExists = yield ioUtil.exists(dest);
-          }
-          if (destExists) {
-            if (options.force == null || options.force) {
-              yield rmRF(dest);
-            } else {
-              throw new Error("Destination already exists");
-            }
-          }
-        }
-        yield mkdirP(path3.dirname(dest));
-        yield ioUtil.rename(source, dest);
-      });
-    }
-    exports2.mv = mv;
-    function rmRF(inputPath) {
-      return __awaiter(this, void 0, void 0, function* () {
-        if (ioUtil.IS_WINDOWS) {
-          if (/[*"<>|]/.test(inputPath)) {
-            throw new Error('File path must not contain `*`, `"`, `<`, `>` or `|` on Windows');
-          }
-        }
-        try {
-          yield ioUtil.rm(inputPath, {
-            force: true,
-            maxRetries: 3,
-            recursive: true,
-            retryDelay: 300
-          });
-        } catch (err) {
-          throw new Error(`File was unable to be removed ${err}`);
-        }
-      });
-    }
-    exports2.rmRF = rmRF;
-    function mkdirP(fsPath) {
-      return __awaiter(this, void 0, void 0, function* () {
-        assert_1.ok(fsPath, "a path argument must be provided");
-        yield ioUtil.mkdir(fsPath, { recursive: true });
-      });
-    }
-    exports2.mkdirP = mkdirP;
-    function which(tool, check) {
-      return __awaiter(this, void 0, void 0, function* () {
-        if (!tool) {
-          throw new Error("parameter 'tool' is required");
-        }
-        if (check) {
-          const result = yield which(tool, false);
-          if (!result) {
-            if (ioUtil.IS_WINDOWS) {
-              throw new Error(`Unable to locate executable file: ${tool}. Please verify either the file path exists or the file can be found within a directory specified by the PATH environment variable. Also verify the file has a valid extension for an executable file.`);
-            } else {
-              throw new Error(`Unable to locate executable file: ${tool}. Please verify either the file path exists or the file can be found within a directory specified by the PATH environment variable. Also check the file mode to verify the file is executable.`);
-            }
-          }
-          return result;
-        }
-        const matches = yield findInPath(tool);
-        if (matches && matches.length > 0) {
-          return matches[0];
-        }
-        return "";
-      });
-    }
-    exports2.which = which;
-    function findInPath(tool) {
-      return __awaiter(this, void 0, void 0, function* () {
-        if (!tool) {
-          throw new Error("parameter 'tool' is required");
-        }
-        const extensions = [];
-        if (ioUtil.IS_WINDOWS && process.env["PATHEXT"]) {
-          for (const extension of process.env["PATHEXT"].split(path3.delimiter)) {
-            if (extension) {
-              extensions.push(extension);
-            }
-          }
-        }
-        if (ioUtil.isRooted(tool)) {
-          const filePath = yield ioUtil.tryGetExecutablePath(tool, extensions);
-          if (filePath) {
-            return [filePath];
-          }
-          return [];
-        }
-        if (tool.includes(path3.sep)) {
-          return [];
-        }
-        const directories = [];
-        if (process.env.PATH) {
-          for (const p of process.env.PATH.split(path3.delimiter)) {
-            if (p) {
-              directories.push(p);
-            }
-          }
-        }
-        const matches = [];
-        for (const directory of directories) {
-          const filePath = yield ioUtil.tryGetExecutablePath(path3.join(directory, tool), extensions);
-          if (filePath) {
-            matches.push(filePath);
-          }
-        }
-        return matches;
-      });
-    }
-    exports2.findInPath = findInPath;
-    function readCopyOptions(options) {
-      const force = options.force == null ? true : options.force;
-      const recursive = Boolean(options.recursive);
-      const copySourceDirectory = options.copySourceDirectory == null ? true : Boolean(options.copySourceDirectory);
-      return { force, recursive, copySourceDirectory };
-    }
-    function cpDirRecursive(sourceDir, destDir, currentDepth, force) {
-      return __awaiter(this, void 0, void 0, function* () {
-        if (currentDepth >= 255)
-          return;
-        currentDepth++;
-        yield mkdirP(destDir);
-        const files = yield ioUtil.readdir(sourceDir);
-        for (const fileName of files) {
-          const srcFile = `${sourceDir}/${fileName}`;
-          const destFile = `${destDir}/${fileName}`;
-          const srcFileStat = yield ioUtil.lstat(srcFile);
-          if (srcFileStat.isDirectory()) {
-            yield cpDirRecursive(srcFile, destFile, currentDepth, force);
-          } else {
-            yield copyFile(srcFile, destFile, force);
-          }
-        }
-        yield ioUtil.chmod(destDir, (yield ioUtil.stat(sourceDir)).mode);
-      });
-    }
-    function copyFile(srcFile, destFile, force) {
-      return __awaiter(this, void 0, void 0, function* () {
-        if ((yield ioUtil.lstat(srcFile)).isSymbolicLink()) {
-          try {
-            yield ioUtil.lstat(destFile);
-            yield ioUtil.unlink(destFile);
-          } catch (e) {
-            if (e.code === "EPERM") {
-              yield ioUtil.chmod(destFile, "0666");
-              yield ioUtil.unlink(destFile);
-            }
-          }
-          const symlinkFull = yield ioUtil.readlink(srcFile);
-          yield ioUtil.symlink(symlinkFull, destFile, ioUtil.IS_WINDOWS ? "junction" : null);
-        } else if (!(yield ioUtil.exists(destFile)) || force) {
-          yield ioUtil.copyFile(srcFile, destFile);
-        }
-      });
-    }
-  }
-});
-
-// node_modules/@actions/exec/lib/toolrunner.js
-var require_toolrunner = __commonJS({
-  "node_modules/@actions/exec/lib/toolrunner.js"(exports2) {
-    "use strict";
-    var __createBinding = exports2 && exports2.__createBinding || (Object.create ? function(o, m, k, k2) {
-      if (k2 === void 0) k2 = k;
-      Object.defineProperty(o, k2, { enumerable: true, get: function() {
-        return m[k];
-      } });
-    } : function(o, m, k, k2) {
-      if (k2 === void 0) k2 = k;
-      o[k2] = m[k];
-    });
-    var __setModuleDefault = exports2 && exports2.__setModuleDefault || (Object.create ? function(o, v) {
-      Object.defineProperty(o, "default", { enumerable: true, value: v });
-    } : function(o, v) {
-      o["default"] = v;
-    });
-    var __importStar = exports2 && exports2.__importStar || function(mod) {
-      if (mod && mod.__esModule) return mod;
-      var result = {};
-      if (mod != null) {
-        for (var k in mod) if (k !== "default" && Object.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-      }
-      __setModuleDefault(result, mod);
-      return result;
-    };
-    var __awaiter = exports2 && exports2.__awaiter || function(thisArg, _arguments, P, generator) {
-      function adopt(value) {
-        return value instanceof P ? value : new P(function(resolve) {
-          resolve(value);
-        });
-      }
-      return new (P || (P = Promise))(function(resolve, reject) {
-        function fulfilled(value) {
-          try {
-            step(generator.next(value));
-          } catch (e) {
-            reject(e);
-          }
-        }
-        function rejected(value) {
-          try {
-            step(generator["throw"](value));
-          } catch (e) {
-            reject(e);
-          }
-        }
-        function step(result) {
-          result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected);
-        }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-      });
-    };
-    Object.defineProperty(exports2, "__esModule", { value: true });
-    exports2.argStringToArray = exports2.ToolRunner = void 0;
-    var os = __importStar(require("os"));
-    var events = __importStar(require("events"));
-    var child = __importStar(require("child_process"));
-    var path3 = __importStar(require("path"));
-    var io = __importStar(require_io());
-    var ioUtil = __importStar(require_io_util());
-    var timers_1 = require("timers");
-    var IS_WINDOWS = process.platform === "win32";
-    var ToolRunner = class extends events.EventEmitter {
-      constructor(toolPath, args, options) {
-        super();
-        if (!toolPath) {
-          throw new Error("Parameter 'toolPath' cannot be null or empty.");
-        }
-        this.toolPath = toolPath;
-        this.args = args || [];
-        this.options = options || {};
-      }
-      _debug(message) {
-        if (this.options.listeners && this.options.listeners.debug) {
-          this.options.listeners.debug(message);
-        }
-      }
-      _getCommandString(options, noPrefix) {
-        const toolPath = this._getSpawnFileName();
-        const args = this._getSpawnArgs(options);
-        let cmd = noPrefix ? "" : "[command]";
-        if (IS_WINDOWS) {
-          if (this._isCmdFile()) {
-            cmd += toolPath;
-            for (const a of args) {
-              cmd += ` ${a}`;
-            }
-          } else if (options.windowsVerbatimArguments) {
-            cmd += `"${toolPath}"`;
-            for (const a of args) {
-              cmd += ` ${a}`;
-            }
-          } else {
-            cmd += this._windowsQuoteCmdArg(toolPath);
-            for (const a of args) {
-              cmd += ` ${this._windowsQuoteCmdArg(a)}`;
-            }
-          }
-        } else {
-          cmd += toolPath;
-          for (const a of args) {
-            cmd += ` ${a}`;
-          }
-        }
-        return cmd;
-      }
-      _processLineBuffer(data, strBuffer, onLine) {
-        try {
-          let s = strBuffer + data.toString();
-          let n = s.indexOf(os.EOL);
-          while (n > -1) {
-            const line = s.substring(0, n);
-            onLine(line);
-            s = s.substring(n + os.EOL.length);
-            n = s.indexOf(os.EOL);
-          }
-          return s;
-        } catch (err) {
-          this._debug(`error processing line. Failed with error ${err}`);
-          return "";
-        }
-      }
-      _getSpawnFileName() {
-        if (IS_WINDOWS) {
-          if (this._isCmdFile()) {
-            return process.env["COMSPEC"] || "cmd.exe";
-          }
-        }
-        return this.toolPath;
-      }
-      _getSpawnArgs(options) {
-        if (IS_WINDOWS) {
-          if (this._isCmdFile()) {
-            let argline = `/D /S /C "${this._windowsQuoteCmdArg(this.toolPath)}`;
-            for (const a of this.args) {
-              argline += " ";
-              argline += options.windowsVerbatimArguments ? a : this._windowsQuoteCmdArg(a);
-            }
-            argline += '"';
-            return [argline];
-          }
-        }
-        return this.args;
-      }
-      _endsWith(str, end) {
-        return str.endsWith(end);
-      }
-      _isCmdFile() {
-        const upperToolPath = this.toolPath.toUpperCase();
-        return this._endsWith(upperToolPath, ".CMD") || this._endsWith(upperToolPath, ".BAT");
-      }
-      _windowsQuoteCmdArg(arg) {
-        if (!this._isCmdFile()) {
-          return this._uvQuoteCmdArg(arg);
-        }
-        if (!arg) {
-          return '""';
-        }
-        const cmdSpecialChars = [
-          " ",
-          "	",
-          "&",
-          "(",
-          ")",
-          "[",
-          "]",
-          "{",
-          "}",
-          "^",
-          "=",
-          ";",
-          "!",
-          "'",
-          "+",
-          ",",
-          "`",
-          "~",
-          "|",
-          "<",
-          ">",
-          '"'
-        ];
-        let needsQuotes = false;
-        for (const char of arg) {
-          if (cmdSpecialChars.some((x) => x === char)) {
-            needsQuotes = true;
-            break;
-          }
-        }
-        if (!needsQuotes) {
-          return arg;
-        }
-        let reverse = '"';
-        let quoteHit = true;
-        for (let i = arg.length; i > 0; i--) {
-          reverse += arg[i - 1];
-          if (quoteHit && arg[i - 1] === "\\") {
-            reverse += "\\";
-          } else if (arg[i - 1] === '"') {
-            quoteHit = true;
-            reverse += '"';
-          } else {
-            quoteHit = false;
-          }
-        }
-        reverse += '"';
-        return reverse.split("").reverse().join("");
-      }
-      _uvQuoteCmdArg(arg) {
-        if (!arg) {
-          return '""';
-        }
-        if (!arg.includes(" ") && !arg.includes("	") && !arg.includes('"')) {
-          return arg;
-        }
-        if (!arg.includes('"') && !arg.includes("\\")) {
-          return `"${arg}"`;
-        }
-        let reverse = '"';
-        let quoteHit = true;
-        for (let i = arg.length; i > 0; i--) {
-          reverse += arg[i - 1];
-          if (quoteHit && arg[i - 1] === "\\") {
-            reverse += "\\";
-          } else if (arg[i - 1] === '"') {
-            quoteHit = true;
-            reverse += "\\";
-          } else {
-            quoteHit = false;
-          }
-        }
-        reverse += '"';
-        return reverse.split("").reverse().join("");
-      }
-      _cloneExecOptions(options) {
-        options = options || {};
-        const result = {
-          cwd: options.cwd || process.cwd(),
-          env: options.env || process.env,
-          silent: options.silent || false,
-          windowsVerbatimArguments: options.windowsVerbatimArguments || false,
-          failOnStdErr: options.failOnStdErr || false,
-          ignoreReturnCode: options.ignoreReturnCode || false,
-          delay: options.delay || 1e4
-        };
-        result.outStream = options.outStream || process.stdout;
-        result.errStream = options.errStream || process.stderr;
-        return result;
-      }
-      _getSpawnOptions(options, toolPath) {
-        options = options || {};
-        const result = {};
-        result.cwd = options.cwd;
-        result.env = options.env;
-        result["windowsVerbatimArguments"] = options.windowsVerbatimArguments || this._isCmdFile();
-        if (options.windowsVerbatimArguments) {
-          result.argv0 = `"${toolPath}"`;
-        }
-        return result;
-      }
-      /**
-       * Exec a tool.
-       * Output will be streamed to the live console.
-       * Returns promise with return code
-       *
-       * @param     tool     path to tool to exec
-       * @param     options  optional exec options.  See ExecOptions
-       * @returns   number
-       */
-      exec() {
-        return __awaiter(this, void 0, void 0, function* () {
-          if (!ioUtil.isRooted(this.toolPath) && (this.toolPath.includes("/") || IS_WINDOWS && this.toolPath.includes("\\"))) {
-            this.toolPath = path3.resolve(process.cwd(), this.options.cwd || process.cwd(), this.toolPath);
-          }
-          this.toolPath = yield io.which(this.toolPath, true);
-          return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
-            this._debug(`exec tool: ${this.toolPath}`);
-            this._debug("arguments:");
-            for (const arg of this.args) {
-              this._debug(`   ${arg}`);
-            }
-            const optionsNonNull = this._cloneExecOptions(this.options);
-            if (!optionsNonNull.silent && optionsNonNull.outStream) {
-              optionsNonNull.outStream.write(this._getCommandString(optionsNonNull) + os.EOL);
-            }
-            const state = new ExecState(optionsNonNull, this.toolPath);
-            state.on("debug", (message) => {
-              this._debug(message);
-            });
-            if (this.options.cwd && !(yield ioUtil.exists(this.options.cwd))) {
-              return reject(new Error(`The cwd: ${this.options.cwd} does not exist!`));
-            }
-            const fileName = this._getSpawnFileName();
-            const cp = child.spawn(fileName, this._getSpawnArgs(optionsNonNull), this._getSpawnOptions(this.options, fileName));
-            let stdbuffer = "";
-            if (cp.stdout) {
-              cp.stdout.on("data", (data) => {
-                if (this.options.listeners && this.options.listeners.stdout) {
-                  this.options.listeners.stdout(data);
-                }
-                if (!optionsNonNull.silent && optionsNonNull.outStream) {
-                  optionsNonNull.outStream.write(data);
-                }
-                stdbuffer = this._processLineBuffer(data, stdbuffer, (line) => {
-                  if (this.options.listeners && this.options.listeners.stdline) {
-                    this.options.listeners.stdline(line);
-                  }
-                });
-              });
-            }
-            let errbuffer = "";
-            if (cp.stderr) {
-              cp.stderr.on("data", (data) => {
-                state.processStderr = true;
-                if (this.options.listeners && this.options.listeners.stderr) {
-                  this.options.listeners.stderr(data);
-                }
-                if (!optionsNonNull.silent && optionsNonNull.errStream && optionsNonNull.outStream) {
-                  const s = optionsNonNull.failOnStdErr ? optionsNonNull.errStream : optionsNonNull.outStream;
-                  s.write(data);
-                }
-                errbuffer = this._processLineBuffer(data, errbuffer, (line) => {
-                  if (this.options.listeners && this.options.listeners.errline) {
-                    this.options.listeners.errline(line);
-                  }
-                });
-              });
-            }
-            cp.on("error", (err) => {
-              state.processError = err.message;
-              state.processExited = true;
-              state.processClosed = true;
-              state.CheckComplete();
-            });
-            cp.on("exit", (code) => {
-              state.processExitCode = code;
-              state.processExited = true;
-              this._debug(`Exit code ${code} received from tool '${this.toolPath}'`);
-              state.CheckComplete();
-            });
-            cp.on("close", (code) => {
-              state.processExitCode = code;
-              state.processExited = true;
-              state.processClosed = true;
-              this._debug(`STDIO streams have closed for tool '${this.toolPath}'`);
-              state.CheckComplete();
-            });
-            state.on("done", (error, exitCode) => {
-              if (stdbuffer.length > 0) {
-                this.emit("stdline", stdbuffer);
-              }
-              if (errbuffer.length > 0) {
-                this.emit("errline", errbuffer);
-              }
-              cp.removeAllListeners();
-              if (error) {
-                reject(error);
-              } else {
-                resolve(exitCode);
-              }
-            });
-            if (this.options.input) {
-              if (!cp.stdin) {
-                throw new Error("child process missing stdin");
-              }
-              cp.stdin.end(this.options.input);
-            }
-          }));
-        });
-      }
-    };
-    exports2.ToolRunner = ToolRunner;
-    function argStringToArray(argString) {
-      const args = [];
-      let inQuotes = false;
-      let escaped = false;
-      let arg = "";
-      function append(c) {
-        if (escaped && c !== '"') {
-          arg += "\\";
-        }
-        arg += c;
-        escaped = false;
-      }
-      for (let i = 0; i < argString.length; i++) {
-        const c = argString.charAt(i);
-        if (c === '"') {
-          if (!escaped) {
-            inQuotes = !inQuotes;
-          } else {
-            append(c);
-          }
-          continue;
-        }
-        if (c === "\\" && escaped) {
-          append(c);
-          continue;
-        }
-        if (c === "\\" && inQuotes) {
-          escaped = true;
-          continue;
-        }
-        if (c === " " && !inQuotes) {
-          if (arg.length > 0) {
-            args.push(arg);
-            arg = "";
-          }
-          continue;
-        }
-        append(c);
-      }
-      if (arg.length > 0) {
-        args.push(arg.trim());
-      }
-      return args;
-    }
-    exports2.argStringToArray = argStringToArray;
-    var ExecState = class _ExecState extends events.EventEmitter {
-      constructor(options, toolPath) {
-        super();
-        this.processClosed = false;
-        this.processError = "";
-        this.processExitCode = 0;
-        this.processExited = false;
-        this.processStderr = false;
-        this.delay = 1e4;
-        this.done = false;
-        this.timeout = null;
-        if (!toolPath) {
-          throw new Error("toolPath must not be empty");
-        }
-        this.options = options;
-        this.toolPath = toolPath;
-        if (options.delay) {
-          this.delay = options.delay;
-        }
-      }
-      CheckComplete() {
-        if (this.done) {
-          return;
-        }
-        if (this.processClosed) {
-          this._setResult();
-        } else if (this.processExited) {
-          this.timeout = timers_1.setTimeout(_ExecState.HandleTimeout, this.delay, this);
-        }
-      }
-      _debug(message) {
-        this.emit("debug", message);
-      }
-      _setResult() {
-        let error;
-        if (this.processExited) {
-          if (this.processError) {
-            error = new Error(`There was an error when attempting to execute the process '${this.toolPath}'. This may indicate the process failed to start. Error: ${this.processError}`);
-          } else if (this.processExitCode !== 0 && !this.options.ignoreReturnCode) {
-            error = new Error(`The process '${this.toolPath}' failed with exit code ${this.processExitCode}`);
-          } else if (this.processStderr && this.options.failOnStdErr) {
-            error = new Error(`The process '${this.toolPath}' failed because one or more lines were written to the STDERR stream`);
-          }
-        }
-        if (this.timeout) {
-          clearTimeout(this.timeout);
-          this.timeout = null;
-        }
-        this.done = true;
-        this.emit("done", error, this.processExitCode);
-      }
-      static HandleTimeout(state) {
-        if (state.done) {
-          return;
-        }
-        if (!state.processClosed && state.processExited) {
-          const message = `The STDIO streams did not close within ${state.delay / 1e3} seconds of the exit event from process '${state.toolPath}'. This may indicate a child process inherited the STDIO streams and has not yet exited.`;
-          state._debug(message);
-        }
-        state._setResult();
-      }
-    };
-  }
-});
-
-// node_modules/@actions/exec/lib/exec.js
-var require_exec = __commonJS({
-  "node_modules/@actions/exec/lib/exec.js"(exports2) {
-    "use strict";
-    var __createBinding = exports2 && exports2.__createBinding || (Object.create ? function(o, m, k, k2) {
-      if (k2 === void 0) k2 = k;
-      Object.defineProperty(o, k2, { enumerable: true, get: function() {
-        return m[k];
-      } });
-    } : function(o, m, k, k2) {
-      if (k2 === void 0) k2 = k;
-      o[k2] = m[k];
-    });
-    var __setModuleDefault = exports2 && exports2.__setModuleDefault || (Object.create ? function(o, v) {
-      Object.defineProperty(o, "default", { enumerable: true, value: v });
-    } : function(o, v) {
-      o["default"] = v;
-    });
-    var __importStar = exports2 && exports2.__importStar || function(mod) {
-      if (mod && mod.__esModule) return mod;
-      var result = {};
-      if (mod != null) {
-        for (var k in mod) if (k !== "default" && Object.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-      }
-      __setModuleDefault(result, mod);
-      return result;
-    };
-    var __awaiter = exports2 && exports2.__awaiter || function(thisArg, _arguments, P, generator) {
-      function adopt(value) {
-        return value instanceof P ? value : new P(function(resolve) {
-          resolve(value);
-        });
-      }
-      return new (P || (P = Promise))(function(resolve, reject) {
-        function fulfilled(value) {
-          try {
-            step(generator.next(value));
-          } catch (e) {
-            reject(e);
-          }
-        }
-        function rejected(value) {
-          try {
-            step(generator["throw"](value));
-          } catch (e) {
-            reject(e);
-          }
-        }
-        function step(result) {
-          result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected);
-        }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-      });
-    };
-    Object.defineProperty(exports2, "__esModule", { value: true });
-    exports2.getExecOutput = exports2.exec = void 0;
-    var string_decoder_1 = require("string_decoder");
-    var tr = __importStar(require_toolrunner());
-    function exec2(commandLine, args, options) {
-      return __awaiter(this, void 0, void 0, function* () {
-        const commandArgs = tr.argStringToArray(commandLine);
-        if (commandArgs.length === 0) {
-          throw new Error(`Parameter 'commandLine' cannot be null or empty.`);
-        }
-        const toolPath = commandArgs[0];
-        args = commandArgs.slice(1).concat(args || []);
-        const runner = new tr.ToolRunner(toolPath, args, options);
-        return runner.exec();
-      });
-    }
-    exports2.exec = exec2;
-    function getExecOutput(commandLine, args, options) {
-      var _a, _b;
-      return __awaiter(this, void 0, void 0, function* () {
-        let stdout = "";
-        let stderr = "";
-        const stdoutDecoder = new string_decoder_1.StringDecoder("utf8");
-        const stderrDecoder = new string_decoder_1.StringDecoder("utf8");
-        const originalStdoutListener = (_a = options === null || options === void 0 ? void 0 : options.listeners) === null || _a === void 0 ? void 0 : _a.stdout;
-        const originalStdErrListener = (_b = options === null || options === void 0 ? void 0 : options.listeners) === null || _b === void 0 ? void 0 : _b.stderr;
-        const stdErrListener = (data) => {
-          stderr += stderrDecoder.write(data);
-          if (originalStdErrListener) {
-            originalStdErrListener(data);
-          }
-        };
-        const stdOutListener = (data) => {
-          stdout += stdoutDecoder.write(data);
-          if (originalStdoutListener) {
-            originalStdoutListener(data);
-          }
-        };
-        const listeners = Object.assign(Object.assign({}, options === null || options === void 0 ? void 0 : options.listeners), { stdout: stdOutListener, stderr: stdErrListener });
-        const exitCode = yield exec2(commandLine, args, Object.assign(Object.assign({}, options), { listeners }));
-        stdout += stdoutDecoder.end();
-        stderr += stderrDecoder.end();
-        return {
-          exitCode,
-          stdout,
-          stderr
-        };
-      });
-    }
-    exports2.getExecOutput = getExecOutput;
-  }
-});
-
 // node_modules/@actions/core/lib/utils.js
 var require_utils6 = __commonJS({
   "node_modules/@actions/core/lib/utils.js"(exports2) {
@@ -28048,7 +28048,7 @@ Support boolean input list: \`true | True | TRUE | false | False | FALSE\``);
 var import_child_process5 = require("child_process");
 
 // src/api/git.ts
-var import_child_process2 = require("child_process");
+var import_child_process = require("child_process");
 
 // src/constants.ts
 var GITHUB_TOKEN = process.env["INPUT_GITHUB-TOKEN"] || "";
@@ -28058,9 +28058,321 @@ var NPM_TOKEN = process.env["INPUT_NPM-TOKEN"] || "";
 var RELEASE_BRANCH = "lazy-release/main";
 var PR_COMMENT_STATUS_ID = "b3da20ce-59b6-4bbd-a6e3-6d625f45d008";
 var RELEASE_PR_TITLE = "Version Packages";
+var RELEASE_ID = "ebe18c5c-b9c6-4fca-8b11-90bf80ad229e";
+var COMMIT_TYPE_PATTERN = /^(feat|fix|perf|chore|docs|style|test|build|ci|revert)(\(([^)]+)\))?(!)?$/;
+var TYPE_TO_CHANGELOG_TYPE = {
+  feat: { emoji: "\u{1F680}", displayName: "New Features", sort: 0 },
+  fix: { emoji: "\u{1F41B}", displayName: "Bug Fixes", sort: 1 },
+  perf: { emoji: "\u26A1\uFE0F", displayName: "Performance Improvements", sort: 2 },
+  chore: { emoji: "\u{1F3E0}", displayName: "Chores", sort: 3 },
+  docs: { emoji: "\u{1F4D6}", displayName: "Documentation", sort: 4 },
+  style: { emoji: "\u{1F3A8}", displayName: "Styles", sort: 5 },
+  refactor: { emoji: "\u267B\uFE0F", displayName: "Refactors", sort: 6 },
+  test: { emoji: "\u2705", displayName: "Tests", sort: 7 },
+  build: { emoji: "\u{1F4E6}", displayName: "Build", sort: 8 },
+  ci: { emoji: "\u{1F916}", displayName: "Automation", sort: 9 },
+  revert: { emoji: "\u23EA", displayName: "Reverts", sort: 10 }
+};
+
+// src/api/git.ts
+var import_exec = __toESM(require_exec());
+
+// src/utils/validation.ts
+var CONVENTIONAL_COMMITS_PATTERN = /^(feat|fix|perf|chore|docs|style|test|build|ci|revert)(!)?(\(([a-z-0-9]+)(,\s*[a-z-0-9]+)*\))?(!)?: .+/;
+function isPRTitleValid(prTitle) {
+  return CONVENTIONAL_COMMITS_PATTERN.test(prTitle);
+}
+
+// src/api/git.ts
+var import_github = __toESM(require_github());
+function setupGitConfig() {
+  console.log("Setting up git config");
+  (0, import_child_process.execFileSync)("git", ["config", "--global", "user.name", "github-actions[bot]"], {
+    stdio: "inherit"
+  });
+  (0, import_child_process.execFileSync)(
+    "git",
+    ["config", "--global", "user.email", "41898282+github-actions[bot]@users.noreply.github.com"],
+    { stdio: "inherit" }
+  );
+  (0, import_child_process.execFileSync)("git", ["config", "--global", "--add", "safe.directory", "/github/workspace"], {
+    stdio: "inherit"
+  });
+}
+function checkoutBranch(branchName) {
+  (0, import_child_process.execFileSync)("git", ["fetch", "origin", branchName], { stdio: "inherit" });
+  (0, import_child_process.execFileSync)("git", ["checkout", branchName], { stdio: "inherit" });
+}
+function createOrCheckoutBranch(branchName) {
+  try {
+    (0, import_child_process.execFileSync)("git", ["checkout", branchName], { stdio: "inherit" });
+    console.log(`Switched to branch ${branchName}`);
+    try {
+      (0, import_child_process.execFileSync)("git", ["merge", `origin/${DEFAULT_BRANCH}`], {
+        stdio: "inherit"
+      });
+      console.log(`Merged ${DEFAULT_BRANCH} into ${branchName}`);
+    } catch (mergeError) {
+      console.log(
+        `Merge conflicts detected, resolving by taking theirs strategy`
+      );
+      (0, import_child_process.execFileSync)("git", ["merge", "--abort"], { stdio: "inherit" });
+      (0, import_child_process.execFileSync)(
+        "git",
+        ["merge", "-X", "theirs", `origin/${DEFAULT_BRANCH}`],
+        {
+          stdio: "inherit"
+        }
+      );
+      console.log(`Resolved merge conflicts by taking theirs strategy`);
+    }
+    (0, import_child_process.execFileSync)("git", ["push", "origin", branchName], { stdio: "inherit" });
+    console.log(`Pushed updated ${branchName} to remote`);
+    (0, import_child_process.execFileSync)("git", ["checkout", `origin/${DEFAULT_BRANCH}`, "--", "."], {
+      stdio: "inherit"
+    });
+    (0, import_child_process.execFileSync)("git", ["add", "."], { stdio: "inherit" });
+    (0, import_child_process.execFileSync)(
+      "git",
+      ["commit", "-m", `sync ${branchName} with ${DEFAULT_BRANCH}`],
+      { stdio: "inherit" }
+    );
+    (0, import_child_process.execFileSync)("git", ["push", "origin", branchName], { stdio: "inherit" });
+    console.log(`Committed and pushed changes to ${branchName}`);
+  } catch (error) {
+    console.log(`Branch ${branchName} does not exist, creating it.`);
+    (0, import_child_process.execFileSync)("git", ["checkout", "-b", branchName], { stdio: "inherit" });
+    (0, import_child_process.execFileSync)("git", ["push", "-u", "origin", branchName], {
+      stdio: "inherit"
+    });
+    console.log(`Created and pushed new branch ${branchName}`);
+  }
+}
+function commitAndPushChanges() {
+  (0, import_child_process.execFileSync)("git", ["add", "."], { stdio: "inherit" });
+  (0, import_child_process.execFileSync)("git", ["commit", "-m", "update release branch"], { stdio: "inherit" });
+  (0, import_child_process.execFileSync)("git", ["push", "origin", "HEAD"], { stdio: "inherit" });
+}
+function hasUnstagedChanges() {
+  try {
+    const statusOutput = (0, import_child_process.execSync)("git status --porcelain", {
+      encoding: "utf-8"
+    });
+    return statusOutput.trim().length > 0;
+  } catch (error) {
+    console.error("Error checking git status:", error);
+    return false;
+  }
+}
+function doesTagExistOnRemote(tagName) {
+  try {
+    (0, import_child_process.execSync)("git fetch --tags", { stdio: "pipe" });
+    const result = (0, import_child_process.execSync)(
+      `git ls-remote --tags origin refs/tags/${tagName}`,
+      {
+        stdio: "pipe",
+        encoding: "utf-8"
+      }
+    );
+    return result.trim().length > 0;
+  } catch (error) {
+    return false;
+  }
+}
+async function isLastCommitAReleaseCommit() {
+  let lastCommit = "";
+  await (0, import_exec.exec)("git", ["log", "-1", "--pretty=format:%B"], {
+    listeners: {
+      stdout: (data) => {
+        lastCommit = data.toString().trim();
+      }
+    },
+    silent: true
+  });
+  console.log(`lastCommit=${lastCommit}`);
+  return lastCommit.includes(RELEASE_ID);
+}
+async function getRecentCommits(ignoreLastest = false) {
+  console.log("Getting recent commits...");
+  let stdoutBuffer = "";
+  console.log("Fetching commits since last release commit...");
+  await (0, import_exec.exec)(
+    "git",
+    [
+      "log",
+      "--pretty=format:%h:%B%n<COMMIT_SEPARATOR>"
+      // Add a custom separator between commits
+    ],
+    {
+      listeners: {
+        stdout: (data) => {
+          stdoutBuffer += data.toString();
+        }
+      },
+      silent: true
+    }
+  );
+  const gitLogItems = stdoutBuffer.split("<COMMIT_SEPARATOR>").map((msg) => msg.trim()).filter((msg) => msg !== "");
+  const commits = [];
+  console.log(`Found ${gitLogItems.length} commit items.`);
+  for (let i = 0; i < gitLogItems.length; i++) {
+    const item = gitLogItems[i];
+    if (ignoreLastest && i === 0) {
+      continue;
+    }
+    const hash = item.substring(0, item.indexOf(":"));
+    if (!hash) {
+      console.warn("No commit hash found in item:", item);
+      continue;
+    }
+    const message = item.substring(item.indexOf(":") + 1);
+    if (!message) {
+      console.warn("No commit message found in item:", item);
+      continue;
+    }
+    if (message.includes(RELEASE_ID)) {
+      const prMatch = message.match(/#(\d+)/);
+      if (!prMatch) {
+        console.warn(
+          `Skipping release commit ${hash} because it does not contain a PR number.`
+        );
+        continue;
+      }
+      const prNumberWithHash = prMatch[0];
+      const prevIndex = i - 1;
+      if (prevIndex < 0) {
+        console.warn(
+          `Skipping release commit ${hash} because it is the first commit.`
+        );
+        continue;
+      }
+      const prevItem = gitLogItems[prevIndex];
+      const prevItemmMsg = prevItem.substring(prevItem.indexOf(":") + 1);
+      const owner = import_github.context.repo.owner;
+      const repo = import_github.context.repo.repo;
+      const repoNameWithOwner = `${owner}/${repo}`;
+      if (prevItemmMsg && prevItemmMsg.includes(`Reverts ${repoNameWithOwner}${prNumberWithHash}`)) {
+        console.warn(
+          `Skipping release commit ${hash} because it is reverted by the next commit.`
+        );
+        continue;
+      }
+      break;
+    }
+    commits.push({ hash, message: message.trim() });
+  }
+  console.log("Commits since last release:");
+  console.log(commits);
+  const filteredCommits = commits.filter(
+    (commit) => CONVENTIONAL_COMMITS_PATTERN.test(commit.message) || commit.message.includes("## Changelog")
+  );
+  console.log("Filtered commits:");
+  console.log(filteredCommits);
+  return filteredCommits;
+}
+
+// src/api/github.ts
+var import_github2 = __toESM(require_github());
+var githubApi = (0, import_github2.getOctokit)(GITHUB_TOKEN);
+var PR_NUMBER = import_github2.context.payload.pull_request?.number || 0;
+var PR_TITLE = import_github2.context.payload.pull_request?.title || "";
+function getEventData() {
+  const owner = import_github2.context.repo.owner;
+  const repo = import_github2.context.repo.repo;
+  const prNumber = import_github2.context.payload.pull_request?.number || 0;
+  const isWorkflowDispatch = import_github2.context.eventName === "workflow_dispatch";
+  return {
+    owner,
+    repo,
+    issue_number: prNumber,
+    isWorkflowDispatch
+  };
+}
+async function createOrUpdatePR({
+  title,
+  body,
+  head,
+  base = DEFAULT_BRANCH
+}) {
+  const eventData = getEventData();
+  const existingPRs = await githubApi.rest.pulls.list({
+    owner: eventData.owner,
+    repo: eventData.repo,
+    head: `${eventData.owner}:${head}`,
+    base
+  });
+  if (existingPRs.data.length > 0) {
+    const existingPR = existingPRs.data[0];
+    const { data } = await githubApi.rest.pulls.update({
+      owner: eventData.owner,
+      repo: eventData.repo,
+      pull_number: existingPR.number,
+      title,
+      body
+    });
+    console.log("Updated existing PR");
+    return data;
+  } else {
+    const { data } = await githubApi.rest.pulls.create({
+      owner: eventData.owner,
+      repo: eventData.repo,
+      title,
+      body,
+      head,
+      base
+    });
+    console.log("Created new PR");
+    return data;
+  }
+}
+async function createGitHubRelease({
+  tag_name,
+  name,
+  body
+}) {
+  const eventData = getEventData();
+  const { data } = await githubApi.rest.repos.createRelease({
+    owner: eventData.owner,
+    repo: eventData.repo,
+    tag_name,
+    name,
+    body
+  });
+  return data;
+}
+async function getPRComments() {
+  const eventData = getEventData();
+  const { data } = await githubApi.rest.issues.listComments({
+    owner: eventData.owner,
+    repo: eventData.repo,
+    issue_number: eventData.issue_number
+  });
+  return data;
+}
+async function updatePRComment(commentId, markdown) {
+  const eventData = getEventData();
+  await githubApi.rest.issues.updateComment({
+    owner: eventData.owner,
+    repo: eventData.repo,
+    comment_id: commentId,
+    body: markdown
+  });
+}
+async function createPRComment(markdown) {
+  const eventData = getEventData();
+  await githubApi.rest.issues.createComment({
+    owner: eventData.owner,
+    repo: eventData.repo,
+    issue_number: eventData.issue_number,
+    body: markdown
+  });
+}
+
+// src/index.ts
+var import_github5 = __toESM(require_github());
 
 // src/utils.ts
-var import_github = __toESM(require_github());
+var import_github3 = __toESM(require_github());
 
 // src/utils/package.ts
 var import_fs = require("fs");
@@ -28392,7 +28704,7 @@ function isMetadataYarnClassic(metadataPath) {
 }
 
 // src/utils/package.ts
-var import_child_process = require("child_process");
+var import_child_process2 = require("child_process");
 
 // node_modules/tinyglobby/dist/index.mjs
 var import_path = __toESM(require("path"), 1);
@@ -28789,7 +29101,7 @@ async function updatePackageLockFiles(dirPath = "") {
   }
   const fullCommand = [rc.command, ...rc.args || []].join(" ");
   console.log(`Running package manager command: ${fullCommand}`);
-  (0, import_child_process.execSync)(fullCommand, {
+  (0, import_child_process2.execSync)(fullCommand, {
     cwd: dirPath ? dirPath : void 0,
     stdio: "inherit"
   });
@@ -28845,6 +29157,156 @@ function getChangedPackageInfos(changelogs, allPkgInfos) {
 }
 function getPackageNameWithoutScope(packageName) {
   return packageName.startsWith("@") ? packageName.split("/")[1] : packageName;
+}
+
+// src/utils.ts
+function getDirectoryNameFromPath(filePath) {
+  const parts = filePath.split("/");
+  return parts[parts.length - 2];
+}
+function getChangelogItems(changelogSection) {
+  const lines = changelogSection.split("- ");
+  const items = [];
+  for (const line of lines) {
+    const trimmedLine = line.trim();
+    if (trimmedLine) {
+      items.push(trimmedLine);
+    }
+  }
+  return items;
+}
+function getVersionPrefix(versionSpec) {
+  const match = versionSpec.match(/^([\^~><=]+)/);
+  return match ? match[1] : "";
+}
+function getChangelogFromMarkdown(markdown, rootPackageName) {
+  const changelogs = [];
+  const changelogSection = getChangelogSectionFromCommitMessage(markdown);
+  const changelogItems = getChangelogItems(changelogSection);
+  for (const item of changelogItems) {
+    const changelog = createChangelogFromChangelogItem(item, rootPackageName);
+    if (!changelog) {
+      continue;
+    }
+    changelogs.push(changelog);
+  }
+  return changelogs;
+}
+function createChangelogFromChangelogItem(item, rootPackageName) {
+  const commitType = extractCommitType(item);
+  const description = extractDescription(item);
+  const typeParts = extractCommitTypeParts(commitType);
+  if (!typeParts.type) {
+    console.warn(
+      `Skipping item with no type: "${item}". Expected format: "type(package): description".`
+    );
+    return;
+  }
+  const semverBump = typeParts.isBreakingChange ? "major" : typeParts.type === "feat" ? "minor" : "patch";
+  let tempPackageNames = typeParts.packageNames || [];
+  if (rootPackageName && tempPackageNames.length) {
+    tempPackageNames = tempPackageNames.filter(
+      (pkgName) => getPackageNameWithoutScope(pkgName) !== getPackageNameWithoutScope(rootPackageName)
+    );
+  }
+  const changelog = {
+    type: typeParts.type,
+    description: transformDescription(description),
+    packages: tempPackageNames,
+    isBreakingChange: typeParts.isBreakingChange,
+    semverBump
+  };
+  return changelog;
+}
+function transformDescription(description) {
+  if (!description) {
+    return "";
+  }
+  let temp = description.trim();
+  temp = uppercaseFirstLetter(temp);
+  temp = replacePRNumberWithLink(temp);
+  return temp;
+}
+function replacePRNumberWithLink(description) {
+  if (!description) {
+    return description;
+  }
+  const owner = import_github3.context.repo.owner;
+  const repo = import_github3.context.repo.repo;
+  const prPattern = /\(#(\d+)\)/;
+  let tempDesc = description;
+  const prNumberMatch = tempDesc.match(prPattern);
+  if (prNumberMatch) {
+    const prNumber = parseInt(prNumberMatch[1]);
+    const prUrl = getPullRequestUrl(owner, repo, prNumber);
+    tempDesc = tempDesc.replace(prPattern, `([#${prNumber}](${prUrl}))`);
+  }
+  return tempDesc;
+}
+function getPullRequestUrl(owner, repo, prNumber) {
+  return `https://github.com/${owner}/${repo}/pull/${prNumber}`;
+}
+function uppercaseFirstLetter(str) {
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+function extractCommitType(changelogItem) {
+  return changelogItem.substring(0, changelogItem.indexOf(":")).trim();
+}
+function extractDescription(changelogItem) {
+  return changelogItem.substring(changelogItem.indexOf(":") + 1).trim();
+}
+function extractCommitTypeParts(commitType) {
+  const typeMatch = commitType.match(COMMIT_TYPE_PATTERN);
+  const type = typeMatch?.[1];
+  const packageNames = typeMatch?.[3] ? typeMatch?.[3].split(",") : [];
+  const isBreakingChange = !!typeMatch?.[4];
+  return {
+    type: type || "",
+    packageNames: packageNames.map((pkg) => pkg.trim()),
+    isBreakingChange
+  };
+}
+function updateChangelog(existingChangelogContent, newChangelogContent, newVersion) {
+  if (!newVersion) {
+    return "";
+  }
+  let updatedChangelogContent = existingChangelogContent;
+  if (existingChangelogContent.includes(newVersion)) {
+    updatedChangelogContent = replaceChangelogSection(
+      newVersion,
+      newChangelogContent,
+      existingChangelogContent
+    );
+  } else {
+    updatedChangelogContent = newChangelogContent + "\n\n\n" + existingChangelogContent;
+  }
+  return updatedChangelogContent;
+}
+function getChangelogDate(date) {
+  return date.toISOString().split("T")[0];
+}
+function replaceChangelogSection(newVersion, newChangelogContent, existingChangelogContent) {
+  const versionHeader = `## ${newVersion}
+`;
+  const startIndex = existingChangelogContent.indexOf(versionHeader);
+  if (startIndex === -1) {
+    return "";
+  }
+  let endIndex = existingChangelogContent.indexOf(
+    "\n## ",
+    startIndex + versionHeader.length
+  );
+  let updatedChangelog = existingChangelogContent.slice(0, startIndex);
+  updatedChangelog += newChangelogContent;
+  if (endIndex !== -1) {
+    updatedChangelog += "\n\n";
+    updatedChangelog += existingChangelogContent.slice(endIndex);
+  }
+  return updatedChangelog;
+}
+function toDirectoryPath(filePath) {
+  const lastSlashIndex = filePath.lastIndexOf("/");
+  return lastSlashIndex !== -1 ? filePath.substring(0, lastSlashIndex) : "";
 }
 
 // src/utils/changelog.ts
@@ -28956,518 +29418,6 @@ function getChangelogFromCommits(commits, rootPackageName) {
   return changelogs;
 }
 
-// src/utils.ts
-var RELEASE_ID = "ebe18c5c-b9c6-4fca-8b11-90bf80ad229e";
-var TYPE_TO_CHANGELOG_TYPE = {
-  feat: { emoji: "\u{1F680}", displayName: "New Features", sort: 0 },
-  fix: { emoji: "\u{1F41B}", displayName: "Bug Fixes", sort: 1 },
-  perf: { emoji: "\u26A1\uFE0F", displayName: "Performance Improvements", sort: 2 },
-  chore: { emoji: "\u{1F3E0}", displayName: "Chores", sort: 3 },
-  docs: { emoji: "\u{1F4D6}", displayName: "Documentation", sort: 4 },
-  style: { emoji: "\u{1F3A8}", displayName: "Styles", sort: 5 },
-  refactor: { emoji: "\u267B\uFE0F", displayName: "Refactors", sort: 6 },
-  test: { emoji: "\u2705", displayName: "Tests", sort: 7 },
-  build: { emoji: "\u{1F4E6}", displayName: "Build", sort: 8 },
-  ci: { emoji: "\u{1F916}", displayName: "Automation", sort: 9 },
-  revert: { emoji: "\u23EA", displayName: "Reverts", sort: 10 }
-};
-var COMMIT_TYPE_PATTERN = /^(feat|fix|perf|chore|docs|style|test|build|ci|revert)(\(([^)]+)\))?(!)?$/;
-function getDirectoryNameFromPath(filePath) {
-  const parts = filePath.split("/");
-  return parts[parts.length - 2];
-}
-function getChangelogItems(changelogSection) {
-  const lines = changelogSection.split("- ");
-  const items = [];
-  for (const line of lines) {
-    const trimmedLine = line.trim();
-    if (trimmedLine) {
-      items.push(trimmedLine);
-    }
-  }
-  return items;
-}
-function getVersionPrefix(versionSpec) {
-  const match = versionSpec.match(/^([\^~><=]+)/);
-  return match ? match[1] : "";
-}
-function getChangelogFromMarkdown(markdown, rootPackageName) {
-  const changelogs = [];
-  const changelogSection = getChangelogSectionFromCommitMessage(markdown);
-  const changelogItems = getChangelogItems(changelogSection);
-  for (const item of changelogItems) {
-    const changelog = createChangelogFromChangelogItem(item, rootPackageName);
-    if (!changelog) {
-      continue;
-    }
-    changelogs.push(changelog);
-  }
-  return changelogs;
-}
-function createChangelogFromChangelogItem(item, rootPackageName) {
-  const commitType = extractCommitType(item);
-  const description = extractDescription(item);
-  const typeParts = extractCommitTypeParts(commitType);
-  if (!typeParts.type) {
-    console.warn(
-      `Skipping item with no type: "${item}". Expected format: "type(package): description".`
-    );
-    return;
-  }
-  const semverBump = typeParts.isBreakingChange ? "major" : typeParts.type === "feat" ? "minor" : "patch";
-  let tempPackageNames = typeParts.packageNames || [];
-  if (rootPackageName && tempPackageNames.length) {
-    tempPackageNames = tempPackageNames.filter(
-      (pkgName) => getPackageNameWithoutScope(pkgName) !== getPackageNameWithoutScope(rootPackageName)
-    );
-  }
-  const changelog = {
-    type: typeParts.type,
-    description: transformDescription(description),
-    packages: tempPackageNames,
-    isBreakingChange: typeParts.isBreakingChange,
-    semverBump
-  };
-  return changelog;
-}
-function transformDescription(description) {
-  if (!description) {
-    return "";
-  }
-  let temp = description.trim();
-  temp = uppercaseFirstLetter(temp);
-  temp = replacePRNumberWithLink(temp);
-  return temp;
-}
-function replacePRNumberWithLink(description) {
-  if (!description) {
-    return description;
-  }
-  const owner = import_github.context.repo.owner;
-  const repo = import_github.context.repo.repo;
-  const prPattern = /\(#(\d+)\)/;
-  let tempDesc = description;
-  const prNumberMatch = tempDesc.match(prPattern);
-  if (prNumberMatch) {
-    const prNumber = parseInt(prNumberMatch[1]);
-    const prUrl = getPullRequestUrl(owner, repo, prNumber);
-    tempDesc = tempDesc.replace(prPattern, `([#${prNumber}](${prUrl}))`);
-  }
-  return tempDesc;
-}
-function getPullRequestUrl(owner, repo, prNumber) {
-  return `https://github.com/${owner}/${repo}/pull/${prNumber}`;
-}
-function uppercaseFirstLetter(str) {
-  return str.charAt(0).toUpperCase() + str.slice(1);
-}
-function extractCommitType(changelogItem) {
-  return changelogItem.substring(0, changelogItem.indexOf(":")).trim();
-}
-function extractDescription(changelogItem) {
-  return changelogItem.substring(changelogItem.indexOf(":") + 1).trim();
-}
-function extractCommitTypeParts(commitType) {
-  const typeMatch = commitType.match(COMMIT_TYPE_PATTERN);
-  const type = typeMatch?.[1];
-  const packageNames = typeMatch?.[3] ? typeMatch?.[3].split(",") : [];
-  const isBreakingChange = !!typeMatch?.[4];
-  return {
-    type: type || "",
-    packageNames: packageNames.map((pkg) => pkg.trim()),
-    isBreakingChange
-  };
-}
-var heading2Regex = /^## ((@[a-z]+)?(\/)?([\w-]+)@)?(\d+\.\d+\.\d+)➡️(\d+\.\d+\.\d+)(\n\n)?/;
-function parseReleasePRBody(prBody) {
-  prBody = removeReleasePRComment(prBody);
-  const changelogEntries = [];
-  const headings = Array.from(
-    prBody.matchAll(new RegExp(heading2Regex, "gm"))
-  );
-  console.log(`Found ${headings.length} headings in PR body.`);
-  for (let i = 0; i < headings.length; i++) {
-    const heading = headings[i];
-    const headingData = parseHeading2(heading[0]);
-    const startIndex = heading.index + heading[0].length;
-    const endIndex = i < headings.length - 1 ? headings[i + 1].index : prBody.length;
-    const content = prBody.substring(startIndex, endIndex).trim();
-    changelogEntries.push({
-      heading: headingData,
-      content
-    });
-  }
-  return changelogEntries;
-}
-function removeReleasePRComment(markdown) {
-  const releaseIdComment = `<!-- Release PR: ${RELEASE_ID} -->`;
-  return markdown.replace(releaseIdComment, "").trim();
-}
-function parseHeading2(heading) {
-  const match = heading.match(heading2Regex);
-  if (!match) {
-    throw new Error(`Invalid heading format: ${heading}`);
-  }
-  const scope = match[2];
-  const packageName = match[4];
-  const oldVersion = match[5];
-  const newVersion = match[6];
-  const isRoot = !packageName;
-  let fullPackageName = packageName;
-  if (scope) {
-    fullPackageName = `${scope}/${packageName}`;
-  }
-  return {
-    packageName: fullPackageName,
-    oldVersion,
-    newVersion,
-    isRoot
-  };
-}
-function appendReleaseIdToMarkdown(markdown) {
-  const releaseIdComment = `<!-- Release PR: ${RELEASE_ID} -->`;
-  return markdown + releaseIdComment;
-}
-function updateChangelog(existingChangelogContent, newChangelogContent, newVersion) {
-  if (!newVersion) {
-    return "";
-  }
-  let updatedChangelogContent = existingChangelogContent;
-  if (existingChangelogContent.includes(newVersion)) {
-    updatedChangelogContent = replaceChangelogSection(
-      newVersion,
-      newChangelogContent,
-      existingChangelogContent
-    );
-  } else {
-    updatedChangelogContent = newChangelogContent + "\n\n\n" + existingChangelogContent;
-  }
-  return updatedChangelogContent;
-}
-function getChangelogDate(date) {
-  return date.toISOString().split("T")[0];
-}
-function replaceChangelogSection(newVersion, newChangelogContent, existingChangelogContent) {
-  const versionHeader = `## ${newVersion}
-`;
-  const startIndex = existingChangelogContent.indexOf(versionHeader);
-  if (startIndex === -1) {
-    return "";
-  }
-  let endIndex = existingChangelogContent.indexOf(
-    "\n## ",
-    startIndex + versionHeader.length
-  );
-  let updatedChangelog = existingChangelogContent.slice(0, startIndex);
-  updatedChangelog += newChangelogContent;
-  if (endIndex !== -1) {
-    updatedChangelog += "\n\n";
-    updatedChangelog += existingChangelogContent.slice(endIndex);
-  }
-  return updatedChangelog;
-}
-function toDirectoryPath(filePath) {
-  const lastSlashIndex = filePath.lastIndexOf("/");
-  return lastSlashIndex !== -1 ? filePath.substring(0, lastSlashIndex) : "";
-}
-
-// src/api/git.ts
-var import_exec = __toESM(require_exec());
-
-// src/utils/validation.ts
-var CONVENTIONAL_COMMITS_PATTERN = /^(feat|fix|perf|chore|docs|style|test|build|ci|revert)(!)?(\(([a-z-0-9]+)(,\s*[a-z-0-9]+)*\))?(!)?: .+/;
-function isPRTitleValid(prTitle) {
-  return CONVENTIONAL_COMMITS_PATTERN.test(prTitle);
-}
-
-// src/api/git.ts
-var import_github2 = __toESM(require_github());
-function setupGitConfig() {
-  console.log("Setting up git config");
-  (0, import_child_process2.execFileSync)("git", ["config", "--global", "user.name", "github-actions[bot]"], {
-    stdio: "inherit"
-  });
-  (0, import_child_process2.execFileSync)(
-    "git",
-    ["config", "--global", "user.email", "41898282+github-actions[bot]@users.noreply.github.com"],
-    { stdio: "inherit" }
-  );
-  (0, import_child_process2.execFileSync)("git", ["config", "--global", "--add", "safe.directory", "/github/workspace"], {
-    stdio: "inherit"
-  });
-}
-function checkoutBranch(branchName) {
-  (0, import_child_process2.execFileSync)("git", ["fetch", "origin", branchName], { stdio: "inherit" });
-  (0, import_child_process2.execFileSync)("git", ["checkout", branchName], { stdio: "inherit" });
-}
-function createOrCheckoutBranch(branchName) {
-  try {
-    (0, import_child_process2.execFileSync)("git", ["checkout", branchName], { stdio: "inherit" });
-    console.log(`Switched to branch ${branchName}`);
-    try {
-      (0, import_child_process2.execFileSync)("git", ["merge", `origin/${DEFAULT_BRANCH}`], {
-        stdio: "inherit"
-      });
-      console.log(`Merged ${DEFAULT_BRANCH} into ${branchName}`);
-    } catch (mergeError) {
-      console.log(
-        `Merge conflicts detected, resolving by taking theirs strategy`
-      );
-      (0, import_child_process2.execFileSync)("git", ["merge", "--abort"], { stdio: "inherit" });
-      (0, import_child_process2.execFileSync)(
-        "git",
-        ["merge", "-X", "theirs", `origin/${DEFAULT_BRANCH}`],
-        {
-          stdio: "inherit"
-        }
-      );
-      console.log(`Resolved merge conflicts by taking theirs strategy`);
-    }
-    (0, import_child_process2.execFileSync)("git", ["push", "origin", branchName], { stdio: "inherit" });
-    console.log(`Pushed updated ${branchName} to remote`);
-    (0, import_child_process2.execFileSync)("git", ["checkout", `origin/${DEFAULT_BRANCH}`, "--", "."], {
-      stdio: "inherit"
-    });
-    (0, import_child_process2.execFileSync)("git", ["add", "."], { stdio: "inherit" });
-    (0, import_child_process2.execFileSync)(
-      "git",
-      ["commit", "-m", `sync ${branchName} with ${DEFAULT_BRANCH}`],
-      { stdio: "inherit" }
-    );
-    (0, import_child_process2.execFileSync)("git", ["push", "origin", branchName], { stdio: "inherit" });
-    console.log(`Committed and pushed changes to ${branchName}`);
-  } catch (error) {
-    console.log(`Branch ${branchName} does not exist, creating it.`);
-    (0, import_child_process2.execFileSync)("git", ["checkout", "-b", branchName], { stdio: "inherit" });
-    (0, import_child_process2.execFileSync)("git", ["push", "-u", "origin", branchName], {
-      stdio: "inherit"
-    });
-    console.log(`Created and pushed new branch ${branchName}`);
-  }
-}
-function commitAndPushChanges() {
-  (0, import_child_process2.execFileSync)("git", ["add", "."], { stdio: "inherit" });
-  (0, import_child_process2.execFileSync)("git", ["commit", "-m", "update release branch"], { stdio: "inherit" });
-  (0, import_child_process2.execFileSync)("git", ["push", "origin", "HEAD"], { stdio: "inherit" });
-}
-function hasUnstagedChanges() {
-  try {
-    const statusOutput = (0, import_child_process2.execSync)("git status --porcelain", {
-      encoding: "utf-8"
-    });
-    return statusOutput.trim().length > 0;
-  } catch (error) {
-    console.error("Error checking git status:", error);
-    return false;
-  }
-}
-function doesTagExistOnRemote(tagName) {
-  try {
-    (0, import_child_process2.execSync)("git fetch --tags", { stdio: "pipe" });
-    const result = (0, import_child_process2.execSync)(
-      `git ls-remote --tags origin refs/tags/${tagName}`,
-      {
-        stdio: "pipe",
-        encoding: "utf-8"
-      }
-    );
-    return result.trim().length > 0;
-  } catch (error) {
-    return false;
-  }
-}
-async function isLastCommitAReleaseCommit() {
-  let lastCommit = "";
-  await (0, import_exec.exec)("git", ["log", "-1", "--pretty=format:%B"], {
-    listeners: {
-      stdout: (data) => {
-        lastCommit = data.toString().trim();
-      }
-    },
-    silent: true
-  });
-  console.log(`lastCommit=${lastCommit}`);
-  return lastCommit.includes(RELEASE_ID);
-}
-async function getRecentCommits(ignoreLastest = false) {
-  console.log("Getting recent commits...");
-  let stdoutBuffer = "";
-  console.log("Fetching commits since last release commit...");
-  await (0, import_exec.exec)(
-    "git",
-    [
-      "log",
-      "--pretty=format:%h:%B%n<COMMIT_SEPARATOR>"
-      // Add a custom separator between commits
-    ],
-    {
-      listeners: {
-        stdout: (data) => {
-          stdoutBuffer += data.toString();
-        }
-      },
-      silent: true
-    }
-  );
-  const gitLogItems = stdoutBuffer.split("<COMMIT_SEPARATOR>").map((msg) => msg.trim()).filter((msg) => msg !== "");
-  const commits = [];
-  console.log(`Found ${gitLogItems.length} commit items.`);
-  for (let i = 0; i < gitLogItems.length; i++) {
-    const item = gitLogItems[i];
-    if (ignoreLastest && i === 0) {
-      continue;
-    }
-    const hash = item.substring(0, item.indexOf(":"));
-    if (!hash) {
-      console.warn("No commit hash found in item:", item);
-      continue;
-    }
-    const message = item.substring(item.indexOf(":") + 1);
-    if (!message) {
-      console.warn("No commit message found in item:", item);
-      continue;
-    }
-    if (message.includes(RELEASE_ID)) {
-      const prMatch = message.match(/#(\d+)/);
-      if (!prMatch) {
-        console.warn(
-          `Skipping release commit ${hash} because it does not contain a PR number.`
-        );
-        continue;
-      }
-      const prNumberWithHash = prMatch[0];
-      const prevIndex = i - 1;
-      if (prevIndex < 0) {
-        console.warn(
-          `Skipping release commit ${hash} because it is the first commit.`
-        );
-        continue;
-      }
-      const prevItem = gitLogItems[prevIndex];
-      const prevItemmMsg = prevItem.substring(prevItem.indexOf(":") + 1);
-      const owner = import_github2.context.repo.owner;
-      const repo = import_github2.context.repo.repo;
-      const repoNameWithOwner = `${owner}/${repo}`;
-      if (prevItemmMsg && prevItemmMsg.includes(`Reverts ${repoNameWithOwner}${prNumberWithHash}`)) {
-        console.warn(
-          `Skipping release commit ${hash} because it is reverted by the next commit.`
-        );
-        continue;
-      }
-      break;
-    }
-    commits.push({ hash, message: message.trim() });
-  }
-  console.log("Commits since last release:");
-  console.log(commits);
-  const filteredCommits = commits.filter(
-    (commit) => CONVENTIONAL_COMMITS_PATTERN.test(commit.message) || commit.message.includes("## Changelog")
-  );
-  console.log("Filtered commits:");
-  console.log(filteredCommits);
-  return filteredCommits;
-}
-
-// src/api/github.ts
-var import_github3 = __toESM(require_github());
-var githubApi = (0, import_github3.getOctokit)(GITHUB_TOKEN);
-var PR_NUMBER = import_github3.context.payload.pull_request?.number || 0;
-var PR_TITLE = import_github3.context.payload.pull_request?.title || "";
-function getEventData() {
-  const owner = import_github3.context.repo.owner;
-  const repo = import_github3.context.repo.repo;
-  const prNumber = import_github3.context.payload.pull_request?.number || 0;
-  const isWorkflowDispatch = import_github3.context.eventName === "workflow_dispatch";
-  return {
-    owner,
-    repo,
-    issue_number: prNumber,
-    isWorkflowDispatch
-  };
-}
-async function createOrUpdatePR({
-  title,
-  body,
-  head,
-  base = DEFAULT_BRANCH
-}) {
-  const eventData = getEventData();
-  const existingPRs = await githubApi.rest.pulls.list({
-    owner: eventData.owner,
-    repo: eventData.repo,
-    head: `${eventData.owner}:${head}`,
-    base
-  });
-  if (existingPRs.data.length > 0) {
-    const existingPR = existingPRs.data[0];
-    const { data } = await githubApi.rest.pulls.update({
-      owner: eventData.owner,
-      repo: eventData.repo,
-      pull_number: existingPR.number,
-      title,
-      body
-    });
-    console.log("Updated existing PR");
-    return data;
-  } else {
-    const { data } = await githubApi.rest.pulls.create({
-      owner: eventData.owner,
-      repo: eventData.repo,
-      title,
-      body,
-      head,
-      base
-    });
-    console.log("Created new PR");
-    return data;
-  }
-}
-async function createGitHubRelease({
-  tag_name,
-  name,
-  body
-}) {
-  const eventData = getEventData();
-  const { data } = await githubApi.rest.repos.createRelease({
-    owner: eventData.owner,
-    repo: eventData.repo,
-    tag_name,
-    name,
-    body
-  });
-  return data;
-}
-async function getPRComments() {
-  const eventData = getEventData();
-  const { data } = await githubApi.rest.issues.listComments({
-    owner: eventData.owner,
-    repo: eventData.repo,
-    issue_number: eventData.issue_number
-  });
-  return data;
-}
-async function updatePRComment(commentId, markdown) {
-  const eventData = getEventData();
-  await githubApi.rest.issues.updateComment({
-    owner: eventData.owner,
-    repo: eventData.repo,
-    comment_id: commentId,
-    body: markdown
-  });
-}
-async function createPRComment(markdown) {
-  const eventData = getEventData();
-  await githubApi.rest.issues.createComment({
-    owner: eventData.owner,
-    repo: eventData.repo,
-    issue_number: eventData.issue_number,
-    body: markdown
-  });
-}
-
-// src/index.ts
-var import_github5 = __toESM(require_github());
-
 // src/utils/markdown.ts
 function generateMarkdown(changedPackageInfos, indirectPackageInfos, changelogs) {
   let markdown = "# \u{1F449} Changelog\n\n";
@@ -29543,6 +29493,56 @@ function generateMarkdown(changedPackageInfos, indirectPackageInfos, changelogs)
 }
 function increaseHeadingLevel(message) {
   return message.replace(/(#+)/g, "$1#");
+}
+function appendReleaseIdToMarkdown(markdown) {
+  const releaseIdComment = `<!-- Release PR: ${RELEASE_ID} -->`;
+  return markdown + releaseIdComment;
+}
+function removeReleasePRComment(markdown) {
+  const releaseIdComment = `<!-- Release PR: ${RELEASE_ID} -->`;
+  return markdown.replace(releaseIdComment, "").trim();
+}
+var heading2Regex = /^## ((@[a-z]+)?(\/)?([\w-]+)@)?(\d+\.\d+\.\d+)➡️(\d+\.\d+\.\d+)(\n\n)?/;
+function parseReleasePRBody(prBody) {
+  prBody = removeReleasePRComment(prBody);
+  const changelogEntries = [];
+  const headings = Array.from(
+    prBody.matchAll(new RegExp(heading2Regex, "gm"))
+  );
+  console.log(`Found ${headings.length} headings in PR body.`);
+  for (let i = 0; i < headings.length; i++) {
+    const heading = headings[i];
+    const headingData = parseHeading2(heading[0]);
+    const startIndex = heading.index + heading[0].length;
+    const endIndex = i < headings.length - 1 ? headings[i + 1].index : prBody.length;
+    const content = prBody.substring(startIndex, endIndex).trim();
+    changelogEntries.push({
+      heading: headingData,
+      content
+    });
+  }
+  return changelogEntries;
+}
+function parseHeading2(heading) {
+  const match = heading.match(heading2Regex);
+  if (!match) {
+    throw new Error(`Invalid heading format: ${heading}`);
+  }
+  const scope = match[2];
+  const packageName = match[4];
+  const oldVersion = match[5];
+  const newVersion = match[6];
+  const isRoot = !packageName;
+  let fullPackageName = packageName;
+  if (scope) {
+    fullPackageName = `${scope}/${packageName}`;
+  }
+  return {
+    packageName: fullPackageName,
+    oldVersion,
+    newVersion,
+    isRoot
+  };
 }
 
 // src/core/changelog.ts

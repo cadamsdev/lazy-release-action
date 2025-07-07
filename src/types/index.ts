@@ -7,3 +7,9 @@ export interface PackageInfo {
   isPrivate: boolean;
   dependencies: string[];
 }
+
+export interface ChangelogType {
+  emoji: string;
+  displayName: string;
+  sort: number;
+}
