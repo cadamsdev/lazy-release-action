@@ -3,6 +3,7 @@ import { DEFAULT_BRANCH, RELEASE_ID } from '../constants';
 import { exec } from '@actions/exec';
 import { CONVENTIONAL_COMMITS_PATTERN } from '../utils/validation';
 import { context } from '@actions/github';
+import { hasChangelogSection } from '../utils/markdown';
 
 export function setupGitConfig() {
   console.log('Setting up git config');
@@ -246,7 +247,7 @@ export async function getRecentCommits(
   const filteredCommits = commits.filter(
     (commit) =>
       CONVENTIONAL_COMMITS_PATTERN.test(commit.message) ||
-      commit.message.includes('## Changelog')
+      hasChangelogSection(commit.message)
   );
 
   console.log('Filtered commits:');

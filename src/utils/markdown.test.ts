@@ -1,6 +1,7 @@
 import {
   appendReleaseIdToMarkdown,
   generateMarkdown,
+  hasChangelogSection,
   hasReleasePRComment,
   increaseHeadingLevel,
   removeReleasePRComment,
@@ -158,5 +159,14 @@ it('should check if markdown has release comment', () => {
 <!-- Release PR: ${RELEASE_ID} -->`;
 
   const result = hasReleasePRComment(markdownWithComment);
+  expect(result).toBe(true);
+});
+
+it('should have a changelog section', () => {
+  const markdownWithChangelog = `## Changelog
+- feat: added some feature
+`;
+
+  const result = hasChangelogSection(markdownWithChangelog);
   expect(result).toBe(true);
 });

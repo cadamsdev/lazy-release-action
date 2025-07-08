@@ -28048,7 +28048,7 @@ Support boolean input list: \`true | True | TRUE | false | False | FALSE\``);
 var import_child_process5 = require("child_process");
 
 // src/api/git.ts
-var import_child_process = require("child_process");
+var import_child_process2 = require("child_process");
 
 // src/constants.ts
 var GITHUB_TOKEN = process.env["INPUT_GITHUB-TOKEN"] || "";
@@ -28084,292 +28084,10 @@ function isPRTitleValid(prTitle) {
 }
 
 // src/api/git.ts
+var import_github3 = __toESM(require_github());
+
+// src/utils/markdown.ts
 var import_github = __toESM(require_github());
-function setupGitConfig() {
-  console.log("Setting up git config");
-  (0, import_child_process.execFileSync)("git", ["config", "--global", "user.name", "github-actions[bot]"], {
-    stdio: "inherit"
-  });
-  (0, import_child_process.execFileSync)(
-    "git",
-    ["config", "--global", "user.email", "41898282+github-actions[bot]@users.noreply.github.com"],
-    { stdio: "inherit" }
-  );
-  (0, import_child_process.execFileSync)("git", ["config", "--global", "--add", "safe.directory", "/github/workspace"], {
-    stdio: "inherit"
-  });
-}
-function checkoutBranch(branchName) {
-  (0, import_child_process.execFileSync)("git", ["fetch", "origin", branchName], { stdio: "inherit" });
-  (0, import_child_process.execFileSync)("git", ["checkout", branchName], { stdio: "inherit" });
-}
-function createOrCheckoutBranch(branchName) {
-  try {
-    (0, import_child_process.execFileSync)("git", ["checkout", branchName], { stdio: "inherit" });
-    console.log(`Switched to branch ${branchName}`);
-    try {
-      (0, import_child_process.execFileSync)("git", ["merge", `origin/${DEFAULT_BRANCH}`], {
-        stdio: "inherit"
-      });
-      console.log(`Merged ${DEFAULT_BRANCH} into ${branchName}`);
-    } catch (mergeError) {
-      console.log(
-        `Merge conflicts detected, resolving by taking theirs strategy`
-      );
-      (0, import_child_process.execFileSync)("git", ["merge", "--abort"], { stdio: "inherit" });
-      (0, import_child_process.execFileSync)(
-        "git",
-        ["merge", "-X", "theirs", `origin/${DEFAULT_BRANCH}`],
-        {
-          stdio: "inherit"
-        }
-      );
-      console.log(`Resolved merge conflicts by taking theirs strategy`);
-    }
-    (0, import_child_process.execFileSync)("git", ["push", "origin", branchName], { stdio: "inherit" });
-    console.log(`Pushed updated ${branchName} to remote`);
-    (0, import_child_process.execFileSync)("git", ["checkout", `origin/${DEFAULT_BRANCH}`, "--", "."], {
-      stdio: "inherit"
-    });
-    (0, import_child_process.execFileSync)("git", ["add", "."], { stdio: "inherit" });
-    (0, import_child_process.execFileSync)(
-      "git",
-      ["commit", "-m", `sync ${branchName} with ${DEFAULT_BRANCH}`],
-      { stdio: "inherit" }
-    );
-    (0, import_child_process.execFileSync)("git", ["push", "origin", branchName], { stdio: "inherit" });
-    console.log(`Committed and pushed changes to ${branchName}`);
-  } catch (error) {
-    console.log(`Branch ${branchName} does not exist, creating it.`);
-    (0, import_child_process.execFileSync)("git", ["checkout", "-b", branchName], { stdio: "inherit" });
-    (0, import_child_process.execFileSync)("git", ["push", "-u", "origin", branchName], {
-      stdio: "inherit"
-    });
-    console.log(`Created and pushed new branch ${branchName}`);
-  }
-}
-function commitAndPushChanges() {
-  (0, import_child_process.execFileSync)("git", ["add", "."], { stdio: "inherit" });
-  (0, import_child_process.execFileSync)("git", ["commit", "-m", "update release branch"], { stdio: "inherit" });
-  (0, import_child_process.execFileSync)("git", ["push", "origin", "HEAD"], { stdio: "inherit" });
-}
-function hasUnstagedChanges() {
-  try {
-    const statusOutput = (0, import_child_process.execSync)("git status --porcelain", {
-      encoding: "utf-8"
-    });
-    return statusOutput.trim().length > 0;
-  } catch (error) {
-    console.error("Error checking git status:", error);
-    return false;
-  }
-}
-function doesTagExistOnRemote(tagName) {
-  try {
-    (0, import_child_process.execSync)("git fetch --tags", { stdio: "pipe" });
-    const result = (0, import_child_process.execSync)(
-      `git ls-remote --tags origin refs/tags/${tagName}`,
-      {
-        stdio: "pipe",
-        encoding: "utf-8"
-      }
-    );
-    return result.trim().length > 0;
-  } catch (error) {
-    return false;
-  }
-}
-async function isLastCommitAReleaseCommit() {
-  let lastCommit = "";
-  await (0, import_exec.exec)("git", ["log", "-1", "--pretty=format:%B"], {
-    listeners: {
-      stdout: (data) => {
-        lastCommit = data.toString().trim();
-      }
-    },
-    silent: true
-  });
-  console.log(`lastCommit=${lastCommit}`);
-  return lastCommit.includes(RELEASE_ID);
-}
-async function getRecentCommits(ignoreLastest = false) {
-  console.log("Getting recent commits...");
-  let stdoutBuffer = "";
-  console.log("Fetching commits since last release commit...");
-  await (0, import_exec.exec)(
-    "git",
-    [
-      "log",
-      "--pretty=format:%h:%B%n<COMMIT_SEPARATOR>"
-      // Add a custom separator between commits
-    ],
-    {
-      listeners: {
-        stdout: (data) => {
-          stdoutBuffer += data.toString();
-        }
-      },
-      silent: true
-    }
-  );
-  const gitLogItems = stdoutBuffer.split("<COMMIT_SEPARATOR>").map((msg) => msg.trim()).filter((msg) => msg !== "");
-  const commits = [];
-  console.log(`Found ${gitLogItems.length} commit items.`);
-  for (let i = 0; i < gitLogItems.length; i++) {
-    const item = gitLogItems[i];
-    if (ignoreLastest && i === 0) {
-      continue;
-    }
-    const hash = item.substring(0, item.indexOf(":"));
-    if (!hash) {
-      console.warn("No commit hash found in item:", item);
-      continue;
-    }
-    const message = item.substring(item.indexOf(":") + 1);
-    if (!message) {
-      console.warn("No commit message found in item:", item);
-      continue;
-    }
-    if (message.includes(RELEASE_ID)) {
-      const prMatch = message.match(/#(\d+)/);
-      if (!prMatch) {
-        console.warn(
-          `Skipping release commit ${hash} because it does not contain a PR number.`
-        );
-        continue;
-      }
-      const prNumberWithHash = prMatch[0];
-      const prevIndex = i - 1;
-      if (prevIndex < 0) {
-        console.warn(
-          `Skipping release commit ${hash} because it is the first commit.`
-        );
-        continue;
-      }
-      const prevItem = gitLogItems[prevIndex];
-      const prevItemmMsg = prevItem.substring(prevItem.indexOf(":") + 1);
-      const owner = import_github.context.repo.owner;
-      const repo = import_github.context.repo.repo;
-      const repoNameWithOwner = `${owner}/${repo}`;
-      if (prevItemmMsg && prevItemmMsg.includes(`Reverts ${repoNameWithOwner}${prNumberWithHash}`)) {
-        console.warn(
-          `Skipping release commit ${hash} because it is reverted by the next commit.`
-        );
-        continue;
-      }
-      break;
-    }
-    commits.push({ hash, message: message.trim() });
-  }
-  console.log("Commits since last release:");
-  console.log(commits);
-  const filteredCommits = commits.filter(
-    (commit) => CONVENTIONAL_COMMITS_PATTERN.test(commit.message) || commit.message.includes("## Changelog")
-  );
-  console.log("Filtered commits:");
-  console.log(filteredCommits);
-  return filteredCommits;
-}
-
-// src/api/github.ts
-var import_github2 = __toESM(require_github());
-var githubApi = (0, import_github2.getOctokit)(GITHUB_TOKEN);
-var PR_NUMBER = import_github2.context.payload.pull_request?.number || 0;
-var PR_TITLE = import_github2.context.payload.pull_request?.title || "";
-function getEventData() {
-  const owner = import_github2.context.repo.owner;
-  const repo = import_github2.context.repo.repo;
-  const prNumber = import_github2.context.payload.pull_request?.number || 0;
-  const isWorkflowDispatch = import_github2.context.eventName === "workflow_dispatch";
-  return {
-    owner,
-    repo,
-    issue_number: prNumber,
-    isWorkflowDispatch
-  };
-}
-async function createOrUpdatePR({
-  title,
-  body,
-  head,
-  base = DEFAULT_BRANCH
-}) {
-  const eventData = getEventData();
-  const existingPRs = await githubApi.rest.pulls.list({
-    owner: eventData.owner,
-    repo: eventData.repo,
-    head: `${eventData.owner}:${head}`,
-    base
-  });
-  if (existingPRs.data.length > 0) {
-    const existingPR = existingPRs.data[0];
-    const { data } = await githubApi.rest.pulls.update({
-      owner: eventData.owner,
-      repo: eventData.repo,
-      pull_number: existingPR.number,
-      title,
-      body
-    });
-    console.log("Updated existing PR");
-    return data;
-  } else {
-    const { data } = await githubApi.rest.pulls.create({
-      owner: eventData.owner,
-      repo: eventData.repo,
-      title,
-      body,
-      head,
-      base
-    });
-    console.log("Created new PR");
-    return data;
-  }
-}
-async function createGitHubRelease({
-  tag_name,
-  name,
-  body
-}) {
-  const eventData = getEventData();
-  const { data } = await githubApi.rest.repos.createRelease({
-    owner: eventData.owner,
-    repo: eventData.repo,
-    tag_name,
-    name,
-    body
-  });
-  return data;
-}
-async function getPRComments() {
-  const eventData = getEventData();
-  const { data } = await githubApi.rest.issues.listComments({
-    owner: eventData.owner,
-    repo: eventData.repo,
-    issue_number: eventData.issue_number
-  });
-  return data;
-}
-async function updatePRComment(commentId, markdown) {
-  const eventData = getEventData();
-  await githubApi.rest.issues.updateComment({
-    owner: eventData.owner,
-    repo: eventData.repo,
-    comment_id: commentId,
-    body: markdown
-  });
-}
-async function createPRComment(markdown) {
-  const eventData = getEventData();
-  await githubApi.rest.issues.createComment({
-    owner: eventData.owner,
-    repo: eventData.repo,
-    issue_number: eventData.issue_number,
-    body: markdown
-  });
-}
-
-// src/index.ts
-var import_github6 = __toESM(require_github());
 
 // src/utils/package.ts
 var import_fs = require("fs");
@@ -28713,7 +28431,7 @@ function isMetadataYarnClassic(metadataPath) {
 }
 
 // src/utils/package.ts
-var import_child_process2 = require("child_process");
+var import_child_process = require("child_process");
 
 // node_modules/tinyglobby/dist/index.mjs
 var import_path2 = __toESM(require("path"), 1);
@@ -29116,7 +28834,7 @@ async function updatePackageLockFiles(dirPath = "") {
   }
   const fullCommand = [rc.command, ...rc.args || []].join(" ");
   console.log(`Running package manager command: ${fullCommand}`);
-  (0, import_child_process2.execSync)(fullCommand, {
+  (0, import_child_process.execSync)(fullCommand, {
     cwd: dirPath ? dirPath : void 0,
     stdio: "inherit"
   });
@@ -29173,9 +28891,6 @@ function getChangedPackageInfos(changelogs, allPkgInfos) {
 function getPackageNameWithoutScope(packageName) {
   return packageName.startsWith("@") ? packageName.split("/")[1] : packageName;
 }
-
-// src/utils/markdown.ts
-var import_github3 = __toESM(require_github());
 
 // src/utils/github.ts
 function getPullRequestUrl(owner, repo, prNumber) {
@@ -29316,8 +29031,8 @@ function replacePRNumberWithLink(description) {
   if (!description) {
     return description;
   }
-  const owner = import_github3.context.repo.owner;
-  const repo = import_github3.context.repo.repo;
+  const owner = import_github.context.repo.owner;
+  const repo = import_github.context.repo.repo;
   const prPattern = /\(#(\d+)\)/;
   let tempDesc = description;
   const prNumberMatch = tempDesc.match(prPattern);
@@ -29328,6 +29043,296 @@ function replacePRNumberWithLink(description) {
   }
   return tempDesc;
 }
+function hasChangelogSection(markdown) {
+  return markdown.includes("## Changelog");
+}
+
+// src/api/git.ts
+function setupGitConfig() {
+  console.log("Setting up git config");
+  (0, import_child_process2.execFileSync)("git", ["config", "--global", "user.name", "github-actions[bot]"], {
+    stdio: "inherit"
+  });
+  (0, import_child_process2.execFileSync)(
+    "git",
+    ["config", "--global", "user.email", "41898282+github-actions[bot]@users.noreply.github.com"],
+    { stdio: "inherit" }
+  );
+  (0, import_child_process2.execFileSync)("git", ["config", "--global", "--add", "safe.directory", "/github/workspace"], {
+    stdio: "inherit"
+  });
+}
+function checkoutBranch(branchName) {
+  (0, import_child_process2.execFileSync)("git", ["fetch", "origin", branchName], { stdio: "inherit" });
+  (0, import_child_process2.execFileSync)("git", ["checkout", branchName], { stdio: "inherit" });
+}
+function createOrCheckoutBranch(branchName) {
+  try {
+    (0, import_child_process2.execFileSync)("git", ["checkout", branchName], { stdio: "inherit" });
+    console.log(`Switched to branch ${branchName}`);
+    try {
+      (0, import_child_process2.execFileSync)("git", ["merge", `origin/${DEFAULT_BRANCH}`], {
+        stdio: "inherit"
+      });
+      console.log(`Merged ${DEFAULT_BRANCH} into ${branchName}`);
+    } catch (mergeError) {
+      console.log(
+        `Merge conflicts detected, resolving by taking theirs strategy`
+      );
+      (0, import_child_process2.execFileSync)("git", ["merge", "--abort"], { stdio: "inherit" });
+      (0, import_child_process2.execFileSync)(
+        "git",
+        ["merge", "-X", "theirs", `origin/${DEFAULT_BRANCH}`],
+        {
+          stdio: "inherit"
+        }
+      );
+      console.log(`Resolved merge conflicts by taking theirs strategy`);
+    }
+    (0, import_child_process2.execFileSync)("git", ["push", "origin", branchName], { stdio: "inherit" });
+    console.log(`Pushed updated ${branchName} to remote`);
+    (0, import_child_process2.execFileSync)("git", ["checkout", `origin/${DEFAULT_BRANCH}`, "--", "."], {
+      stdio: "inherit"
+    });
+    (0, import_child_process2.execFileSync)("git", ["add", "."], { stdio: "inherit" });
+    (0, import_child_process2.execFileSync)(
+      "git",
+      ["commit", "-m", `sync ${branchName} with ${DEFAULT_BRANCH}`],
+      { stdio: "inherit" }
+    );
+    (0, import_child_process2.execFileSync)("git", ["push", "origin", branchName], { stdio: "inherit" });
+    console.log(`Committed and pushed changes to ${branchName}`);
+  } catch (error) {
+    console.log(`Branch ${branchName} does not exist, creating it.`);
+    (0, import_child_process2.execFileSync)("git", ["checkout", "-b", branchName], { stdio: "inherit" });
+    (0, import_child_process2.execFileSync)("git", ["push", "-u", "origin", branchName], {
+      stdio: "inherit"
+    });
+    console.log(`Created and pushed new branch ${branchName}`);
+  }
+}
+function commitAndPushChanges() {
+  (0, import_child_process2.execFileSync)("git", ["add", "."], { stdio: "inherit" });
+  (0, import_child_process2.execFileSync)("git", ["commit", "-m", "update release branch"], { stdio: "inherit" });
+  (0, import_child_process2.execFileSync)("git", ["push", "origin", "HEAD"], { stdio: "inherit" });
+}
+function hasUnstagedChanges() {
+  try {
+    const statusOutput = (0, import_child_process2.execSync)("git status --porcelain", {
+      encoding: "utf-8"
+    });
+    return statusOutput.trim().length > 0;
+  } catch (error) {
+    console.error("Error checking git status:", error);
+    return false;
+  }
+}
+function doesTagExistOnRemote(tagName) {
+  try {
+    (0, import_child_process2.execSync)("git fetch --tags", { stdio: "pipe" });
+    const result = (0, import_child_process2.execSync)(
+      `git ls-remote --tags origin refs/tags/${tagName}`,
+      {
+        stdio: "pipe",
+        encoding: "utf-8"
+      }
+    );
+    return result.trim().length > 0;
+  } catch (error) {
+    return false;
+  }
+}
+async function isLastCommitAReleaseCommit() {
+  let lastCommit = "";
+  await (0, import_exec.exec)("git", ["log", "-1", "--pretty=format:%B"], {
+    listeners: {
+      stdout: (data) => {
+        lastCommit = data.toString().trim();
+      }
+    },
+    silent: true
+  });
+  console.log(`lastCommit=${lastCommit}`);
+  return lastCommit.includes(RELEASE_ID);
+}
+async function getRecentCommits(ignoreLastest = false) {
+  console.log("Getting recent commits...");
+  let stdoutBuffer = "";
+  console.log("Fetching commits since last release commit...");
+  await (0, import_exec.exec)(
+    "git",
+    [
+      "log",
+      "--pretty=format:%h:%B%n<COMMIT_SEPARATOR>"
+      // Add a custom separator between commits
+    ],
+    {
+      listeners: {
+        stdout: (data) => {
+          stdoutBuffer += data.toString();
+        }
+      },
+      silent: true
+    }
+  );
+  const gitLogItems = stdoutBuffer.split("<COMMIT_SEPARATOR>").map((msg) => msg.trim()).filter((msg) => msg !== "");
+  const commits = [];
+  console.log(`Found ${gitLogItems.length} commit items.`);
+  for (let i = 0; i < gitLogItems.length; i++) {
+    const item = gitLogItems[i];
+    if (ignoreLastest && i === 0) {
+      continue;
+    }
+    const hash = item.substring(0, item.indexOf(":"));
+    if (!hash) {
+      console.warn("No commit hash found in item:", item);
+      continue;
+    }
+    const message = item.substring(item.indexOf(":") + 1);
+    if (!message) {
+      console.warn("No commit message found in item:", item);
+      continue;
+    }
+    if (message.includes(RELEASE_ID)) {
+      const prMatch = message.match(/#(\d+)/);
+      if (!prMatch) {
+        console.warn(
+          `Skipping release commit ${hash} because it does not contain a PR number.`
+        );
+        continue;
+      }
+      const prNumberWithHash = prMatch[0];
+      const prevIndex = i - 1;
+      if (prevIndex < 0) {
+        console.warn(
+          `Skipping release commit ${hash} because it is the first commit.`
+        );
+        continue;
+      }
+      const prevItem = gitLogItems[prevIndex];
+      const prevItemmMsg = prevItem.substring(prevItem.indexOf(":") + 1);
+      const owner = import_github3.context.repo.owner;
+      const repo = import_github3.context.repo.repo;
+      const repoNameWithOwner = `${owner}/${repo}`;
+      if (prevItemmMsg && prevItemmMsg.includes(`Reverts ${repoNameWithOwner}${prNumberWithHash}`)) {
+        console.warn(
+          `Skipping release commit ${hash} because it is reverted by the next commit.`
+        );
+        continue;
+      }
+      break;
+    }
+    commits.push({ hash, message: message.trim() });
+  }
+  console.log("Commits since last release:");
+  console.log(commits);
+  const filteredCommits = commits.filter(
+    (commit) => CONVENTIONAL_COMMITS_PATTERN.test(commit.message) || hasChangelogSection(commit.message)
+  );
+  console.log("Filtered commits:");
+  console.log(filteredCommits);
+  return filteredCommits;
+}
+
+// src/api/github.ts
+var import_github4 = __toESM(require_github());
+var githubApi = (0, import_github4.getOctokit)(GITHUB_TOKEN);
+var PR_NUMBER = import_github4.context.payload.pull_request?.number || 0;
+var PR_TITLE = import_github4.context.payload.pull_request?.title || "";
+function getEventData() {
+  const owner = import_github4.context.repo.owner;
+  const repo = import_github4.context.repo.repo;
+  const prNumber = import_github4.context.payload.pull_request?.number || 0;
+  const isWorkflowDispatch = import_github4.context.eventName === "workflow_dispatch";
+  return {
+    owner,
+    repo,
+    issue_number: prNumber,
+    isWorkflowDispatch
+  };
+}
+async function createOrUpdatePR({
+  title,
+  body,
+  head,
+  base = DEFAULT_BRANCH
+}) {
+  const eventData = getEventData();
+  const existingPRs = await githubApi.rest.pulls.list({
+    owner: eventData.owner,
+    repo: eventData.repo,
+    head: `${eventData.owner}:${head}`,
+    base
+  });
+  if (existingPRs.data.length > 0) {
+    const existingPR = existingPRs.data[0];
+    const { data } = await githubApi.rest.pulls.update({
+      owner: eventData.owner,
+      repo: eventData.repo,
+      pull_number: existingPR.number,
+      title,
+      body
+    });
+    console.log("Updated existing PR");
+    return data;
+  } else {
+    const { data } = await githubApi.rest.pulls.create({
+      owner: eventData.owner,
+      repo: eventData.repo,
+      title,
+      body,
+      head,
+      base
+    });
+    console.log("Created new PR");
+    return data;
+  }
+}
+async function createGitHubRelease({
+  tag_name,
+  name,
+  body
+}) {
+  const eventData = getEventData();
+  const { data } = await githubApi.rest.repos.createRelease({
+    owner: eventData.owner,
+    repo: eventData.repo,
+    tag_name,
+    name,
+    body
+  });
+  return data;
+}
+async function getPRComments() {
+  const eventData = getEventData();
+  const { data } = await githubApi.rest.issues.listComments({
+    owner: eventData.owner,
+    repo: eventData.repo,
+    issue_number: eventData.issue_number
+  });
+  return data;
+}
+async function updatePRComment(commentId, markdown) {
+  const eventData = getEventData();
+  await githubApi.rest.issues.updateComment({
+    owner: eventData.owner,
+    repo: eventData.repo,
+    comment_id: commentId,
+    body: markdown
+  });
+}
+async function createPRComment(markdown) {
+  const eventData = getEventData();
+  await githubApi.rest.issues.createComment({
+    owner: eventData.owner,
+    repo: eventData.repo,
+    issue_number: eventData.issue_number,
+    body: markdown
+  });
+}
+
+// src/index.ts
+var import_github6 = __toESM(require_github());
 
 // src/utils/string.ts
 function transformDescription(description) {
@@ -29420,7 +29425,7 @@ function getChangelogSectionFromCommitMessage(commitMessage) {
 function getChangelogFromCommits(commits, rootPackageName) {
   const changelogs = [];
   for (const commit of commits) {
-    if (commit.message.includes("## Changelog")) {
+    if (hasChangelogSection(commit.message)) {
       const changelogSection = getChangelogSectionFromCommitMessage(
         commit.message
       );
@@ -29822,10 +29827,13 @@ async function createOrUpdatePRStatusComment(shouldCreateSnapshot = false) {
   }
   console.log(`Found ${allPkgInfos.length} packages.`);
   const rootPackageName = allPkgInfos.find((pkg) => pkg.isRoot)?.name;
-  if (prBody) {
+  if (hasChangelogSection(prBody)) {
     changelogs = getChangelogFromMarkdown(prBody, rootPackageName);
   } else if (PR_TITLE) {
-    const changelog = createChangelogFromChangelogItem(PR_TITLE, rootPackageName);
+    const changelog = createChangelogFromChangelogItem(
+      PR_TITLE,
+      rootPackageName
+    );
     if (changelog) {
       changelogs.push(changelog);
     }
