@@ -10,8 +10,8 @@ import { Changelog } from "../types";
 import { createChangelogFromChangelogItem, getChangelogFromMarkdown } from "../utils/changelog";
 
 export async function createOrUpdatePRStatusComment(shouldCreateSnapshot = false): Promise<void> {
-  const PR_BODY = context.payload.pull_request?.body || '';
-  if (hasReleasePRComment(PR_BODY)) {
+  const prBody = context.payload.pull_request?.body || '';
+  if (hasReleasePRComment(prBody)) {
     console.log('Detected release PR comment, skipping status comment creation.');
     return;
   }
@@ -19,10 +19,6 @@ export async function createOrUpdatePRStatusComment(shouldCreateSnapshot = false
   console.log('Creating or updating PR status comment...');
 
   let markdown = '## 🚀 Lazy Release Action\n';
-  const prBody = context.payload.pull_request?.body;
-  console.log('Pull request body');
-  console.log(prBody);
-
   let changelogs: Changelog[] = [];
 
   // get all package infos
