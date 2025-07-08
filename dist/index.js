@@ -29801,16 +29801,13 @@ async function createPackageSnapshot(pkgInfo, allPkgInfos) {
 
 // src/core/comments.ts
 async function createOrUpdatePRStatusComment(shouldCreateSnapshot = false) {
-  const PR_BODY = import_github5.context.payload.pull_request?.body || "";
-  if (hasReleasePRComment(PR_BODY)) {
+  const prBody = import_github5.context.payload.pull_request?.body || "";
+  if (hasReleasePRComment(prBody)) {
     console.log("Detected release PR comment, skipping status comment creation.");
     return;
   }
   console.log("Creating or updating PR status comment...");
   let markdown = "## \u{1F680} Lazy Release Action\n";
-  const prBody = import_github5.context.payload.pull_request?.body;
-  console.log("Pull request body");
-  console.log(prBody);
   let changelogs = [];
   const packagePaths = getPackagePaths();
   if (packagePaths.length === 0) {
