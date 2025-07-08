@@ -119,6 +119,11 @@ export function removeReleasePRComment(markdown: string): string {
   return markdown.replace(releaseIdComment, '').trim();
 }
 
+export function hasReleasePRComment(markdown: string): boolean {
+  const releaseIdComment = `<!-- Release PR: ${RELEASE_ID} -->`;
+  return markdown.includes(releaseIdComment);
+}
+
 const heading2Regex =
   /^## ((@[a-z]+)?(\/)?([\w-]+)@)?(\d+\.\d+\.\d+)➡️(\d+\.\d+\.\d+)(\n\n)?/;
 
