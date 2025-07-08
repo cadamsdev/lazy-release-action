@@ -1,3 +1,18 @@
+## 0.4.1 (2025-07-08)
+
+### 🐛 Bug Fixes
+- Don't log PR body ([#30](https://github.com/cadamsdev/lazy-release-action/pull/30))
+- Skip creating status comment for release PR ([#29](https://github.com/cadamsdev/lazy-release-action/pull/29))
+- Install snapshot command ([#28](https://github.com/cadamsdev/lazy-release-action/pull/28))
+
+### 🏠 Chores
+- Setup oxlint ([#26](https://github.com/cadamsdev/lazy-release-action/pull/26))
+- Organize code ([#24](https://github.com/cadamsdev/lazy-release-action/pull/24))
+
+### ✅ Tests
+- Add vitest globals ([#27](https://github.com/cadamsdev/lazy-release-action/pull/27))
+
+
 ## 0.4.0 (2025-07-06)
 
 ### 🚀 New Features
