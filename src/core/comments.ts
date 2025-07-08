@@ -2,14 +2,20 @@ import { context } from "@actions/github";
 import { bumpIndirectPackageVersion, getChangedPackageInfos, getPackageInfos, getPackagePaths, updateIndirectPackageJsonFile, updatePackageJsonFile } from "../utils/package";
 import * as githubApi from "../api/github";
 import { applyNewVersion } from "./version";
-import { generateMarkdown, increaseHeadingLevel } from "../utils/markdown";
+import { generateMarkdown, hasReleasePRComment, increaseHeadingLevel } from "../utils/markdown";
 import { detect, resolveCommand } from "package-manager-detector";
 import { createSnapshot } from "./snapshots";
 import { PR_COMMENT_STATUS_ID } from "../constants";
 import { Changelog } from "../types";
 import { createChangelogFromChangelogItem, getChangelogFromMarkdown } from "../utils/changelog";
 
-export async function createOrUpdatePRStatusComment(shouldCreateSnapshot = false) {
+export async function createOrUpdatePRStatusComment(shouldCreateSnapshot = false): Promise<void> {
+  const PR_BODY = context.payload.pull_request?.body || '';
+  if (hasReleasePRComment(PR_BODY)) {
+    console.log('Detected release PR comment, skipping status comment creation.');
+    return;
+  }
+
   console.log('Creating or updating PR status comment...');
 
   let markdown = '## 🚀 Lazy Release Action\n';

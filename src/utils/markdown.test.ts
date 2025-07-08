@@ -1,4 +1,10 @@
-import { appendReleaseIdToMarkdown, generateMarkdown, increaseHeadingLevel, removeReleasePRComment } from "./markdown";
+import {
+  appendReleaseIdToMarkdown,
+  generateMarkdown,
+  hasReleasePRComment,
+  increaseHeadingLevel,
+  removeReleasePRComment,
+} from './markdown';
 import { Changelog, PackageInfo } from "../types";
 import { RELEASE_ID } from "../constants";
 
@@ -139,4 +145,18 @@ it('should remove Release PR comment from markdown', () => {
 
   const result = removeReleasePRComment(markdown);
   expect(result).not.toContain(`<!-- Release PR: ${RELEASE_ID} -->`);
+});
+
+it('should check if markdown has release comment', () => {
+  const markdownWithComment = `# 👉 Changelog
+
+## 0.0.0➡️0.0.1
+
+### 🐛 Bug Fixes
+- Install snapshot command
+
+<!-- Release PR: ${RELEASE_ID} -->`;
+
+  const result = hasReleasePRComment(markdownWithComment);
+  expect(result).toBe(true);
 });
