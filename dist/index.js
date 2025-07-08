@@ -29266,6 +29266,10 @@ function removeReleasePRComment(markdown) {
   const releaseIdComment = `<!-- Release PR: ${RELEASE_ID} -->`;
   return markdown.replace(releaseIdComment, "").trim();
 }
+function hasReleasePRComment(markdown) {
+  const releaseIdComment = `<!-- Release PR: ${RELEASE_ID} -->`;
+  return markdown.includes(releaseIdComment);
+}
 var heading2Regex = /^## ((@[a-z]+)?(\/)?([\w-]+)@)?(\d+\.\d+\.\d+)➡️(\d+\.\d+\.\d+)(\n\n)?/;
 function parseReleasePRBody(prBody) {
   prBody = removeReleasePRComment(prBody);
@@ -29797,6 +29801,11 @@ async function createPackageSnapshot(pkgInfo, allPkgInfos) {
 
 // src/core/comments.ts
 async function createOrUpdatePRStatusComment(shouldCreateSnapshot = false) {
+  const PR_BODY = import_github5.context.payload.pull_request?.body || "";
+  if (hasReleasePRComment(PR_BODY)) {
+    console.log("Detected release PR comment, skipping status comment creation.");
+    return;
+  }
   console.log("Creating or updating PR status comment...");
   let markdown = "## \u{1F680} Lazy Release Action\n";
   const prBody = import_github5.context.payload.pull_request?.body;
