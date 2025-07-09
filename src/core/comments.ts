@@ -2,7 +2,7 @@ import { context } from "@actions/github";
 import { bumpIndirectPackageVersion, getChangedPackageInfos, getPackageInfos, getPackagePaths, updateIndirectPackageJsonFile, updatePackageJsonFile } from "../utils/package";
 import * as githubApi from "../api/github";
 import { applyNewVersion } from "./version";
-import { generateMarkdown, hasReleasePRComment, increaseHeadingLevel } from "../utils/markdown";
+import { generateMarkdown, hasChangelogSection, hasReleasePRComment, increaseHeadingLevel } from "../utils/markdown";
 import { detect, resolveCommand } from "package-manager-detector";
 import { createSnapshot } from "./snapshots";
 import { PR_COMMENT_STATUS_ID } from "../constants";
@@ -40,10 +40,13 @@ export async function createOrUpdatePRStatusComment(shouldCreateSnapshot = false
 
   const rootPackageName = allPkgInfos.find((pkg) => pkg.isRoot)?.name;
 
-  if (prBody) {
+  if (hasChangelogSection(prBody)) {
     changelogs = getChangelogFromMarkdown(prBody, rootPackageName);
   } else if (githubApi.PR_TITLE) {
-    const changelog = createChangelogFromChangelogItem(githubApi.PR_TITLE, rootPackageName);
+    const changelog = createChangelogFromChangelogItem(
+      githubApi.PR_TITLE,
+      rootPackageName
+    );
     if (changelog) {
       changelogs.push(changelog);
     }
