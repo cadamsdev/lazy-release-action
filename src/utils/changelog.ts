@@ -1,6 +1,7 @@
 import { Commit } from "../api/git";
 import { COMMIT_TYPE_PATTERN, TYPE_TO_CHANGELOG_TYPE } from "../constants";
 import { Changelog, CommitTypeParts, PackageInfo, SemverBump } from "../types";
+import { hasChangelogSection } from "./markdown";
 import { getPackageNameWithoutScope } from "./package";
 import { getDirectoryNameFromPath } from "./path";
 import { transformDescription } from "./string";
@@ -112,7 +113,7 @@ export function getChangelogFromCommits(
   const changelogs: Changelog[] = [];
 
   for (const commit of commits) {
-    if (commit.message.includes('## Changelog')) {
+    if (hasChangelogSection(commit.message)) {
       const changelogSection = getChangelogSectionFromCommitMessage(
         commit.message
       );

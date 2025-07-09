@@ -205,3 +205,7 @@ export function replacePRNumberWithLink(
 
   return tempDesc;
 }
+
+export function hasChangelogSection(markdown: string): boolean  {
+  return markdown.includes('## Changelog');
+}
