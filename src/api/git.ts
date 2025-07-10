@@ -141,35 +141,30 @@ export async function isLastCommitAReleaseCommit(): Promise<boolean> {
 
 export interface Commit {
   hash: string;
-  message: string;
+  subject: string;
+  body?: string;
 }
 
 export async function getRecentCommits(
   ignoreLastest: boolean = false
 ): Promise<Commit[]> {
   console.log('Getting recent commits...');
-
-  let stdoutBuffer = '';
-
   console.log('Fetching commits since last release commit...');
-  await exec(
-    'git',
-    [
-      'log',
-      '--pretty=format:%h:%B%n<COMMIT_SEPARATOR>', // Add a custom separator between commits
-    ],
+
+  const HASH_SEPARATOR = '<HASH_SEPARATOR>';
+  const SUBJECT_SEPARATOR = '<SUBJECT_SEPARATOR>';
+  const COMMIT_SEPARATOR = '<COMMIT_SEPARATOR>';
+
+  const data = execSync(
+    `git log --pretty=format:"%h${HASH_SEPARATOR}%s${SUBJECT_SEPARATOR}%b${COMMIT_SEPARATOR}"`,
     {
-      listeners: {
-        stdout: (data: Buffer) => {
-          stdoutBuffer += data.toString();
-        },
-      },
-      silent: true,
+      encoding: 'utf8',
+      stdio: 'pipe',
     }
   );
 
-  const gitLogItems = stdoutBuffer
-    .split('<COMMIT_SEPARATOR>')
+  const gitLogItems = data
+    .split(COMMIT_SEPARATOR)
     .map((msg) => msg.trim())
     .filter((msg) => msg !== '');
 
@@ -184,21 +179,23 @@ export async function getRecentCommits(
       continue;
     }
 
-    const hash = item.substring(0, item.indexOf(':'));
+    const hash = item.substring(0, item.indexOf(HASH_SEPARATOR));
     if (!hash) {
       console.warn('No commit hash found in item:', item);
       continue;
     }
 
-    const message = item.substring(item.indexOf(':') + 1);
-    if (!message) {
-      console.warn('No commit message found in item:', item);
+    const subject = item.substring(item.indexOf(HASH_SEPARATOR) + 1, item.indexOf(SUBJECT_SEPARATOR));
+    if (!subject) {
+      console.warn('No commit subject found in item:', item);
       continue;
     }
 
-    if (message.includes(RELEASE_ID)) {
-      // get PR number from message
-      const prMatch = message.match(/#(\d+)/);
+    const body = item.substring(item.indexOf(SUBJECT_SEPARATOR) + 1) || '';
+
+    if (body && body.includes(RELEASE_ID)) {
+      // get PR number from subject
+      const prMatch = subject.match(/#(\d+)/);
 
       if (!prMatch) {
         console.warn(
@@ -237,7 +234,7 @@ export async function getRecentCommits(
       break; // Stop processing further commits if we found a release commit
     }
 
-    commits.push({ hash, message: message.trim() });
+    commits.push({ hash, subject: subject.trim(), body: body.trim() });
   }
 
   console.log('Commits since last release:');
