@@ -215,15 +215,15 @@ export async function getRecentCommits(
       }
 
       const prevItem = gitLogItems[prevIndex];
-      const prevItemmMsg = prevItem.substring(prevItem.indexOf(':') + 1);
+      const prevItemBody = prevItem.substring(prevItem.indexOf(SUBJECT_SEPARATOR) + 1);
 
       const owner = context.repo.owner;
       const repo = context.repo.repo;
       const repoNameWithOwner = `${owner}/${repo}`;
 
       if (
-        prevItemmMsg &&
-        prevItemmMsg.includes(`Reverts ${repoNameWithOwner}${prNumberWithHash}`)
+        prevItemBody &&
+        prevItemBody.includes(`Reverts ${repoNameWithOwner}${prNumberWithHash}`)
       ) {
         console.warn(
           `Skipping release commit ${hash} because it is reverted by the next commit.`
@@ -238,13 +238,13 @@ export async function getRecentCommits(
   }
 
   console.log('Commits since last release:');
-  console.log(commits);
+  commits.forEach((commit) => console.log(`${commit.hash}: ${commit.subject}`));
 
   // Filter for commits containing "## Changelog"
   const filteredCommits = commits.filter(
     (commit) =>
-      CONVENTIONAL_COMMITS_PATTERN.test(commit.message) ||
-      hasChangelogSection(commit.message)
+      CONVENTIONAL_COMMITS_PATTERN.test(commit.subject) ||
+      (commit.body && hasChangelogSection(commit.body))
   );
 
   console.log('Filtered commits:');
