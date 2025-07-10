@@ -74,29 +74,24 @@ ghi789<HASH_SEPARATOR>chore: release (#123)<SUBJECT_SEPARATOR>[release-action]
     ]);
   });
 
-//   it('should skip release commit that is reverted', async () => {
-//     const gitOutput = `abc123:Reverts test-owner/test-repo#123
-// <COMMIT_SEPARATOR>
-// def456:chore: release [release-action] (#123)
-// <COMMIT_SEPARATOR>
-// ghi789:feat: some feature
-// <COMMIT_SEPARATOR>`;
+  it('should skip release commit that is reverted', async () => {
+    const gitOutput = `abc123<HASH_SEPARATOR>Revert some changes<SUBJECT_SEPARATOR>Reverts test-owner/test-repo#123
+<COMMIT_SEPARATOR>
+def456<HASH_SEPARATOR>chore: release (#123)<SUBJECT_SEPARATOR>[release-action]
+<COMMIT_SEPARATOR>
+ghi789<HASH_SEPARATOR>feat: some feature<SUBJECT_SEPARATOR>
+<COMMIT_SEPARATOR>`;
 
-//     mockExec.mockImplementation(async (command, args, options) => {
-//       if (options?.listeners?.stdout) {
-//         options.listeners.stdout(Buffer.from(gitOutput));
-//       }
-//       return 0;
-//     });
+    mockExecSync.mockImplementation(() => {
+      return gitOutput;
+    });
 
-//     mockConventionalCommitsPattern.test = vi.fn().mockReturnValue(true);
+    const result = await getRecentCommits();
 
-//     const result = await getRecentCommits();
-
-//     expect(result).toEqual([
-//       { hash: 'abc123', message: 'Reverts test-owner/test-repo#123' }
-//     ]);
-//   });
+    expect(result).toEqual([
+      { hash: 'ghi789', subject: 'feat: some feature', body: '' },
+    ]);
+  });
 
 //   it('should filter commits based on conventional commits pattern', async () => {
 //     const gitOutput = `abc123:feat: new feature

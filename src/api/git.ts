@@ -215,7 +215,7 @@ export async function getRecentCommits(
       }
 
       const prevItem = gitLogItems[prevIndex];
-      const prevItemBody = prevItem.substring(prevItem.indexOf(SUBJECT_SEPARATOR) + 1);
+      const prevItemBody = prevItem.substring(prevItem.indexOf(SUBJECT_SEPARATOR) + SUBJECT_SEPARATOR.length);
 
       const owner = context.repo.owner;
       const repo = context.repo.repo;
