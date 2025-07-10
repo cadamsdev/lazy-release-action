@@ -1,8 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { getRecentCommits } from './git';
 import { exec } from '@actions/exec';
-import { CONVENTIONAL_COMMITS_PATTERN } from '../utils/validation';
-import { hasChangelogSection } from '../utils/markdown';
 
 // Mock dependencies
 vi.mock('@actions/exec');
@@ -21,15 +19,10 @@ vi.mock('../constants', () => ({
 }));
 
 const mockExec = vi.mocked(exec);
-const mockConventionalCommitsPattern = vi.mocked(CONVENTIONAL_COMMITS_PATTERN);
-const mockHasChangelogSection = vi.mocked(hasChangelogSection);
 
 describe('getRecentCommits', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-
-    mockConventionalCommitsPattern.test = vi.fn().mockReturnValue(false);
-    mockHasChangelogSection.mockReturnValue(false);
     
     // Mock console methods to avoid noise in tests
     vi.spyOn(console, 'log').mockImplementation(() => {});
@@ -52,10 +45,6 @@ jkl012:old commit
       }
       return 0;
     });
-
-    mockConventionalCommitsPattern.test = vi.fn()
-      .mockReturnValueOnce(true)  // feat: add new feature
-      .mockReturnValueOnce(true); // fix: bug fix
 
     const result = await getRecentCommits();
 
