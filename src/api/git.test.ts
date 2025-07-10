@@ -55,29 +55,24 @@ jkl012<HASH_SEPARATOR>old commit<SUBJECT_SEPARATOR>
     ]);
   });
 
-//   it('should ignore latest commit when ignoreLatest is true', async () => {
-//     const gitOutput = `abc123:feat: latest commit
-// <COMMIT_SEPARATOR>
-// def456:fix: previous commit
-// <COMMIT_SEPARATOR>
-// ghi789:chore: release [release-action] (#123)
-// <COMMIT_SEPARATOR>`;
+  it('should ignore latest commit when ignoreLatest is true', async () => {
+    const gitOutput = `abc123<HASH_SEPARATOR>feat: latest commit<SUBJECT_SEPARATOR>
+<COMMIT_SEPARATOR>
+def456<HASH_SEPARATOR>fix: previous commit<SUBJECT_SEPARATOR>
+<COMMIT_SEPARATOR>
+ghi789<HASH_SEPARATOR>chore: release (#123)<SUBJECT_SEPARATOR>[release-action]
+<COMMIT_SEPARATOR>`;
 
-//     mockExec.mockImplementation(async (command, args, options) => {
-//       if (options?.listeners?.stdout) {
-//         options.listeners.stdout(Buffer.from(gitOutput));
-//       }
-//       return 0;
-//     });
+    mockExecSync.mockImplementation(() => {
+      return gitOutput;
+    });
 
-//     mockConventionalCommitsPattern.test = vi.fn().mockReturnValue(true);
+    const result = await getRecentCommits(true);
 
-//     const result = await getRecentCommits(true);
-
-//     expect(result).toEqual([
-//       { hash: 'def456', message: 'previous commit' }
-//     ]);
-//   });
+    expect(result).toEqual([
+      { hash: 'def456', subject: 'fix: previous commit', body: '' },
+    ]);
+  });
 
 //   it('should skip release commit that is reverted', async () => {
 //     const gitOutput = `abc123:Reverts test-owner/test-repo#123
