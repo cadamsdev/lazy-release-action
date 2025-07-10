@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { getRecentCommits } from './git';
-import { exec } from '@actions/exec';
+import { execSync } from 'child_process';
 
 // Mock dependencies
 vi.mock('@actions/exec');
@@ -12,13 +12,17 @@ vi.mock('@actions/github', () => ({
     },
   },
 }));
+vi.mock('child_process', () => ({
+  execSync: vi.fn(),
+  execFileSync: vi.fn(),
+}));
 vi.mock('../utils/validation');
 vi.mock('../utils/markdown');
 vi.mock('../constants', () => ({
   RELEASE_ID: '[release-action]'
 }));
 
-const mockExec = vi.mocked(exec);
+const mockExecSync = vi.mocked(execSync);
 
 describe('getRecentCommits', () => {
   beforeEach(() => {
@@ -30,27 +34,24 @@ describe('getRecentCommits', () => {
   });
 
   it('should return commits before release commit', async () => {
-    const gitOutput = `abc123:feat: add new feature
+    const gitOutput = `abc123<HASH_SEPARATOR>feat: add new feature<SUBJECT_SEPARATOR>
 <COMMIT_SEPARATOR>
-def456:fix: bug fix
+def456<HASH_SEPARATOR>fix: bug fix<SUBJECT_SEPARATOR>
 <COMMIT_SEPARATOR>
-ghi789:chore: release [release-action] (#123)
+ghi789<HASH_SEPARATOR>chore: release (#123)<SUBJECT_SEPARATOR>[release-action]
 <COMMIT_SEPARATOR>
-jkl012:old commit
+jkl012<HASH_SEPARATOR>old commit<SUBJECT_SEPARATOR>
 <COMMIT_SEPARATOR>`;
 
-    mockExec.mockImplementation(async (command, args, options) => {
-      if (options?.listeners?.stdout) {
-        options.listeners.stdout(Buffer.from(gitOutput));
-      }
-      return 0;
+    mockExecSync.mockImplementation(() => {
+      return gitOutput;
     });
 
     const result = await getRecentCommits();
 
     expect(result).toEqual([
-      { hash: 'abc123', message: 'feat: add new feature' },
-      { hash: 'def456', message: 'fix: bug fix' }
+      { hash: 'abc123', subject: 'feat: add new feature', body: '' },
+      { hash: 'def456', subject: 'fix: bug fix', body: '' }
     ]);
   });
 

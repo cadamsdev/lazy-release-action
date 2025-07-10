@@ -72,7 +72,8 @@ describe('getChangelogFromCommits', () => {
     const commits: Commit[] = [
       {
         hash: '123456',
-        message: `## Changelog
+        subject: 'feat(package-a): Some description',
+        body: `## Changelog
         - feat(package-a): Some description
         - chore(package-a,package-b): Some description 2`,
       },

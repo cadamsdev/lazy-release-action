@@ -185,13 +185,13 @@ export async function getRecentCommits(
       continue;
     }
 
-    const subject = item.substring(item.indexOf(HASH_SEPARATOR) + 1, item.indexOf(SUBJECT_SEPARATOR));
+    const subject = item.substring(item.indexOf(HASH_SEPARATOR) + HASH_SEPARATOR.length, item.indexOf(SUBJECT_SEPARATOR));
     if (!subject) {
       console.warn('No commit subject found in item:', item);
       continue;
     }
 
-    const body = item.substring(item.indexOf(SUBJECT_SEPARATOR) + 1) || '';
+    const body = item.substring(item.indexOf(SUBJECT_SEPARATOR) + SUBJECT_SEPARATOR.length) || '';
 
     if (body && body.includes(RELEASE_ID)) {
       // get PR number from subject
