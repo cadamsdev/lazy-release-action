@@ -113,9 +113,9 @@ export function getChangelogFromCommits(
   const changelogs: Changelog[] = [];
 
   for (const commit of commits) {
-    if (hasChangelogSection(commit.message)) {
+    if (commit.body && hasChangelogSection(commit.body)) {
       const changelogSection = getChangelogSectionFromCommitMessage(
-        commit.message
+        commit.body
       );
       const changelogItems = getChangelogItems(changelogSection);
       for (const item of changelogItems) {
@@ -131,7 +131,7 @@ export function getChangelogFromCommits(
       }
     } else {
       const changelog = createChangelogFromChangelogItem(
-        commit.message,
+        commit.subject,
         rootPackageName
       );
 
