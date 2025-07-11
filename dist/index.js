@@ -5148,18 +5148,18 @@ var require_webidl = __commonJS({
     webidl.errors.exception = function(message) {
       return new TypeError(`${message.header}: ${message.message}`);
     };
-    webidl.errors.conversionFailed = function(context6) {
-      const plural = context6.types.length === 1 ? "" : " one of";
-      const message = `${context6.argument} could not be converted to${plural}: ${context6.types.join(", ")}.`;
+    webidl.errors.conversionFailed = function(context5) {
+      const plural = context5.types.length === 1 ? "" : " one of";
+      const message = `${context5.argument} could not be converted to${plural}: ${context5.types.join(", ")}.`;
       return webidl.errors.exception({
-        header: context6.prefix,
+        header: context5.prefix,
         message
       });
     };
-    webidl.errors.invalidArgument = function(context6) {
+    webidl.errors.invalidArgument = function(context5) {
       return webidl.errors.exception({
-        header: context6.prefix,
-        message: `"${context6.value}" is an invalid ${context6.type}.`
+        header: context5.prefix,
+        message: `"${context5.value}" is an invalid ${context5.type}.`
       });
     };
     webidl.brandCheck = function(V, I, opts = void 0) {
@@ -10477,15 +10477,15 @@ var require_api_request = __commonJS({
         }
         addSignal(this, signal);
       }
-      onConnect(abort, context6) {
+      onConnect(abort, context5) {
         if (!this.callback) {
           throw new RequestAbortedError();
         }
         this.abort = abort;
-        this.context = context6;
+        this.context = context5;
       }
       onHeaders(statusCode, rawHeaders, resume, statusMessage) {
-        const { callback, opaque, abort, context: context6, responseHeaders, highWaterMark } = this;
+        const { callback, opaque, abort, context: context5, responseHeaders, highWaterMark } = this;
         const headers = responseHeaders === "raw" ? util.parseRawHeaders(rawHeaders) : util.parseHeaders(rawHeaders);
         if (statusCode < 200) {
           if (this.onInfo) {
@@ -10512,7 +10512,7 @@ var require_api_request = __commonJS({
               trailers: this.trailers,
               opaque,
               body,
-              context: context6
+              context: context5
             });
           }
         }
@@ -10632,15 +10632,15 @@ var require_api_stream = __commonJS({
         }
         addSignal(this, signal);
       }
-      onConnect(abort, context6) {
+      onConnect(abort, context5) {
         if (!this.callback) {
           throw new RequestAbortedError();
         }
         this.abort = abort;
-        this.context = context6;
+        this.context = context5;
       }
       onHeaders(statusCode, rawHeaders, resume, statusMessage) {
-        const { factory, opaque, context: context6, callback, responseHeaders } = this;
+        const { factory, opaque, context: context5, callback, responseHeaders } = this;
         const headers = responseHeaders === "raw" ? util.parseRawHeaders(rawHeaders) : util.parseHeaders(rawHeaders);
         if (statusCode < 200) {
           if (this.onInfo) {
@@ -10668,7 +10668,7 @@ var require_api_stream = __commonJS({
             statusCode,
             headers,
             opaque,
-            context: context6
+            context: context5
           });
           if (!res || typeof res.write !== "function" || typeof res.end !== "function" || typeof res.on !== "function") {
             throw new InvalidReturnValueError("expected Writable");
@@ -10860,17 +10860,17 @@ var require_api_pipeline = __commonJS({
         this.res = null;
         addSignal(this, signal);
       }
-      onConnect(abort, context6) {
+      onConnect(abort, context5) {
         const { ret, res } = this;
         assert(!res, "pipeline cannot be retried");
         if (ret.destroyed) {
           throw new RequestAbortedError();
         }
         this.abort = abort;
-        this.context = context6;
+        this.context = context5;
       }
       onHeaders(statusCode, rawHeaders, resume) {
-        const { opaque, handler, context: context6 } = this;
+        const { opaque, handler, context: context5 } = this;
         if (statusCode < 200) {
           if (this.onInfo) {
             const headers = this.responseHeaders === "raw" ? util.parseRawHeaders(rawHeaders) : util.parseHeaders(rawHeaders);
@@ -10888,7 +10888,7 @@ var require_api_pipeline = __commonJS({
             headers,
             opaque,
             body: this.res,
-            context: context6
+            context: context5
           });
         } catch (err) {
           this.res.on("error", util.nop);
@@ -10972,7 +10972,7 @@ var require_api_upgrade = __commonJS({
         this.context = null;
         addSignal(this, signal);
       }
-      onConnect(abort, context6) {
+      onConnect(abort, context5) {
         if (!this.callback) {
           throw new RequestAbortedError();
         }
@@ -10983,7 +10983,7 @@ var require_api_upgrade = __commonJS({
         throw new SocketError("bad upgrade", null);
       }
       onUpgrade(statusCode, rawHeaders, socket) {
-        const { callback, opaque, context: context6 } = this;
+        const { callback, opaque, context: context5 } = this;
         assert.strictEqual(statusCode, 101);
         removeSignal(this);
         this.callback = null;
@@ -10992,7 +10992,7 @@ var require_api_upgrade = __commonJS({
           headers,
           socket,
           opaque,
-          context: context6
+          context: context5
         });
       }
       onError(err) {
@@ -11060,18 +11060,18 @@ var require_api_connect = __commonJS({
         this.abort = null;
         addSignal(this, signal);
       }
-      onConnect(abort, context6) {
+      onConnect(abort, context5) {
         if (!this.callback) {
           throw new RequestAbortedError();
         }
         this.abort = abort;
-        this.context = context6;
+        this.context = context5;
       }
       onHeaders() {
         throw new SocketError("bad connect", null);
       }
       onUpgrade(statusCode, rawHeaders, socket) {
-        const { callback, opaque, context: context6 } = this;
+        const { callback, opaque, context: context5 } = this;
         removeSignal(this);
         this.callback = null;
         let headers = rawHeaders;
@@ -11083,7 +11083,7 @@ var require_api_connect = __commonJS({
           headers,
           socket,
           opaque,
-          context: context6
+          context: context5
         });
       }
       onError(err) {
@@ -19212,8 +19212,8 @@ var require_dist_node2 = __commonJS({
     function isKeyOperator(operator) {
       return operator === ";" || operator === "&" || operator === "?";
     }
-    function getValues(context6, operator, key, modifier) {
-      var value = context6[key], result = [];
+    function getValues(context5, operator, key, modifier) {
+      var value = context5[key], result = [];
       if (isDefined(value) && value !== "") {
         if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
           value = value.toString();
@@ -19277,7 +19277,7 @@ var require_dist_node2 = __commonJS({
         expand: expand.bind(null, template)
       };
     }
-    function expand(template, context6) {
+    function expand(template, context5) {
       var operators = ["+", "#", ".", "/", ";", "?", "&"];
       template = template.replace(
         /\{([^\{\}]+)\}|([^\{\}]+)/g,
@@ -19291,7 +19291,7 @@ var require_dist_node2 = __commonJS({
             }
             expression.split(/,/g).forEach(function(variable) {
               var tmp = /([^:\*]*)(?::(\d+)|(\*))?/.exec(variable);
-              values.push(getValues(context6, operator, tmp[1], tmp[2] || tmp[3]));
+              values.push(getValues(context5, operator, tmp[1], tmp[2] || tmp[3]));
             });
             if (operator && operator !== "+") {
               var separator = ",";
@@ -28083,9 +28083,6 @@ function isPRTitleValid(prTitle) {
   return CONVENTIONAL_COMMITS_PATTERN.test(prTitle);
 }
 
-// src/api/git.ts
-var import_github3 = __toESM(require_github());
-
 // src/utils/markdown.ts
 var import_github = __toESM(require_github());
 
@@ -29157,51 +29154,76 @@ async function isLastCommitAReleaseCommit() {
 }
 async function getRecentCommits(ignoreLastest = false) {
   console.log("Getting recent commits...");
-  let stdoutBuffer = "";
   console.log("Fetching commits since last release commit...");
-  await (0, import_exec.exec)(
-    "git",
-    [
-      "log",
-      "--pretty=format:%h:%B%n<COMMIT_SEPARATOR>"
-      // Add a custom separator between commits
-    ],
+  const HASH_SEPARATOR = "<HASH_SEPARATOR>";
+  const SUBJECT_SEPARATOR = "<SUBJECT_SEPARATOR>";
+  const COMMIT_SEPARATOR = "<COMMIT_SEPARATOR>";
+  const data = (0, import_child_process2.execSync)(
+    `git log --pretty=format:"%h${HASH_SEPARATOR}%s${SUBJECT_SEPARATOR}%b${COMMIT_SEPARATOR}"`,
     {
-      listeners: {
-        stdout: (data) => {
-          stdoutBuffer += data.toString();
-        }
-      },
-      silent: true
+      encoding: "utf8",
+      stdio: "pipe"
     }
   );
-  const gitLogItems = stdoutBuffer.split("<COMMIT_SEPARATOR>").map((msg) => msg.trim()).filter((msg) => msg !== "");
+  const gitLogItems = data.split(COMMIT_SEPARATOR).map((msg) => msg.trim()).filter((msg) => msg !== "");
   const commits = [];
+  const revertedCommitHashes = /* @__PURE__ */ new Set();
   console.log(`Found ${gitLogItems.length} commit items.`);
+  const issueNumberPattern = /#\d+/;
   for (let i = 0; i < gitLogItems.length; i++) {
     const item = gitLogItems[i];
     if (ignoreLastest && i === 0) {
       continue;
     }
-    const hash = item.substring(0, item.indexOf(":"));
+    const subject = item.substring(
+      item.indexOf(HASH_SEPARATOR) + HASH_SEPARATOR.length,
+      item.indexOf(SUBJECT_SEPARATOR)
+    );
+    const body = item.substring(
+      item.indexOf(SUBJECT_SEPARATOR) + SUBJECT_SEPARATOR.length
+    ) || "";
+    if (isRevertCommit(subject, body)) {
+      const issueNumber = body.match(issueNumberPattern)?.[0];
+      if (issueNumber) {
+        revertedCommitHashes.add(issueNumber);
+        console.log(
+          `Found revert commit, excluding original commit: ${issueNumber}`
+        );
+      }
+    }
+  }
+  for (let i = 0; i < gitLogItems.length; i++) {
+    const item = gitLogItems[i];
+    if (ignoreLastest && i === 0) {
+      continue;
+    }
+    const hash = item.substring(0, item.indexOf(HASH_SEPARATOR));
     if (!hash) {
       console.warn("No commit hash found in item:", item);
       continue;
     }
-    const message = item.substring(item.indexOf(":") + 1);
-    if (!message) {
-      console.warn("No commit message found in item:", item);
+    if (revertedCommitHashes.has(hash)) {
+      console.log(`Skipping reverted commit: ${hash}`);
       continue;
     }
-    if (message.includes(RELEASE_ID)) {
-      const prMatch = message.match(/#(\d+)/);
-      if (!prMatch) {
-        console.warn(
-          `Skipping release commit ${hash} because it does not contain a PR number.`
-        );
-        continue;
-      }
-      const prNumberWithHash = prMatch[0];
+    const subject = item.substring(
+      item.indexOf(HASH_SEPARATOR) + HASH_SEPARATOR.length,
+      item.indexOf(SUBJECT_SEPARATOR)
+    );
+    if (!subject) {
+      console.warn("No commit subject found in item:", item);
+      continue;
+    }
+    const issueNumber = subject.match(issueNumberPattern)?.[0];
+    if (issueNumber && revertedCommitHashes.has(issueNumber)) {
+      console.log(`Skipping commit with reverted issue number: ${issueNumber}`);
+      continue;
+    }
+    const body = item.substring(
+      item.indexOf(SUBJECT_SEPARATOR) + SUBJECT_SEPARATOR.length
+    ) || "";
+    const isReleaseCommit = body.includes(RELEASE_ID);
+    if (isReleaseCommit) {
       const prevIndex = i - 1;
       if (prevIndex < 0) {
         console.warn(
@@ -29209,41 +29231,44 @@ async function getRecentCommits(ignoreLastest = false) {
         );
         continue;
       }
-      const prevItem = gitLogItems[prevIndex];
-      const prevItemmMsg = prevItem.substring(prevItem.indexOf(":") + 1);
-      const owner = import_github3.context.repo.owner;
-      const repo = import_github3.context.repo.repo;
-      const repoNameWithOwner = `${owner}/${repo}`;
-      if (prevItemmMsg && prevItemmMsg.includes(`Reverts ${repoNameWithOwner}${prNumberWithHash}`)) {
+      const prMatch = subject.match(issueNumberPattern);
+      if (!prMatch) {
         console.warn(
-          `Skipping release commit ${hash} because it is reverted by the next commit.`
+          `Skipping release commit ${hash} because it does not contain a PR number.`
         );
         continue;
       }
       break;
     }
-    commits.push({ hash, message: message.trim() });
+    if (isRevertCommit(subject, body)) {
+      console.log(`Skipping revert commit: ${hash}`);
+      continue;
+    }
+    commits.push({ hash, subject: subject.trim(), body: body.trim() });
   }
   console.log("Commits since last release:");
-  console.log(commits);
+  commits.forEach((commit) => console.log(`${commit.hash}: ${commit.subject}`));
   const filteredCommits = commits.filter(
-    (commit) => CONVENTIONAL_COMMITS_PATTERN.test(commit.message) || hasChangelogSection(commit.message)
+    (commit) => CONVENTIONAL_COMMITS_PATTERN.test(commit.subject) || commit.body && hasChangelogSection(commit.body)
   );
   console.log("Filtered commits:");
   console.log(filteredCommits);
   return filteredCommits;
 }
+function isRevertCommit(subject, body) {
+  return subject.startsWith("Revert ") || body.startsWith("Reverts ");
+}
 
 // src/api/github.ts
-var import_github4 = __toESM(require_github());
-var githubApi = (0, import_github4.getOctokit)(GITHUB_TOKEN);
-var PR_NUMBER = import_github4.context.payload.pull_request?.number || 0;
-var PR_TITLE = import_github4.context.payload.pull_request?.title || "";
+var import_github3 = __toESM(require_github());
+var githubApi = (0, import_github3.getOctokit)(GITHUB_TOKEN);
+var PR_NUMBER = import_github3.context.payload.pull_request?.number || 0;
+var PR_TITLE = import_github3.context.payload.pull_request?.title || "";
 function getEventData() {
-  const owner = import_github4.context.repo.owner;
-  const repo = import_github4.context.repo.repo;
-  const prNumber = import_github4.context.payload.pull_request?.number || 0;
-  const isWorkflowDispatch = import_github4.context.eventName === "workflow_dispatch";
+  const owner = import_github3.context.repo.owner;
+  const repo = import_github3.context.repo.repo;
+  const prNumber = import_github3.context.payload.pull_request?.number || 0;
+  const isWorkflowDispatch = import_github3.context.eventName === "workflow_dispatch";
   return {
     owner,
     repo,
@@ -29332,7 +29357,7 @@ async function createPRComment(markdown) {
 }
 
 // src/index.ts
-var import_github6 = __toESM(require_github());
+var import_github5 = __toESM(require_github());
 
 // src/utils/string.ts
 function transformDescription(description) {
@@ -29425,9 +29450,9 @@ function getChangelogSectionFromCommitMessage(commitMessage) {
 function getChangelogFromCommits(commits, rootPackageName) {
   const changelogs = [];
   for (const commit of commits) {
-    if (hasChangelogSection(commit.message)) {
+    if (commit.body && hasChangelogSection(commit.body)) {
       const changelogSection = getChangelogSectionFromCommitMessage(
-        commit.message
+        commit.body
       );
       const changelogItems = getChangelogItems(changelogSection);
       for (const item of changelogItems) {
@@ -29442,7 +29467,7 @@ function getChangelogFromCommits(commits, rootPackageName) {
       }
     } else {
       const changelog = createChangelogFromChangelogItem(
-        commit.message,
+        commit.subject,
         rootPackageName
       );
       if (changelog) {
@@ -29745,7 +29770,7 @@ function getGitHubReleaseName(pkgInfo) {
 }
 
 // src/core/comments.ts
-var import_github5 = __toESM(require_github());
+var import_github4 = __toESM(require_github());
 
 // src/core/snapshots.ts
 var import_fs3 = require("fs");
@@ -29806,7 +29831,7 @@ async function createPackageSnapshot(pkgInfo, allPkgInfos) {
 
 // src/core/comments.ts
 async function createOrUpdatePRStatusComment(shouldCreateSnapshot = false) {
-  const prBody = import_github5.context.payload.pull_request?.body || "";
+  const prBody = import_github4.context.payload.pull_request?.body || "";
   if (hasReleasePRComment(prBody)) {
     console.log("Detected release PR comment, skipping status comment creation.");
     return;
@@ -29856,7 +29881,7 @@ async function createOrUpdatePRStatusComment(shouldCreateSnapshot = false) {
   } else {
     markdown += "\u26A0\uFE0F No packages changed.\n";
   }
-  const latestCommitHash = import_github5.context.payload.pull_request?.head.sha;
+  const latestCommitHash = import_github4.context.payload.pull_request?.head.sha;
   if (latestCommitHash) {
     console.log(`Latest commit hash: ${latestCommitHash}`);
     markdown += `Latest commit: ${latestCommitHash}
@@ -29931,10 +29956,10 @@ async function createOrUpdatePRStatusComment(shouldCreateSnapshot = false) {
 // src/index.ts
 (async () => {
   init();
-  if (import_github6.context.payload.pull_request?.merged) {
+  if (import_github5.context.payload.pull_request?.merged) {
     checkoutBranch(DEFAULT_BRANCH);
     console.log(
-      `Pull request #${import_github6.context.payload.pull_request.number} has been merged.`
+      `Pull request #${import_github5.context.payload.pull_request.number} has been merged.`
     );
     const isRelease = await isLastCommitAReleaseCommit();
     if (isRelease) {
@@ -29942,9 +29967,9 @@ async function createOrUpdatePRStatusComment(shouldCreateSnapshot = false) {
       return;
     }
     await createOrUpdateReleasePR();
-  } else if (!import_github6.context.payload.pull_request?.merged) {
+  } else if (!import_github5.context.payload.pull_request?.merged) {
     console.log(
-      `Pull request #${import_github6.context.payload.pull_request?.number} is not merged yet.`
+      `Pull request #${import_github5.context.payload.pull_request?.number} is not merged yet.`
     );
     if (!isPRTitleValid(PR_TITLE) && PR_TITLE !== RELEASE_PR_TITLE) {
       await createOrUpdatePRStatusComment(false);
@@ -29981,7 +30006,7 @@ function setNpmConfig() {
 }
 async function publish() {
   console.log("Publishing...");
-  const prBody = import_github6.context.payload.pull_request?.body;
+  const prBody = import_github5.context.payload.pull_request?.body;
   if (!prBody) {
     console.log("No pull request body found, skipping release creation.");
     return;

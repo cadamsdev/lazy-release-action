@@ -2,7 +2,6 @@ import { execFileSync, execSync } from 'child_process';
 import { DEFAULT_BRANCH, RELEASE_ID } from '../constants';
 import { exec } from '@actions/exec';
 import { CONVENTIONAL_COMMITS_PATTERN } from '../utils/validation';
-import { context } from '@actions/github';
 import { hasChangelogSection } from '../utils/markdown';
 
 export function setupGitConfig() {
@@ -141,42 +140,41 @@ export async function isLastCommitAReleaseCommit(): Promise<boolean> {
 
 export interface Commit {
   hash: string;
-  message: string;
+  subject: string;
+  body?: string;
 }
 
 export async function getRecentCommits(
   ignoreLastest: boolean = false
 ): Promise<Commit[]> {
   console.log('Getting recent commits...');
-
-  let stdoutBuffer = '';
-
   console.log('Fetching commits since last release commit...');
-  await exec(
-    'git',
-    [
-      'log',
-      '--pretty=format:%h:%B%n<COMMIT_SEPARATOR>', // Add a custom separator between commits
-    ],
+
+  const HASH_SEPARATOR = '<HASH_SEPARATOR>';
+  const SUBJECT_SEPARATOR = '<SUBJECT_SEPARATOR>';
+  const COMMIT_SEPARATOR = '<COMMIT_SEPARATOR>';
+
+  const data = execSync(
+    `git log --pretty=format:"%h${HASH_SEPARATOR}%s${SUBJECT_SEPARATOR}%b${COMMIT_SEPARATOR}"`,
     {
-      listeners: {
-        stdout: (data: Buffer) => {
-          stdoutBuffer += data.toString();
-        },
-      },
-      silent: true,
+      encoding: 'utf8',
+      stdio: 'pipe',
     }
   );
 
-  const gitLogItems = stdoutBuffer
-    .split('<COMMIT_SEPARATOR>')
+  const gitLogItems = data
+    .split(COMMIT_SEPARATOR)
     .map((msg) => msg.trim())
     .filter((msg) => msg !== '');
 
   const commits: Commit[] = [];
+  const revertedCommitHashes = new Set<string>();
 
   console.log(`Found ${gitLogItems.length} commit items.`);
 
+  const issueNumberPattern = /#\d+/;
+
+  // First pass: identify all reverted commits
   for (let i = 0; i < gitLogItems.length; i++) {
     const item = gitLogItems[i];
 
@@ -184,30 +182,74 @@ export async function getRecentCommits(
       continue;
     }
 
-    const hash = item.substring(0, item.indexOf(':'));
+    const subject = item.substring(
+      item.indexOf(HASH_SEPARATOR) + HASH_SEPARATOR.length,
+      item.indexOf(SUBJECT_SEPARATOR)
+    );
+
+    const body =
+      item.substring(
+        item.indexOf(SUBJECT_SEPARATOR) + SUBJECT_SEPARATOR.length
+      ) || '';
+
+    // Check if this is a revert commit
+    if (isRevertCommit(subject, body)) {
+      // Extract the hash of the reverted commit from the body
+      const issueNumber = body.match(issueNumberPattern)?.[0];
+
+      if (issueNumber) {
+        revertedCommitHashes.add(issueNumber);
+        console.log(
+          `Found revert commit, excluding original commit: ${issueNumber}`
+        );
+      }
+    }
+  }
+
+  // Second pass: collect commits, excluding reverted ones
+  for (let i = 0; i < gitLogItems.length; i++) {
+    const item = gitLogItems[i];
+
+    if (ignoreLastest && i === 0) {
+      continue;
+    }
+
+    const hash = item.substring(0, item.indexOf(HASH_SEPARATOR));
     if (!hash) {
       console.warn('No commit hash found in item:', item);
       continue;
     }
 
-    const message = item.substring(item.indexOf(':') + 1);
-    if (!message) {
-      console.warn('No commit message found in item:', item);
+    // Skip if this commit has been reverted
+    if (revertedCommitHashes.has(hash)) {
+      console.log(`Skipping reverted commit: ${hash}`);
       continue;
     }
 
-    if (message.includes(RELEASE_ID)) {
-      // get PR number from message
-      const prMatch = message.match(/#(\d+)/);
+    const subject = item.substring(
+      item.indexOf(HASH_SEPARATOR) + HASH_SEPARATOR.length,
+      item.indexOf(SUBJECT_SEPARATOR)
+    );
 
-      if (!prMatch) {
-        console.warn(
-          `Skipping release commit ${hash} because it does not contain a PR number.`
-        );
-        continue;
-      }
+    if (!subject) {
+      console.warn('No commit subject found in item:', item);
+      continue;
+    }
 
-      const prNumberWithHash = prMatch[0];
+    // check if issue number is reverted
+    const issueNumber = subject.match(issueNumberPattern)?.[0];
+    if (issueNumber && revertedCommitHashes.has(issueNumber)) {
+      console.log(`Skipping commit with reverted issue number: ${issueNumber}`);
+      continue;
+    } 
+
+    const body =
+      item.substring(
+        item.indexOf(SUBJECT_SEPARATOR) + SUBJECT_SEPARATOR.length
+      ) || '';
+
+    const isReleaseCommit = body.includes(RELEASE_ID);
+    if (isReleaseCommit) {
       const prevIndex = i - 1;
 
       if (prevIndex < 0) {
@@ -217,41 +259,43 @@ export async function getRecentCommits(
         continue;
       }
 
-      const prevItem = gitLogItems[prevIndex];
-      const prevItemmMsg = prevItem.substring(prevItem.indexOf(':') + 1);
+      // get PR number from subject
+      const prMatch = subject.match(issueNumberPattern);
 
-      const owner = context.repo.owner;
-      const repo = context.repo.repo;
-      const repoNameWithOwner = `${owner}/${repo}`;
-
-      if (
-        prevItemmMsg &&
-        prevItemmMsg.includes(`Reverts ${repoNameWithOwner}${prNumberWithHash}`)
-      ) {
+      if (!prMatch) {
         console.warn(
-          `Skipping release commit ${hash} because it is reverted by the next commit.`
+          `Skipping release commit ${hash} because it does not contain a PR number.`
         );
         continue;
       }
-
       break; // Stop processing further commits if we found a release commit
     }
 
-    commits.push({ hash, message: message.trim() });
+    // Skip revert commits themselves from the final list
+    if (isRevertCommit(subject, body)) {
+      console.log(`Skipping revert commit: ${hash}`);
+      continue;
+    }
+
+    commits.push({ hash, subject: subject.trim(), body: body.trim() });
   }
 
   console.log('Commits since last release:');
-  console.log(commits);
+  commits.forEach((commit) => console.log(`${commit.hash}: ${commit.subject}`));
 
   // Filter for commits containing "## Changelog"
   const filteredCommits = commits.filter(
     (commit) =>
-      CONVENTIONAL_COMMITS_PATTERN.test(commit.message) ||
-      hasChangelogSection(commit.message)
+      CONVENTIONAL_COMMITS_PATTERN.test(commit.subject) ||
+      (commit.body && hasChangelogSection(commit.body))
   );
 
   console.log('Filtered commits:');
   console.log(filteredCommits);
 
   return filteredCommits;
+}
+
+export function isRevertCommit(subject: string, body: string): boolean {
+  return subject.startsWith('Revert ') || body.startsWith('Reverts ');
 }
