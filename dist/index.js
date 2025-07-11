@@ -29948,7 +29948,7 @@ async function createOrUpdatePRStatusComment(shouldCreateSnapshot = false) {
     );
     if (!isPRTitleValid(PR_TITLE) && PR_TITLE !== RELEASE_PR_TITLE) {
       await createOrUpdatePRStatusComment(false);
-      throw new Error(`Invalid pull request title: ${PR_TITLE}`);
+      return;
     }
     await createOrUpdatePRStatusComment(true);
   }
