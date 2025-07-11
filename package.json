@@ -1,7 +1,7 @@
 {
   "name": "@cadamsdev/lazy-release-action",
   "private": true,
-  "version": "0.4.1",
+  "version": "0.4.0",
   "main": "./dist/index.js",
   "scripts": {
     "type-check": "tsc --noEmit",
