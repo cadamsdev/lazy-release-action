@@ -2,7 +2,6 @@ import { execFileSync, execSync } from 'child_process';
 import { DEFAULT_BRANCH, RELEASE_ID } from '../constants';
 import { exec } from '@actions/exec';
 import { CONVENTIONAL_COMMITS_PATTERN } from '../utils/validation';
-import { context } from '@actions/github';
 import { hasChangelogSection } from '../utils/markdown';
 
 export function setupGitConfig() {
@@ -173,6 +172,8 @@ export async function getRecentCommits(
 
   console.log(`Found ${gitLogItems.length} commit items.`);
 
+  const issueNumberPattern = /#\d+/;
+
   // First pass: identify all reverted commits
   for (let i = 0; i < gitLogItems.length; i++) {
     const item = gitLogItems[i];
@@ -185,23 +186,21 @@ export async function getRecentCommits(
       item.indexOf(HASH_SEPARATOR) + HASH_SEPARATOR.length,
       item.indexOf(SUBJECT_SEPARATOR)
     );
+
     const body =
       item.substring(
         item.indexOf(SUBJECT_SEPARATOR) + SUBJECT_SEPARATOR.length
       ) || '';
 
     // Check if this is a revert commit
-    const revertMatch =
-      subject.match(/^Revert\s+".*"/) ||
-      body.match(/This reverts commit ([a-f0-9]+)/);
-
-    if (revertMatch) {
+    if (isRevertCommit(subject, body)) {
       // Extract the hash of the reverted commit from the body
-      const revertedHashMatch = body.match(/This reverts commit ([a-f0-9]+)/);
-      if (revertedHashMatch) {
-        revertedCommitHashes.add(revertedHashMatch[1]);
+      const issueNumber = body.match(issueNumberPattern)?.[0];
+
+      if (issueNumber) {
+        revertedCommitHashes.add(issueNumber);
         console.log(
-          `Found revert commit, excluding original commit: ${revertedHashMatch[1]}`
+          `Found revert commit, excluding original commit: ${issueNumber}`
         );
       }
     }
@@ -231,29 +230,26 @@ export async function getRecentCommits(
       item.indexOf(HASH_SEPARATOR) + HASH_SEPARATOR.length,
       item.indexOf(SUBJECT_SEPARATOR)
     );
+
     if (!subject) {
       console.warn('No commit subject found in item:', item);
       continue;
     }
 
+    // check if issue number is reverted
+    const issueNumber = subject.match(issueNumberPattern)?.[0];
+    if (issueNumber && revertedCommitHashes.has(issueNumber)) {
+      console.log(`Skipping commit with reverted issue number: ${issueNumber}`);
+      continue;
+    } 
+
     const body =
       item.substring(
         item.indexOf(SUBJECT_SEPARATOR) + SUBJECT_SEPARATOR.length
       ) || '';
+
     const isReleaseCommit = body.includes(RELEASE_ID);
-
     if (isReleaseCommit) {
-      // get PR number from subject
-      const prMatch = subject.match(/#(\d+)/);
-
-      if (!prMatch) {
-        console.warn(
-          `Skipping release commit ${hash} because it does not contain a PR number.`
-        );
-        continue;
-      }
-
-      const prNumberWithHash = prMatch[0];
       const prevIndex = i - 1;
 
       if (prevIndex < 0) {
@@ -263,33 +259,20 @@ export async function getRecentCommits(
         continue;
       }
 
-      const prevItem = gitLogItems[prevIndex];
-      const prevItemBody = prevItem.substring(
-        prevItem.indexOf(SUBJECT_SEPARATOR) + SUBJECT_SEPARATOR.length
-      );
+      // get PR number from subject
+      const prMatch = subject.match(issueNumberPattern);
 
-      const owner = context.repo.owner;
-      const repo = context.repo.repo;
-      const repoNameWithOwner = `${owner}/${repo}`;
-
-      if (
-        prevItemBody &&
-        prevItemBody.includes(`Reverts ${repoNameWithOwner}${prNumberWithHash}`)
-      ) {
+      if (!prMatch) {
         console.warn(
-          `Skipping release commit ${hash} because it is reverted by the next commit.`
+          `Skipping release commit ${hash} because it does not contain a PR number.`
         );
         continue;
       }
-
       break; // Stop processing further commits if we found a release commit
     }
 
     // Skip revert commits themselves from the final list
-    const isRevertCommit =
-      subject.match(/^Revert\s+".*"/) ||
-      body.match(/This reverts commit ([a-f0-9]+)/);
-    if (isRevertCommit) {
+    if (isRevertCommit(subject, body)) {
       console.log(`Skipping revert commit: ${hash}`);
       continue;
     }
@@ -311,4 +294,8 @@ export async function getRecentCommits(
   console.log(filteredCommits);
 
   return filteredCommits;
+}
+
+export function isRevertCommit(subject: string, body: string): boolean {
+  return subject.startsWith('Revert ') || body.startsWith('Reverts ');
 }
