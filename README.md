@@ -8,6 +8,16 @@ If you enjoy this tool, please consider giving it a star ⭐️ on GitHub! Also 
 
 [!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/cadamsdev)
 
+## Table of Contents
+
+- [How does it work?](#how-does-it-work)
+- [📝 Setup](#-setup)
+- [🏷️ Types](#️-types)
+- [🔧 Customization](#-customization)
+  - [Inputs](#inputs)
+  - [Output Params](#output-params)
+- [🔗 Links](#-links)
+
 ## How does it work?
 
 [see docs](/docs/how-does-it-work.md)
