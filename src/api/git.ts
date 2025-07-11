@@ -169,9 +169,45 @@ export async function getRecentCommits(
     .filter((msg) => msg !== '');
 
   const commits: Commit[] = [];
+  const revertedCommitHashes = new Set<string>();
 
   console.log(`Found ${gitLogItems.length} commit items.`);
 
+  // First pass: identify all reverted commits
+  for (let i = 0; i < gitLogItems.length; i++) {
+    const item = gitLogItems[i];
+
+    if (ignoreLastest && i === 0) {
+      continue;
+    }
+
+    const subject = item.substring(
+      item.indexOf(HASH_SEPARATOR) + HASH_SEPARATOR.length,
+      item.indexOf(SUBJECT_SEPARATOR)
+    );
+    const body =
+      item.substring(
+        item.indexOf(SUBJECT_SEPARATOR) + SUBJECT_SEPARATOR.length
+      ) || '';
+
+    // Check if this is a revert commit
+    const revertMatch =
+      subject.match(/^Revert\s+".*"/) ||
+      body.match(/This reverts commit ([a-f0-9]+)/);
+
+    if (revertMatch) {
+      // Extract the hash of the reverted commit from the body
+      const revertedHashMatch = body.match(/This reverts commit ([a-f0-9]+)/);
+      if (revertedHashMatch) {
+        revertedCommitHashes.add(revertedHashMatch[1]);
+        console.log(
+          `Found revert commit, excluding original commit: ${revertedHashMatch[1]}`
+        );
+      }
+    }
+  }
+
+  // Second pass: collect commits, excluding reverted ones
   for (let i = 0; i < gitLogItems.length; i++) {
     const item = gitLogItems[i];
 
@@ -185,15 +221,28 @@ export async function getRecentCommits(
       continue;
     }
 
-    const subject = item.substring(item.indexOf(HASH_SEPARATOR) + HASH_SEPARATOR.length, item.indexOf(SUBJECT_SEPARATOR));
+    // Skip if this commit has been reverted
+    if (revertedCommitHashes.has(hash)) {
+      console.log(`Skipping reverted commit: ${hash}`);
+      continue;
+    }
+
+    const subject = item.substring(
+      item.indexOf(HASH_SEPARATOR) + HASH_SEPARATOR.length,
+      item.indexOf(SUBJECT_SEPARATOR)
+    );
     if (!subject) {
       console.warn('No commit subject found in item:', item);
       continue;
     }
 
-    const body = item.substring(item.indexOf(SUBJECT_SEPARATOR) + SUBJECT_SEPARATOR.length) || '';
+    const body =
+      item.substring(
+        item.indexOf(SUBJECT_SEPARATOR) + SUBJECT_SEPARATOR.length
+      ) || '';
+    const isReleaseCommit = body.includes(RELEASE_ID);
 
-    if (body && body.includes(RELEASE_ID)) {
+    if (isReleaseCommit) {
       // get PR number from subject
       const prMatch = subject.match(/#(\d+)/);
 
@@ -215,7 +264,9 @@ export async function getRecentCommits(
       }
 
       const prevItem = gitLogItems[prevIndex];
-      const prevItemBody = prevItem.substring(prevItem.indexOf(SUBJECT_SEPARATOR) + SUBJECT_SEPARATOR.length);
+      const prevItemBody = prevItem.substring(
+        prevItem.indexOf(SUBJECT_SEPARATOR) + SUBJECT_SEPARATOR.length
+      );
 
       const owner = context.repo.owner;
       const repo = context.repo.repo;
@@ -232,6 +283,15 @@ export async function getRecentCommits(
       }
 
       break; // Stop processing further commits if we found a release commit
+    }
+
+    // Skip revert commits themselves from the final list
+    const isRevertCommit =
+      subject.match(/^Revert\s+".*"/) ||
+      body.match(/This reverts commit ([a-f0-9]+)/);
+    if (isRevertCommit) {
+      console.log(`Skipping revert commit: ${hash}`);
+      continue;
     }
 
     commits.push({ hash, subject: subject.trim(), body: body.trim() });
