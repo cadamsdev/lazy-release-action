@@ -53,7 +53,7 @@ import { ReleasePackageInfo } from './types';
       githubApi.PR_TITLE !== RELEASE_PR_TITLE
     ) {
       await createOrUpdatePRStatusComment(false);
-      throw new Error(`Invalid pull request title: ${githubApi.PR_TITLE}`);
+      return;
     }
   
     await createOrUpdatePRStatusComment(true);
