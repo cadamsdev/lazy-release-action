@@ -36,4 +36,25 @@ describe('CONVENTIONAL_COMMITS_PATTERN', () => {
       )
     ).toBe(true);
   });
+
+  it('should allow for explicit version bumps', () => {
+    expect(CONVENTIONAL_COMMITS_PATTERN.test('fix: hello world #major')).toBe(
+      true
+    );
+    expect(CONVENTIONAL_COMMITS_PATTERN.test('fix: hello world #minor')).toBe(
+      true
+    );
+    expect(CONVENTIONAL_COMMITS_PATTERN.test('fix: hello world #patch')).toBe(
+      true
+    );
+    expect(
+      CONVENTIONAL_COMMITS_PATTERN.test('fix(scope): hello world #major')
+    ).toBe(true);
+    expect(
+      CONVENTIONAL_COMMITS_PATTERN.test('fix(scope): hello world #minor')
+    ).toBe(true);
+    expect(
+      CONVENTIONAL_COMMITS_PATTERN.test('fix(scope): hello world #patch')
+    ).toBe(true);
+  });
 });

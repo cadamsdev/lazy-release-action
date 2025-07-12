@@ -239,6 +239,26 @@ export function getChangelogFromMarkdown(
   return changelogs;
 }
 
+function getSemverFromDescription(description: string): SemverBump | undefined {
+  const match = description.match(/#(major|minor|patch)/);
+  if (match) {
+    return match[1] as SemverBump;
+  }
+  return undefined;
+}
+
+function getSemverBump(typeParts: CommitTypeParts): SemverBump {
+  if (typeParts.isBreakingChange) {
+    return 'major';
+  }
+
+  if (typeParts.type === 'feat') {
+    return 'minor';
+  }
+
+  return 'patch';
+}
+
 export function createChangelogFromChangelogItem(item: string, rootPackageName?: string): Changelog|undefined {
   const commitType = extractCommitType(item);
   const description = extractDescription(item);
@@ -251,11 +271,8 @@ export function createChangelogFromChangelogItem(item: string, rootPackageName?:
     return;
   }
 
-  const semverBump: SemverBump = typeParts.isBreakingChange
-    ? 'major'
-    : typeParts.type === 'feat'
-    ? 'minor'
-    : 'patch';
+  const explicitVersionBump = getSemverFromDescription(description);
+  const semverBump = explicitVersionBump || getSemverBump(typeParts);
 
   let tempPackageNames = typeParts.packageNames || [];
 
@@ -274,6 +291,7 @@ export function createChangelogFromChangelogItem(item: string, rootPackageName?:
     packages: tempPackageNames,
     isBreakingChange: typeParts.isBreakingChange,
     semverBump,
+    hasExplicitVersionBump: !!explicitVersionBump,
   };
 
   return changelog;

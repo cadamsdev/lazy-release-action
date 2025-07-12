@@ -39,6 +39,7 @@ describe('generateMarkdown', () => {
         semverBump: 'patch',
         isBreakingChange: false,
         packages: ['package-a'],
+        hasExplicitVersionBump: false,
       },
       {
         type: 'chore',
@@ -46,6 +47,7 @@ describe('generateMarkdown', () => {
         semverBump: 'patch',
         isBreakingChange: false,
         packages: ['package-b'],
+        hasExplicitVersionBump: false,
       },
       {
         type: 'fix',
@@ -53,6 +55,7 @@ describe('generateMarkdown', () => {
         semverBump: 'patch',
         isBreakingChange: false,
         packages: ['package-b'],
+        hasExplicitVersionBump: false,
       },
     ];
 
@@ -96,6 +99,7 @@ describe('generateMarkdown', () => {
         semverBump: 'patch',
         isBreakingChange: false,
         packages: ['package-a'],
+        hasExplicitVersionBump: false,
       },
     ];
 
@@ -112,18 +116,34 @@ describe('generateMarkdown', () => {
   });
 });
 
-it('should increase heading level in markdown', () => {
+describe('increaseHeadingLevel', () => {
+  it('should increase heading level for headings', () => {
+    const markdown = `
+  # Heading 1
+  ## Heading 2
+  ### Heading 3
+    `;
+    const result = increaseHeadingLevel(markdown);
+    expect(result).toEqual(`
+  ## Heading 1
+  ### Heading 2
+  #### Heading 3
+    `);
+  });
+
+it('should not increase heading level for non-headings', () => {
   const markdown = `
-# Heading 1
-## Heading 2
-### Heading 3
+#major
+#minor
+#patch
   `;
   const result = increaseHeadingLevel(markdown);
   expect(result).toEqual(`
-## Heading 1
-### Heading 2
-#### Heading 3
+#major
+#minor
+#patch
   `);
+});
 });
 
 it('should append release id to markdown', () => {

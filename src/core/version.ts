@@ -27,7 +27,9 @@ export function applyNewVersion(
       continue;
     }
 
-    if (changelog.isBreakingChange && isV0) {
+    if (changelog.hasExplicitVersionBump) {
+      semver = changelog.semverBump;
+    } else if (changelog.isBreakingChange && isV0) {
       semver = 'minor'; // In v0, breaking changes are treated as minor bumps
     } else if (changelog.isBreakingChange) {
       semver = 'major';

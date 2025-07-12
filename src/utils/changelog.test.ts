@@ -87,6 +87,7 @@ describe('getChangelogFromCommits', () => {
         semverBump: 'minor',
         isBreakingChange: false,
         packages: ['package-a'],
+        hasExplicitVersionBump: false,
       },
       {
         type: 'chore',
@@ -94,6 +95,7 @@ describe('getChangelogFromCommits', () => {
         semverBump: 'patch',
         isBreakingChange: false,
         packages: ['package-a', 'package-b'],
+        hasExplicitVersionBump: false,
       },
     ];
 
@@ -120,6 +122,7 @@ describe('generateChangelogContent', () => {
         semverBump: 'minor',
         isBreakingChange: false,
         packages: ['some-package'],
+        hasExplicitVersionBump: false,
       },
       {
         type: 'fix',
@@ -127,6 +130,7 @@ describe('generateChangelogContent', () => {
         semverBump: 'patch',
         isBreakingChange: false,
         packages: ['some-package'],
+        hasExplicitVersionBump: false,
       },
     ];
 
@@ -165,6 +169,7 @@ describe('generateChangelogContent', () => {
           packages: ['components'],
           isBreakingChange: false,
           semverBump: 'patch',
+          hasExplicitVersionBump: false,
         },
         {
           type: 'chore',
@@ -173,6 +178,7 @@ describe('generateChangelogContent', () => {
           packages: ['components'],
           isBreakingChange: false,
           semverBump: 'patch',
+          hasExplicitVersionBump: false,
         },
         {
           type: 'chore',
@@ -181,6 +187,7 @@ describe('generateChangelogContent', () => {
           packages: ['components'],
           isBreakingChange: false,
           semverBump: 'patch',
+          hasExplicitVersionBump: false,
         },
         {
           type: 'feat',
@@ -189,6 +196,7 @@ describe('generateChangelogContent', () => {
           packages: ['components'],
           isBreakingChange: false,
           semverBump: 'minor',
+          hasExplicitVersionBump: false,
         },
       ];
   
@@ -222,9 +230,24 @@ describe('createChangelogFromChangelogItem', () => {
       semverBump: 'minor',
       isBreakingChange: false,
       packages: ['components'],
+      hasExplicitVersionBump: false,
     };
     expect(changelog).toEqual(expectedChangelog);
-  }); 
+  });
+
+  it('should handle explicit version bumps', () => {
+    const prTitle = 'feat(components): some test #major';
+    const changelog = createChangelogFromChangelogItem(prTitle);
+    const expectedChangelog: Changelog = {
+      type: 'feat',
+      description: 'Some test #major',
+      semverBump: 'major',
+      isBreakingChange: false,
+      packages: ['components'],
+      hasExplicitVersionBump: true,
+    };
+    expect(changelog).toEqual(expectedChangelog);
+  });
 });
 
 describe('replaceChangelogSection', () => {
