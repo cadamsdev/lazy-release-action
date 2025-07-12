@@ -106,7 +106,7 @@ export function generateMarkdown(
 }
 
 export function increaseHeadingLevel(message: string): string {
-  return message.replace(/(#+)\s/g, '$1# ');
+  return message.replace(/(#+)\s/g, '$1# '); // https://regexr.com/8g0di
 }
 
 export function appendReleaseIdToMarkdown(markdown: string): string {
