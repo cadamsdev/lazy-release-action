@@ -1,3 +1,9 @@
+## 0.5.0 (2025-07-12)
+
+### 🚀 New Features
+- Added explicit version bumps ([#38](https://github.com/cadamsdev/lazy-release-action/pull/38))
+
+
 ## 0.4.1 (2025-07-11)
 
 ### 🐛 Bug Fixes
