@@ -20,6 +20,13 @@ Use `!` example
 
 `chore(package-a)!: some breaking change`
 
+### Explicit version bump
+
+Use `#major`, `#minor` or `#patch` to specify an explicit version bump.
+
+example
+`chore(package-a): some message #major`
+
 ## PR Body
 
 Instead of using the PR title, you can use the PR Body. This allows for more descriptive changelogs.
@@ -30,6 +37,10 @@ Add section
 ```
 ## Changelog
 - chore: hello world
-- fix: some bug
+- fix: fixed some bug
 - feat: added some feature
+- chore(package-a): some message
+- chore(package-a,package-b): some message
+- chore(package-a)!: some breaking change
+- feat(package-c): added some feature #major
 ```
