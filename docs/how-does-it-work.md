@@ -6,13 +6,22 @@ For the PR title use [Conventional Commit](https://www.conventionalcommits.org/e
 
 `feat: added some feature`
 
+version bump:
+1.0.0 -> 1.1.0
+
 ### Specifying a specific package
 
 `chore(package-a): some message`
 
+version bump:
+1.0.0 -> 1.0.1
+
 ### Specifying multiple packages 
 
 `chore(package-a,package-b): some message`
+
+version bump:
+1.0.0 -> 1.0.1
 
 ### Breaking change
 
@@ -20,12 +29,18 @@ Use `!` example
 
 `chore(package-a)!: some breaking change`
 
+version bump:
+1.0.0 -> 2.0.0
+
 ### Explicit version bump
 
 Use `#major`, `#minor` or `#patch` to specify an explicit version bump.
 
 example
 `chore(package-a): some message #major`
+
+version bump:
+1.0.0 -> 2.0.0
 
 ## PR Body
 
