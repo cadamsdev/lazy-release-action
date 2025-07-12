@@ -39,6 +39,7 @@ describe('generateMarkdown', () => {
         semverBump: 'patch',
         isBreakingChange: false,
         packages: ['package-a'],
+        hasExplicitVersionBump: false,
       },
       {
         type: 'chore',
@@ -46,6 +47,7 @@ describe('generateMarkdown', () => {
         semverBump: 'patch',
         isBreakingChange: false,
         packages: ['package-b'],
+        hasExplicitVersionBump: false,
       },
       {
         type: 'fix',
@@ -53,6 +55,7 @@ describe('generateMarkdown', () => {
         semverBump: 'patch',
         isBreakingChange: false,
         packages: ['package-b'],
+        hasExplicitVersionBump: false,
       },
     ];
 
@@ -96,6 +99,7 @@ describe('generateMarkdown', () => {
         semverBump: 'patch',
         isBreakingChange: false,
         packages: ['package-a'],
+        hasExplicitVersionBump: false,
       },
     ];
 

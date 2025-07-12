@@ -28078,7 +28078,7 @@ var TYPE_TO_CHANGELOG_TYPE = {
 var import_exec = __toESM(require_exec());
 
 // src/utils/validation.ts
-var CONVENTIONAL_COMMITS_PATTERN = /^(feat|fix|perf|chore|docs|style|test|build|ci|revert)(!)?(\(([a-z-0-9]+)(,\s*[a-z-0-9]+)*\))?(!)?: .+/;
+var CONVENTIONAL_COMMITS_PATTERN = /^(feat|fix|perf|chore|docs|style|test|build|ci|revert)(!)?(\(([a-z-0-9]+)(,\s*[a-z-0-9]+)*\))?(!)?(#(major|minor|patch))?: .+/;
 function isPRTitleValid(prTitle) {
   return CONVENTIONAL_COMMITS_PATTERN.test(prTitle);
 }
@@ -28115,7 +28115,9 @@ function applyNewVersion(packageInfo, changelogs) {
     if (!isRelevant) {
       continue;
     }
-    if (changelog.isBreakingChange && isV0) {
+    if (changelog.hasExplicitVersionBump) {
+      semver = changelog.semverBump;
+    } else if (changelog.isBreakingChange && isV0) {
       semver = "minor";
     } else if (changelog.isBreakingChange) {
       semver = "major";
@@ -29543,6 +29545,22 @@ function getChangelogFromMarkdown(markdown, rootPackageName) {
   }
   return changelogs;
 }
+function getSemverFromDescription(description) {
+  const match = description.match(/#(major|minor|patch)/);
+  if (match) {
+    return match[1];
+  }
+  return void 0;
+}
+function getSemverBump(typeParts) {
+  if (typeParts.isBreakingChange) {
+    return "major";
+  }
+  if (typeParts.type === "feat") {
+    return "minor";
+  }
+  return "patch";
+}
 function createChangelogFromChangelogItem(item, rootPackageName) {
   const commitType = extractCommitType(item);
   const description = extractDescription(item);
@@ -29553,7 +29571,8 @@ function createChangelogFromChangelogItem(item, rootPackageName) {
     );
     return;
   }
-  const semverBump = typeParts.isBreakingChange ? "major" : typeParts.type === "feat" ? "minor" : "patch";
+  const explicitVersionBump = getSemverFromDescription(description);
+  const semverBump = explicitVersionBump || getSemverBump(typeParts);
   let tempPackageNames = typeParts.packageNames || [];
   if (rootPackageName && tempPackageNames.length) {
     tempPackageNames = tempPackageNames.filter(
@@ -29565,7 +29584,8 @@ function createChangelogFromChangelogItem(item, rootPackageName) {
     description: transformDescription(description),
     packages: tempPackageNames,
     isBreakingChange: typeParts.isBreakingChange,
-    semverBump
+    semverBump,
+    hasExplicitVersionBump: !!explicitVersionBump
   };
   return changelog;
 }
