@@ -39,9 +39,12 @@ version bump: 1.0.0 -> 2.0.0
 
 ## PR Body
 
-Instead of using the PR title, you can use the PR Body. This allows for more descriptive changelogs.
-- Longer changelogs
-- Supports codeblocks etc
+Instead of using the PR title, you can also use the PR Body.
+
+This allows for...
+- Longer / more descriptive changelogs
+- Using codeblocks
+- More granular control over versioning when you have multiple packages
 
 Add section
 ```
