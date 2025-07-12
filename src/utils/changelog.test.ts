@@ -233,7 +233,21 @@ describe('createChangelogFromChangelogItem', () => {
       hasExplicitVersionBump: false,
     };
     expect(changelog).toEqual(expectedChangelog);
-  }); 
+  });
+
+  it('should handle explicit version bumps', () => {
+    const prTitle = 'feat(components): some test #major';
+    const changelog = createChangelogFromChangelogItem(prTitle);
+    const expectedChangelog: Changelog = {
+      type: 'feat',
+      description: 'Some test #major',
+      semverBump: 'major',
+      isBreakingChange: false,
+      packages: ['components'],
+      hasExplicitVersionBump: true,
+    };
+    expect(changelog).toEqual(expectedChangelog);
+  });
 });
 
 describe('replaceChangelogSection', () => {
