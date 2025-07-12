@@ -32,6 +32,7 @@ export interface Changelog {
   packages: string[];
   isBreakingChange: boolean;
   semverBump: SemverBump;
+  hasExplicitVersionBump: boolean
 }
 
 export interface PackageRelease {
