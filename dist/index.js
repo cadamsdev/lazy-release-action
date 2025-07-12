@@ -28970,7 +28970,7 @@ function generateMarkdown(changedPackageInfos, indirectPackageInfos, changelogs)
   return markdown;
 }
 function increaseHeadingLevel(message) {
-  return message.replace(/(#+)/g, "$1#");
+  return message.replace(/(#+)\s/g, "$1# ");
 }
 function appendReleaseIdToMarkdown(markdown) {
   const releaseIdComment = `<!-- Release PR: ${RELEASE_ID} -->`;
