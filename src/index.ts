@@ -244,7 +244,7 @@ async function createOrUpdateReleasePR() {
 
   // create or update PR
   await githubApi.createOrUpdatePR({
-    title: 'Version Packages',
+    title: RELEASE_PR_TITLE,
     body: appendReleaseIdToMarkdown(markdown),
     head: RELEASE_BRANCH,
   });

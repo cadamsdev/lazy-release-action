@@ -18,9 +18,11 @@ inputs:
   default-branch:
     description: "Default branch to use for the release"
     required: false
-    default: 'main'
   end-commit:
     description: "The end commit reference."
+    required: false
+  release-pr-title:
+    description: "The title of the release PR"
     required: false
 
 runs:

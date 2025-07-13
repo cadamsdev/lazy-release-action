@@ -28104,9 +28104,9 @@ var SNAPSHOTS_ENABLED = process.env["INPUT_SNAPSHOTS"] ? process.env["INPUT_SNAP
 var DEFAULT_BRANCH = process.env["INPUT_DEFAULT-BRANCH"] || "main";
 var NPM_TOKEN = process.env["INPUT_NPM-TOKEN"] || "";
 var END_COMMIT = process.env["INPUT_END-COMMIT"] || "";
+var RELEASE_PR_TITLE = process.env["INPUT_RELEASE-PR-TITLE"] || "Version Packages";
 var RELEASE_BRANCH = "lazy-release/main";
 var PR_COMMENT_STATUS_ID = "b3da20ce-59b6-4bbd-a6e3-6d625f45d008";
-var RELEASE_PR_TITLE = "Version Packages";
 var RELEASE_ID = "ebe18c5c-b9c6-4fca-8b11-90bf80ad229e";
 var COMMIT_TYPE_PATTERN = /^(feat|fix|perf|chore|docs|style|test|build|ci|revert)(\(([^)]+)\))?(!)?$/;
 var TYPE_TO_CHANGELOG_TYPE = {
@@ -30172,7 +30172,7 @@ async function createOrUpdateReleasePR() {
     commitAndPushChanges();
   }
   await createOrUpdatePR({
-    title: "Version Packages",
+    title: RELEASE_PR_TITLE,
     body: appendReleaseIdToMarkdown(markdown),
     head: RELEASE_BRANCH
   });
