@@ -7,6 +7,7 @@ export const SNAPSHOTS_ENABLED = process.env['INPUT_SNAPSHOTS']
   : false;
 export const DEFAULT_BRANCH = process.env['INPUT_DEFAULT-BRANCH'] || 'main';
 export const NPM_TOKEN = process.env['INPUT_NPM-TOKEN'] || '';
+export const END_COMMIT = process.env['INPUT_END-COMMIT'] || '';
 
 // constants
 export const RELEASE_BRANCH = 'lazy-release/main';

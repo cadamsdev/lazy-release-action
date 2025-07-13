@@ -19,6 +19,9 @@ inputs:
     description: "Default branch to use for the release"
     required: false
     default: 'main'
+  end-commit:
+    description: "The end commit reference."
+    required: false
 
 runs:
   using: 'node20'

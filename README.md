@@ -152,6 +152,7 @@ jobs:
 | `npm-token`      | string  | `''`          | NPM authentication token    |
 | `default-branch` | string  | `main`        | The repo's default branch   |
 | `snapshots`      | boolean | `false`       | Whether to create snapshots |
+| `end-commit`     | string  | `''`          | The end commit reference    |
 
 examples
 
