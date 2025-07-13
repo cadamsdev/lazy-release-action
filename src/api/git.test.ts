@@ -153,4 +153,31 @@ ghi789<HASH_SEPARATOR>fix: bug fix<SUBJECT_SEPARATOR>
       }
     );
   });
+
+  it('should not use range when END_COMMIT is empty', async () => {
+    (globalThis as any).__mockConstants.END_COMMIT = '';
+
+    // END_COMMIT is already empty from beforeEach
+    const gitOutput = `def456<HASH_SEPARATOR>feat: new feature<SUBJECT_SEPARATOR>
+<COMMIT_SEPARATOR>
+ghi789<HASH_SEPARATOR>fix: bug fix<SUBJECT_SEPARATOR>
+<COMMIT_SEPARATOR>`;
+
+    mockExecFileSync.mockReturnValue(gitOutput);
+
+    await getRecentCommits();
+
+    // Verify that execFileSync was called without the range argument
+    expect(mockExecFileSync).toHaveBeenCalledWith(
+      'git',
+      [
+        'log',
+        '--pretty=format:"%h<HASH_SEPARATOR>%s<SUBJECT_SEPARATOR>%b<COMMIT_SEPARATOR>"',
+      ],
+      {
+        encoding: 'utf8',
+        stdio: 'pipe',
+      }
+    );
+  });
 });
