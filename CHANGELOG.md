@@ -1,13 +1,3 @@
-## 0.5.0 (2025-07-13)
-
-### ⚠️ Breaking Changes
-- Moved repo to stellasoftio org ([#40](https://github.com/stellasoftio/lazy-release-action/pull/40))
-
-### 🚀 New Features
-- Added input for end commit reference ([#41](https://github.com/stellasoftio/lazy-release-action/pull/41))
-- Added explicit version bumps ([#38](https://github.com/stellasoftio/lazy-release-action/pull/38))
-
-
 ## 0.4.1 (2025-07-11)
 
 ### 🐛 Bug Fixes
