@@ -1,5 +1,5 @@
 import { execFileSync, execSync } from 'child_process';
-import { DEFAULT_BRANCH, RELEASE_ID } from '../constants';
+import { DEFAULT_BRANCH, END_COMMIT, RELEASE_ID } from '../constants';
 import { exec } from '@actions/exec';
 import { CONVENTIONAL_COMMITS_PATTERN } from '../utils/validation';
 import { hasChangelogSection } from '../utils/markdown';
@@ -154,13 +154,19 @@ export async function getRecentCommits(
   const SUBJECT_SEPARATOR = '<SUBJECT_SEPARATOR>';
   const COMMIT_SEPARATOR = '<COMMIT_SEPARATOR>';
 
-  const data = execSync(
-    `git log --pretty=format:"%h${HASH_SEPARATOR}%s${SUBJECT_SEPARATOR}%b${COMMIT_SEPARATOR}"`,
-    {
-      encoding: 'utf8',
-      stdio: 'pipe',
-    }
-  );
+  const args = [
+    'log',
+    `--pretty=format:"%h${HASH_SEPARATOR}%s${SUBJECT_SEPARATOR}%b${COMMIT_SEPARATOR}"`,
+  ];
+
+  if (END_COMMIT) {
+    args.push(`${END_COMMIT}^..HEAD`);
+  }
+
+  const data = execFileSync('git', args, {
+    encoding: 'utf8',
+    stdio: 'pipe',
+  });
 
   const gitLogItems = data
     .split(COMMIT_SEPARATOR)

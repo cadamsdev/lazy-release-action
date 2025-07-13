@@ -28103,6 +28103,7 @@ var GITHUB_TOKEN = process.env["INPUT_GITHUB-TOKEN"] || "";
 var SNAPSHOTS_ENABLED = process.env["INPUT_SNAPSHOTS"] ? process.env["INPUT_SNAPSHOTS"] === "true" : false;
 var DEFAULT_BRANCH = process.env["INPUT_DEFAULT-BRANCH"] || "main";
 var NPM_TOKEN = process.env["INPUT_NPM-TOKEN"] || "";
+var END_COMMIT = process.env["INPUT_END-COMMIT"] || "";
 var RELEASE_BRANCH = "lazy-release/main";
 var PR_COMMENT_STATUS_ID = "b3da20ce-59b6-4bbd-a6e3-6d625f45d008";
 var RELEASE_PR_TITLE = "Version Packages";
@@ -29208,13 +29209,17 @@ async function getRecentCommits(ignoreLastest = false) {
   const HASH_SEPARATOR = "<HASH_SEPARATOR>";
   const SUBJECT_SEPARATOR = "<SUBJECT_SEPARATOR>";
   const COMMIT_SEPARATOR = "<COMMIT_SEPARATOR>";
-  const data = (0, import_child_process2.execSync)(
-    `git log --pretty=format:"%h${HASH_SEPARATOR}%s${SUBJECT_SEPARATOR}%b${COMMIT_SEPARATOR}"`,
-    {
-      encoding: "utf8",
-      stdio: "pipe"
-    }
-  );
+  const args = [
+    "log",
+    `--pretty=format:"%h${HASH_SEPARATOR}%s${SUBJECT_SEPARATOR}%b${COMMIT_SEPARATOR}"`
+  ];
+  if (END_COMMIT) {
+    args.push(`${END_COMMIT}^..HEAD`);
+  }
+  const data = (0, import_child_process2.execFileSync)("git", args, {
+    encoding: "utf8",
+    stdio: "pipe"
+  });
   const gitLogItems = data.split(COMMIT_SEPARATOR).map((msg) => msg.trim()).filter((msg) => msg !== "");
   const commits = [];
   const revertedCommitHashes = /* @__PURE__ */ new Set();

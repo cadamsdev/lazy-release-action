@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { getRecentCommits } from './git';
-import { execSync } from 'child_process';
+import { execFileSync } from 'child_process';
 
 // Mock dependencies
 vi.mock('@actions/exec');
@@ -18,11 +18,20 @@ vi.mock('child_process', () => ({
 }));
 vi.mock('../utils/validation');
 vi.mock('../utils/markdown');
-vi.mock('../constants', () => ({
-  RELEASE_ID: '[release-action]'
-}));
 
-const mockExecSync = vi.mocked(execSync);
+vi.mock('../constants', () => {
+  const mockConstants = {
+    RELEASE_ID: '[release-action]',
+    END_COMMIT: '',
+  };
+
+  // Expose the mock object so we can modify it in tests
+  (globalThis as any).__mockConstants = mockConstants;
+
+  return mockConstants;
+});
+
+const mockExecFileSync = vi.mocked(execFileSync);
 
 describe('getRecentCommits', () => {
   beforeEach(() => {
@@ -43,7 +52,7 @@ ghi789<HASH_SEPARATOR>chore: release (#123)<SUBJECT_SEPARATOR>[release-action]
 jkl012<HASH_SEPARATOR>old commit<SUBJECT_SEPARATOR>
 <COMMIT_SEPARATOR>`;
 
-    mockExecSync.mockImplementation(() => {
+    mockExecFileSync.mockImplementation(() => {
       return gitOutput;
     });
 
@@ -63,7 +72,7 @@ def456<HASH_SEPARATOR>fix: previous commit<SUBJECT_SEPARATOR>
 ghi789<HASH_SEPARATOR>chore: release (#123)<SUBJECT_SEPARATOR>[release-action]
 <COMMIT_SEPARATOR>`;
 
-    mockExecSync.mockImplementation(() => {
+    mockExecFileSync.mockImplementation(() => {
       return gitOutput;
     });
 
@@ -82,7 +91,7 @@ def456<HASH_SEPARATOR>chore: release (#123)<SUBJECT_SEPARATOR>[release-action]
 ghi789<HASH_SEPARATOR>feat: some feature<SUBJECT_SEPARATOR>
 <COMMIT_SEPARATOR>`;
 
-    mockExecSync.mockImplementation(() => {
+    mockExecFileSync.mockImplementation(() => {
       return gitOutput;
     });
 
@@ -105,7 +114,7 @@ ghi789<HASH_SEPARATOR>fix: bug fix<SUBJECT_SEPARATOR>
 jkl012<HASH_SEPARATOR>chore: release (#123)<SUBJECT_SEPARATOR>[release-action]
 <COMMIT_SEPARATOR>`;
 
-    mockExecSync.mockImplementation(() => {
+    mockExecFileSync.mockImplementation(() => {
       return gitOutput;
     });
 
@@ -115,5 +124,59 @@ jkl012<HASH_SEPARATOR>chore: release (#123)<SUBJECT_SEPARATOR>[release-action]
       { hash: 'abc123', subject: 'feat: add new feature', body: '' },
       { hash: 'ghi789', subject: 'fix: bug fix', body: '' },
     ]);
+  });
+
+  it('should use END_COMMIT range when END_COMMIT is provided', async () => {
+    (globalThis as any).__mockConstants.END_COMMIT = 'abc123';
+
+    const gitOutput = `def456<HASH_SEPARATOR>feat: new feature<SUBJECT_SEPARATOR>
+<COMMIT_SEPARATOR>
+ghi789<HASH_SEPARATOR>fix: bug fix<SUBJECT_SEPARATOR>
+<COMMIT_SEPARATOR>`;
+
+    mockExecFileSync.mockReturnValue(gitOutput);
+
+    await getRecentCommits();
+
+    // Verify that execFileSync was called with the correct arguments including the range
+    expect(mockExecFileSync).toHaveBeenCalledWith(
+      'git',
+      [
+        'log',
+        '--pretty=format:"%h<HASH_SEPARATOR>%s<SUBJECT_SEPARATOR>%b<COMMIT_SEPARATOR>"',
+        'abc123^..HEAD',
+      ],
+      {
+        encoding: 'utf8',
+        stdio: 'pipe',
+      }
+    );
+  });
+
+  it('should not use range when END_COMMIT is empty', async () => {
+    (globalThis as any).__mockConstants.END_COMMIT = '';
+
+    // END_COMMIT is already empty from beforeEach
+    const gitOutput = `def456<HASH_SEPARATOR>feat: new feature<SUBJECT_SEPARATOR>
+<COMMIT_SEPARATOR>
+ghi789<HASH_SEPARATOR>fix: bug fix<SUBJECT_SEPARATOR>
+<COMMIT_SEPARATOR>`;
+
+    mockExecFileSync.mockReturnValue(gitOutput);
+
+    await getRecentCommits();
+
+    // Verify that execFileSync was called without the range argument
+    expect(mockExecFileSync).toHaveBeenCalledWith(
+      'git',
+      [
+        'log',
+        '--pretty=format:"%h<HASH_SEPARATOR>%s<SUBJECT_SEPARATOR>%b<COMMIT_SEPARATOR>"',
+      ],
+      {
+        encoding: 'utf8',
+        stdio: 'pipe',
+      }
+    );
   });
 });
