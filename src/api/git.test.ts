@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { getRecentCommits } from './git';
 import { execFileSync } from 'child_process';
-import { END_COMMIT } from '../constants';
 
 // Mock dependencies
 vi.mock('@actions/exec');
