@@ -1,6 +1,6 @@
 # Lazy Release Action
 
-[![contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](https://github.com/cadamsdev/lazy-release-action/issues) [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0) ![GitHub Tag](https://img.shields.io/github/v/tag/cadamsdev/lazy-release-action)
+[![contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](https://github.com/stellasoftio/lazy-release-action/issues) [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0) ![GitHub Tag](https://img.shields.io/github/v/tag/stellasoftio/lazy-release-action)
 
 The easiest way to version, publish and create changelogs for your JavaScript/TypeScript projects.
 
@@ -77,7 +77,7 @@ jobs:
         run: npm ci
 
       - name: Create Release PR or Release
-        uses: cadamsdev/lazy-release-action@a42c92f017d915146778c111d988f16d732cc395 # v0.4.0
+        uses: stellasoftio/lazy-release-action@a42c92f017d915146778c111d988f16d732cc395 # v0.4.0
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 ```
@@ -121,7 +121,7 @@ jobs:
         run: npm run build
 
       - name: Create Release PR or Release
-        uses: cadamsdev/lazy-release-action@a42c92f017d915146778c111d988f16d732cc395 # v0.4.0
+        uses: stellasoftio/lazy-release-action@a42c92f017d915146778c111d988f16d732cc395 # v0.4.0
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 ```
@@ -157,7 +157,7 @@ examples
 
 ```yaml
 - name: Create Release PR or Publish Release
-  uses: cadamsdev/lazy-release-action@a42c92f017d915146778c111d988f16d732cc395 # v0.4.0
+  uses: stellasoftio/lazy-release-action@a42c92f017d915146778c111d988f16d732cc395 # v0.4.0
   with:
     github-token: ${{ secrets.GITHUB_TOKEN }}
     snapshots: true
@@ -175,7 +175,7 @@ example
 ```yaml
 - name: Create Release PR or Publish Release
   id: lazy-release
-  uses: cadamsdev/lazy-release-action@a42c92f017d915146778c111d988f16d732cc395 # v0.4.0
+  uses: stellasoftio/lazy-release-action@a42c92f017d915146778c111d988f16d732cc395 # v0.4.0
   with:
     github-token: ${{ secrets.GITHUB_TOKEN }}
 

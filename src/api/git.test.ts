@@ -96,7 +96,7 @@ ghi789<HASH_SEPARATOR>feat: some feature<SUBJECT_SEPARATOR>
   it('should exclude reverted commits', async () => {
     const gitOutput = `abc123<HASH_SEPARATOR>feat: add new feature<SUBJECT_SEPARATOR>
 <COMMIT_SEPARATOR>
-cc88b03<HASH_SEPARATOR>Revert "feat: add support for snapshots" (#5)<SUBJECT_SEPARATOR>Reverts cadamsdev/lazy-release-action#4
+cc88b03<HASH_SEPARATOR>Revert "feat: add support for snapshots" (#5)<SUBJECT_SEPARATOR>Reverts stellasoftio/lazy-release-action#4
 <COMMIT_SEPARATOR>
 b4ddfdb<HASH_SEPARATOR>feat: add support for snapshots (#4)<SUBJECT_SEPARATOR>
 <COMMIT_SEPARATOR>
