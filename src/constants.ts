@@ -8,11 +8,11 @@ export const SNAPSHOTS_ENABLED = process.env['INPUT_SNAPSHOTS']
 export const DEFAULT_BRANCH = process.env['INPUT_DEFAULT-BRANCH'] || 'main';
 export const NPM_TOKEN = process.env['INPUT_NPM-TOKEN'] || '';
 export const END_COMMIT = process.env['INPUT_END-COMMIT'] || '';
+export const RELEASE_PR_TITLE = process.env['INPUT_RELEASE-PR-TITLE'] || 'Version Packages';
 
 // constants
 export const RELEASE_BRANCH = 'lazy-release/main';
 export const PR_COMMENT_STATUS_ID = 'b3da20ce-59b6-4bbd-a6e3-6d625f45d008';
-export const RELEASE_PR_TITLE = 'Version Packages';
 export const RELEASE_ID = 'ebe18c5c-b9c6-4fca-8b11-90bf80ad229e';
 export const COMMIT_TYPE_PATTERN =
   /^(feat|fix|perf|chore|docs|style|test|build|ci|revert)(\(([^)]+)\))?(!)?$/;
