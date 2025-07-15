@@ -1,4 +1,4 @@
-name: 'Lazy Release Action'
+name: 'Lazy Release'
 description: 'Easily version, publish and create changelogs for your JavaScript/TypeScript projects'
 author: 'StellaSoft'
 branding:
