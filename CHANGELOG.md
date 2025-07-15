@@ -1,3 +1,9 @@
+## 0.5.1 (2025-07-15)
+
+### 🐛 Bug Fixes
+- Update action, description and icon ([#43](https://github.com/stellasoftio/lazy-release-action/pull/43))
+
+
 ## 0.5.0 (2025-07-13)
 
 ### ⚠️ Breaking Changes
