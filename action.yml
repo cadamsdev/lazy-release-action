@@ -1,8 +1,8 @@
 name: 'Lazy Release Action'
-description: 'The easiest way to create releases for Node projects.'
-author: 'Chad Adams'
+description: 'Easily version, publish and create changelogs for your JavaScript/TypeScript projects'
+author: 'StellaSoft'
 branding:
-  icon: 'image'
+  icon: 'tag'
   color: 'white'
 
 inputs:
