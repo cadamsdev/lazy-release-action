@@ -6,7 +6,7 @@ import { getMajorTagName, getTagName } from "../utils/tag";
 import { doesTagExistOnRemote } from "../api/git";
 import { getPackageNameWithoutScope } from "../utils/package";
 import { toDirectoryPath } from "../utils/path";
-import { REPUBLISH_MAJOR_TAG } from "../constants";
+import { PUBLISH_MAJOR_TAG } from "../constants";
 
 export async function publishPackages(changedPkgInfos: PackageInfo[]): Promise<void> {
   console.log('Publishing packages...');
@@ -119,7 +119,7 @@ export function createTags(packageInfos: PackageInfo[]): void {
     console.error('Failed to push tags:', error);
   }
 
-  if (rootPkg && REPUBLISH_MAJOR_TAG) {
+  if (rootPkg && PUBLISH_MAJOR_TAG) {
     const majorTagName = getMajorTagName(rootPkg.version);
 
     let publishTag = false;

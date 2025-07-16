@@ -5,7 +5,7 @@ import { applyNewVersion } from "./version";
 import { generateMarkdown, hasChangelogSection, hasReleasePRComment, increaseHeadingLevel } from "../utils/markdown";
 import { detect, resolveCommand } from "package-manager-detector";
 import { createSnapshot } from "./snapshots";
-import { PR_COMMENT_STATUS_ID, REPUBLISH_MAJOR_TAG } from "../constants";
+import { PR_COMMENT_STATUS_ID, PUBLISH_MAJOR_TAG } from "../constants";
 import { Changelog } from "../types";
 import { createChangelogFromChangelogItem, getChangelogFromMarkdown } from "../utils/changelog";
 import { getMajorTagName } from "../utils/tag";
@@ -78,7 +78,7 @@ export async function createOrUpdatePRStatusComment(shouldCreateSnapshot = false
   }
 
   const changedRootPkg = changedPackageInfos.find((pkg) => pkg.isRoot);
-  if (changedRootPkg && REPUBLISH_MAJOR_TAG) {
+  if (changedRootPkg && PUBLISH_MAJOR_TAG) {
     const majorTagName = getMajorTagName(changedRootPkg.version);
     const tagExists = doesTagExistOnRemote(majorTagName);
     markdown += `🏷️ ${tagExists ? 'Republish' : 'Publish'} major tag: ${majorTagName}\n`;

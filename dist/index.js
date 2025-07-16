@@ -28105,7 +28105,7 @@ var DEFAULT_BRANCH = process.env["INPUT_DEFAULT-BRANCH"] || "main";
 var NPM_TOKEN = process.env["INPUT_NPM-TOKEN"] || "";
 var END_COMMIT = process.env["INPUT_END-COMMIT"] || "";
 var RELEASE_PR_TITLE = process.env["INPUT_RELEASE-PR-TITLE"] || "Version Packages";
-var REPUBLISH_MAJOR_TAG = process.env["INPUT_REPUBLISH-MAJOR-TAG"] ? process.env["INPUT_REPUBLISH-MAJOR-TAG"] === "true" : false;
+var PUBLISH_MAJOR_TAG = process.env["INPUT_PUBLISH-MAJOR-TAG"] ? process.env["INPUT_PUBLISH-MAJOR-TAG"] === "true" : false;
 var RELEASE_BRANCH = "lazy-release/main";
 var PR_COMMENT_STATUS_ID = "b3da20ce-59b6-4bbd-a6e3-6d625f45d008";
 var RELEASE_ID = "ebe18c5c-b9c6-4fca-8b11-90bf80ad229e";
@@ -29807,7 +29807,7 @@ function createTags(packageInfos) {
   } catch (error) {
     console.error("Failed to push tags:", error);
   }
-  if (rootPkg && REPUBLISH_MAJOR_TAG) {
+  if (rootPkg && PUBLISH_MAJOR_TAG) {
     const majorTagName = getMajorTagName(rootPkg.version);
     let publishTag = false;
     try {
@@ -29988,7 +29988,7 @@ async function createOrUpdatePRStatusComment(shouldCreateSnapshot = false) {
     markdown += "\u26A0\uFE0F No packages changed.\n";
   }
   const changedRootPkg = changedPackageInfos.find((pkg) => pkg.isRoot);
-  if (changedRootPkg && REPUBLISH_MAJOR_TAG) {
+  if (changedRootPkg && PUBLISH_MAJOR_TAG) {
     const majorTagName = getMajorTagName(changedRootPkg.version);
     const tagExists = doesTagExistOnRemote(majorTagName);
     markdown += `\u{1F3F7}\uFE0F ${tagExists ? "Republish" : "Publish"} major tag: ${majorTagName}

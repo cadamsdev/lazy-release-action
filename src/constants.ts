@@ -9,8 +9,8 @@ export const DEFAULT_BRANCH = process.env['INPUT_DEFAULT-BRANCH'] || 'main';
 export const NPM_TOKEN = process.env['INPUT_NPM-TOKEN'] || '';
 export const END_COMMIT = process.env['INPUT_END-COMMIT'] || '';
 export const RELEASE_PR_TITLE = process.env['INPUT_RELEASE-PR-TITLE'] || 'Version Packages';
-export const REPUBLISH_MAJOR_TAG = process.env['INPUT_REPUBLISH-MAJOR-TAG']
-  ? process.env['INPUT_REPUBLISH-MAJOR-TAG'] === 'true'
+export const PUBLISH_MAJOR_TAG = process.env['INPUT_PUBLISH-MAJOR-TAG']
+  ? process.env['INPUT_PUBLISH-MAJOR-TAG'] === 'true'
   : false;
 
 // constants
