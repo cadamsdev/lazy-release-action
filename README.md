@@ -77,7 +77,7 @@ jobs:
         run: npm ci
 
       - name: Create Release PR or Release
-        uses: stellasoftio/lazy-release-action@a42c92f017d915146778c111d988f16d732cc395 # v0.4.0
+        uses: stellasoftio/lazy-release-action@40cbbc343f8b7c8efb5c7ae4e7fd9b9584472531 # v0.5.1
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 ```
@@ -121,7 +121,7 @@ jobs:
         run: npm run build
 
       - name: Create Release PR or Release
-        uses: stellasoftio/lazy-release-action@a42c92f017d915146778c111d988f16d732cc395 # v0.4.0
+        uses: stellasoftio/lazy-release-action@40cbbc343f8b7c8efb5c7ae4e7fd9b9584472531 # v0.5.1
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 ```
@@ -159,7 +159,7 @@ examples
 
 ```yaml
 - name: Create Release PR or Publish Release
-  uses: stellasoftio/lazy-release-action@a42c92f017d915146778c111d988f16d732cc395 # v0.4.0
+  uses: stellasoftio/lazy-release-action@40cbbc343f8b7c8efb5c7ae4e7fd9b9584472531 # v0.5.1
   with:
     github-token: ${{ secrets.GITHUB_TOKEN }}
     snapshots: true
@@ -177,7 +177,7 @@ example
 ```yaml
 - name: Create Release PR or Publish Release
   id: lazy-release
-  uses: stellasoftio/lazy-release-action@a42c92f017d915146778c111d988f16d732cc395 # v0.4.0
+  uses: stellasoftio/lazy-release-action@40cbbc343f8b7c8efb5c7ae4e7fd9b9584472531 # v0.5.1
   with:
     github-token: ${{ secrets.GITHUB_TOKEN }}
 
