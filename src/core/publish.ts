@@ -2,10 +2,11 @@ import { detect } from "package-manager-detector";
 import { PackageInfo } from "../types";
 import { execFileSync, execSync } from "child_process";
 import { setOutput } from "@actions/core";
-import { getTagName } from "../utils/tag";
+import { getMajorTagName, getTagName } from "../utils/tag";
 import { doesTagExistOnRemote } from "../api/git";
 import { getPackageNameWithoutScope } from "../utils/package";
 import { toDirectoryPath } from "../utils/path";
+import { REPUBLISH_MAJOR_TAG } from "../constants";
 
 export async function publishPackages(changedPkgInfos: PackageInfo[]): Promise<void> {
   console.log('Publishing packages...');
@@ -68,6 +69,7 @@ export async function publishPackages(changedPkgInfos: PackageInfo[]): Promise<v
 export function createTags(packageInfos: PackageInfo[]): void {
   console.log('Creating tags...');
 
+  let rootPkg: PackageInfo | undefined;
   const tagsToCreate: string[] = [];
   packageInfos.forEach((pkgInfo) => {
     if (!pkgInfo.version) {
@@ -77,10 +79,15 @@ export function createTags(packageInfos: PackageInfo[]): void {
       return;
     }
 
+    if (pkgInfo.isRoot) { 
+      rootPkg = pkgInfo;
+    }
+
     const tagName = getTagName(pkgInfo);
 
     // Check if tag exists on remote
     const tagExists = doesTagExistOnRemote(tagName);
+
     if (tagExists) {
       console.log(`Tag ${tagName} already exists on remote, skipping...`);
       return;
@@ -110,6 +117,34 @@ export function createTags(packageInfos: PackageInfo[]): void {
     console.log('Tags pushed successfully.');
   } catch (error) {
     console.error('Failed to push tags:', error);
+  }
+
+  if (rootPkg && REPUBLISH_MAJOR_TAG) {
+    const majorTagName = getMajorTagName(rootPkg.version);
+
+    let publishTag = false;
+    try {
+      // create local tag
+      execSync(`git tag -f ${majorTagName}`, {
+        stdio: 'inherit',
+      });
+      publishTag = true;
+      console.log(`Created local major tag: ${majorTagName}`);
+    } catch (error) {
+      console.error(`Failed to create local major tag ${majorTagName}:`, error);
+    }
+
+    if (publishTag) {
+      try {
+        // override tag
+        execSync(`git push origin ${majorTagName} --force`, {
+          stdio: 'inherit',
+        });
+        console.log(`Pushed major tag: ${majorTagName}`);
+      } catch (error) {
+        console.error(`Failed to push local major tag ${majorTagName}:`, error);
+      }
+    }
   }
 }
 

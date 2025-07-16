@@ -24,6 +24,9 @@ inputs:
   release-pr-title:
     description: "The title of the release PR"
     required: false
+  republish-major-tag:
+    description: "Republish the major tag"
+    required: false
 
 runs:
   using: 'node20'
