@@ -29987,6 +29987,13 @@ async function createOrUpdatePRStatusComment(shouldCreateSnapshot = false) {
   } else {
     markdown += "\u26A0\uFE0F No packages changed.\n";
   }
+  const changedRootPkg = changedPackageInfos.find((pkg) => pkg.isRoot);
+  if (changedRootPkg && REPUBLISH_MAJOR_TAG) {
+    const majorTagName = getMajorTagName(changedRootPkg.version);
+    const tagExists = doesTagExistOnRemote(majorTagName);
+    markdown += `\u{1F3F7}\uFE0F ${tagExists ? "Republish" : "Publish"} major tag: ${majorTagName}
+`;
+  }
   const latestCommitHash = import_github4.context.payload.pull_request?.head.sha;
   if (latestCommitHash) {
     console.log(`Latest commit hash: ${latestCommitHash}`);
