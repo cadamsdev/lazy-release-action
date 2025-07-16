@@ -1,4 +1,4 @@
-import { getTagName } from "./tag";
+import { getMajorTagName, getTagName } from "./tag";
 import { PackageInfo } from "../types";
 
 describe('getTagName', () => {
@@ -28,5 +28,21 @@ describe('getTagName', () => {
     };
 
     expect(getTagName(pkgInfo)).toEqual('v1.0.0');
+  });
+});
+
+describe('getMajorTagName', () => {
+  it('should get the major tag name', () => {
+    const pkgInfo: PackageInfo = {
+      name: 'test-package',
+      version: '1.2.3',
+      newVersion: '1.2.4',
+      isRoot: false,
+      isPrivate: false,
+      path: '',
+      dependencies: [],
+    };
+
+    expect(getMajorTagName(pkgInfo.version)).toEqual('v1');
   });
 });

@@ -23350,8 +23350,8 @@ var require_major = __commonJS({
   "node_modules/semver/functions/major.js"(exports2, module2) {
     "use strict";
     var SemVer = require_semver();
-    var major = (a, loose) => new SemVer(a, loose).major;
-    module2.exports = major;
+    var major2 = (a, loose) => new SemVer(a, loose).major;
+    module2.exports = major2;
   }
 });
 
@@ -23597,12 +23597,12 @@ var require_coerce = __commonJS({
       if (match === null) {
         return null;
       }
-      const major = match[2];
+      const major2 = match[2];
       const minor = match[3] || "0";
       const patch = match[4] || "0";
       const prerelease = options.includePrerelease && match[5] ? `-${match[5]}` : "";
       const build = options.includePrerelease && match[6] ? `+${match[6]}` : "";
-      return parse(`${major}.${minor}.${patch}${prerelease}${build}`, options);
+      return parse(`${major2}.${minor}.${patch}${prerelease}${build}`, options);
     };
     module2.exports = coerce;
   }
@@ -24623,7 +24623,7 @@ var require_semver2 = __commonJS({
     var clean = require_clean();
     var inc2 = require_inc();
     var diff = require_diff();
-    var major = require_major();
+    var major2 = require_major();
     var minor = require_minor();
     var patch = require_patch();
     var prerelease = require_prerelease();
@@ -24661,7 +24661,7 @@ var require_semver2 = __commonJS({
       clean,
       inc: inc2,
       diff,
-      major,
+      major: major2,
       minor,
       patch,
       prerelease,
@@ -28105,6 +28105,7 @@ var DEFAULT_BRANCH = process.env["INPUT_DEFAULT-BRANCH"] || "main";
 var NPM_TOKEN = process.env["INPUT_NPM-TOKEN"] || "";
 var END_COMMIT = process.env["INPUT_END-COMMIT"] || "";
 var RELEASE_PR_TITLE = process.env["INPUT_RELEASE-PR-TITLE"] || "Version Packages";
+var PUBLISH_MAJOR_TAG = process.env["INPUT_PUBLISH-MAJOR-TAG"] ? process.env["INPUT_PUBLISH-MAJOR-TAG"] === "true" : false;
 var RELEASE_BRANCH = "lazy-release/main";
 var PR_COMMENT_STATUS_ID = "b3da20ce-59b6-4bbd-a6e3-6d625f45d008";
 var RELEASE_ID = "ebe18c5c-b9c6-4fca-8b11-90bf80ad229e";
@@ -29702,6 +29703,7 @@ var import_child_process3 = require("child_process");
 var import_core = __toESM(require_core());
 
 // src/utils/tag.ts
+var import_semver2 = __toESM(require_semver2());
 function getTagName(pkgInfo) {
   let tagName = "";
   if (pkgInfo.isRoot) {
@@ -29710,6 +29712,10 @@ function getTagName(pkgInfo) {
     tagName = `${pkgInfo.name}@${pkgInfo.version}`;
   }
   return tagName;
+}
+function getMajorTagName(version) {
+  const majorVersion = (0, import_semver2.major)(version);
+  return `v${majorVersion}`;
 }
 
 // src/core/publish.ts
@@ -29761,6 +29767,7 @@ async function publishPackages(changedPkgInfos) {
 }
 function createTags(packageInfos) {
   console.log("Creating tags...");
+  let rootPkg;
   const tagsToCreate = [];
   packageInfos.forEach((pkgInfo) => {
     if (!pkgInfo.version) {
@@ -29768,6 +29775,9 @@ function createTags(packageInfos) {
         `No version for package ${pkgInfo.name}, skipping tag creation.`
       );
       return;
+    }
+    if (pkgInfo.isRoot) {
+      rootPkg = pkgInfo;
     }
     const tagName = getTagName(pkgInfo);
     const tagExists = doesTagExistOnRemote(tagName);
@@ -29796,6 +29806,29 @@ function createTags(packageInfos) {
     console.log("Tags pushed successfully.");
   } catch (error) {
     console.error("Failed to push tags:", error);
+  }
+  if (rootPkg && PUBLISH_MAJOR_TAG) {
+    const majorTagName = getMajorTagName(rootPkg.version);
+    let publishTag = false;
+    try {
+      (0, import_child_process3.execSync)(`git tag -f ${majorTagName}`, {
+        stdio: "inherit"
+      });
+      publishTag = true;
+      console.log(`Created local major tag: ${majorTagName}`);
+    } catch (error) {
+      console.error(`Failed to create local major tag ${majorTagName}:`, error);
+    }
+    if (publishTag) {
+      try {
+        (0, import_child_process3.execSync)(`git push origin ${majorTagName} --force`, {
+          stdio: "inherit"
+        });
+        console.log(`Pushed major tag: ${majorTagName}`);
+      } catch (error) {
+        console.error(`Failed to push local major tag ${majorTagName}:`, error);
+      }
+    }
   }
 }
 function setPackageVersionOutput(pkgInfo) {
@@ -29953,6 +29986,13 @@ async function createOrUpdatePRStatusComment(shouldCreateSnapshot = false) {
 `;
   } else {
     markdown += "\u26A0\uFE0F No packages changed.\n";
+  }
+  const changedRootPkg = changedPackageInfos.find((pkg) => pkg.isRoot);
+  if (changedRootPkg && PUBLISH_MAJOR_TAG) {
+    const majorTagName = getMajorTagName(changedRootPkg.version);
+    const tagExists = doesTagExistOnRemote(majorTagName);
+    markdown += `\u{1F3F7}\uFE0F ${tagExists ? "Republish" : "Publish"} major tag: ${majorTagName}
+`;
   }
   const latestCommitHash = import_github4.context.payload.pull_request?.head.sha;
   if (latestCommitHash) {

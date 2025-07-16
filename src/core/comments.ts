@@ -5,9 +5,11 @@ import { applyNewVersion } from "./version";
 import { generateMarkdown, hasChangelogSection, hasReleasePRComment, increaseHeadingLevel } from "../utils/markdown";
 import { detect, resolveCommand } from "package-manager-detector";
 import { createSnapshot } from "./snapshots";
-import { PR_COMMENT_STATUS_ID } from "../constants";
+import { PR_COMMENT_STATUS_ID, PUBLISH_MAJOR_TAG } from "../constants";
 import { Changelog } from "../types";
 import { createChangelogFromChangelogItem, getChangelogFromMarkdown } from "../utils/changelog";
+import { getMajorTagName } from "../utils/tag";
+import { doesTagExistOnRemote } from "../api/git";
 
 export async function createOrUpdatePRStatusComment(shouldCreateSnapshot = false): Promise<void> {
   const prBody = context.payload.pull_request?.body || '';
@@ -73,6 +75,13 @@ export async function createOrUpdatePRStatusComment(shouldCreateSnapshot = false
     } will be updated.\n`;
   } else {
     markdown += '⚠️ No packages changed.\n';
+  }
+
+  const changedRootPkg = changedPackageInfos.find((pkg) => pkg.isRoot);
+  if (changedRootPkg && PUBLISH_MAJOR_TAG) {
+    const majorTagName = getMajorTagName(changedRootPkg.version);
+    const tagExists = doesTagExistOnRemote(majorTagName);
+    markdown += `🏷️ ${tagExists ? 'Republish' : 'Publish'} major tag: ${majorTagName}\n`;
   }
 
   const latestCommitHash = context.payload.pull_request?.head.sha;
