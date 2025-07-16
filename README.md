@@ -146,14 +146,15 @@ jobs:
 
 ### Inputs
 
-| Input              | Type    | Default Value      | Description                 |
-| ------------------ | ------- | ------------------ | --------------------------- |
-| `github-token`     | string  | `''`               | GitHub authentication token |
-| `npm-token`        | string  | `''`               | NPM authentication token    |
-| `default-branch`   | string  | `main`             | The repo's default branch   |
-| `snapshots`        | boolean | `false`            | Whether to create snapshots |
-| `end-commit`       | string  | `''`               | The end commit reference    |
-| `release-pr-title` | string  | `Version Packages` | The title of the release PR |
+| Input               | Type    | Default Value      | Description                                                                                                                     |
+| ------------------- | ------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
+| `github-token`      | string  | `''`               | GitHub authentication token                                                                                                     |
+| `npm-token`         | string  | `''`               | NPM authentication token                                                                                                        |
+| `default-branch`    | string  | `main`             | The repo's default branch                                                                                                       |
+| `snapshots`         | boolean | `false`            | Whether to create snapshots                                                                                                     |
+| `end-commit`        | string  | `''`               | The end commit reference                                                                                                        |
+| `release-pr-title`  | string  | `Version Packages` | The title of the release PR                                                                                                     |
+| `publish-major-tag` | boolean | `false`            | Publishes the major tag e.g v1. This option is useful for GitHub actions. If the tag already exists the tag will be overwritten |
 
 examples
 
