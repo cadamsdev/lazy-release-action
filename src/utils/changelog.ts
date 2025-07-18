@@ -5,6 +5,7 @@ import { hasChangelogSection } from "./markdown";
 import { getPackageNameWithoutScope } from "./package";
 import { getDirectoryNameFromPath } from "./path";
 import { transformDescription } from "./string";
+import { PR_NUMBER_PATTERN } from "./regex";
 
 const DATE_NOW = new Date();
 
@@ -114,6 +115,7 @@ export function getChangelogFromCommits(
 
   for (const commit of commits) {
     if (commit.body && hasChangelogSection(commit.body)) {
+      const prNumber = getPRNumberFromCommit(commit);
       const changelogSection = getChangelogSectionFromCommitMessage(
         commit.body
       );
@@ -121,7 +123,8 @@ export function getChangelogFromCommits(
       for (const item of changelogItems) {
         const changelog = createChangelogFromChangelogItem(
           item,
-          rootPackageName
+          rootPackageName,
+          prNumber,
         );
         if (!changelog) {
           continue;
@@ -146,6 +149,14 @@ export function getChangelogFromCommits(
     changelogs
   );
   return changelogs;
+}
+
+export function getPRNumberFromCommit(commit: Commit): number | undefined {
+  const prNumberMatch = commit.subject.match(PR_NUMBER_PATTERN);
+  if (prNumberMatch) {
+    return parseInt(prNumberMatch[1]);
+  }
+  return undefined;
 }
 
 export function updateChangelog(
@@ -259,7 +270,7 @@ function getSemverBump(typeParts: CommitTypeParts): SemverBump {
   return 'patch';
 }
 
-export function createChangelogFromChangelogItem(item: string, rootPackageName?: string): Changelog|undefined {
+export function createChangelogFromChangelogItem(item: string, rootPackageName?: string, prNumber?: number): Changelog|undefined {
   const commitType = extractCommitType(item);
   const description = extractDescription(item);
   const typeParts = extractCommitTypeParts(commitType);
@@ -287,7 +298,7 @@ export function createChangelogFromChangelogItem(item: string, rootPackageName?:
 
   const changelog: Changelog = {
     type: typeParts.type,
-    description: transformDescription(description),
+    description: transformDescription(description, prNumber),
     packages: tempPackageNames,
     isBreakingChange: typeParts.isBreakingChange,
     semverBump,

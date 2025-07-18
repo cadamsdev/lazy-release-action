@@ -1,6 +1,6 @@
-import { replacePRNumberWithLink } from "./markdown";
+import { getPRMarkdownLink, replacePRNumberWithLink } from "./markdown";
 
-export function transformDescription(description: string): string {
+export function transformDescription(description: string, prNumber?: number): string {
   if (!description) {
     return '';
   }
@@ -13,6 +13,12 @@ export function transformDescription(description: string): string {
 
   // replace PR number
   temp = replacePRNumberWithLink(temp);
+
+  if (prNumber) {
+    const prMarkdownLink = getPRMarkdownLink(prNumber);
+    temp = temp += ` (${prMarkdownLink})`;
+  }
+
   return temp;
 }
 

@@ -28946,6 +28946,9 @@ function getPullRequestUrl(owner, repo, prNumber) {
   return `https://github.com/${owner}/${repo}/pull/${prNumber}`;
 }
 
+// src/utils/regex.ts
+var PR_NUMBER_PATTERN = /\(#(\d+)\)/;
+
 // src/utils/markdown.ts
 function generateMarkdown(changedPackageInfos, indirectPackageInfos, changelogs) {
   let markdown = "# \u{1F449} Changelog\n\n";
@@ -29080,17 +29083,20 @@ function replacePRNumberWithLink(description) {
   if (!description) {
     return description;
   }
-  const owner = import_github.context.repo.owner;
-  const repo = import_github.context.repo.repo;
-  const prPattern = /\(#(\d+)\)/;
   let tempDesc = description;
-  const prNumberMatch = tempDesc.match(prPattern);
+  const prNumberMatch = tempDesc.match(PR_NUMBER_PATTERN);
   if (prNumberMatch) {
     const prNumber = parseInt(prNumberMatch[1]);
-    const prUrl = getPullRequestUrl(owner, repo, prNumber);
-    tempDesc = tempDesc.replace(prPattern, `([#${prNumber}](${prUrl}))`);
+    const prMarkdownLink = getPRMarkdownLink(prNumber);
+    tempDesc = tempDesc.replace(PR_NUMBER_PATTERN, `(${prMarkdownLink})`);
   }
   return tempDesc;
+}
+function getPRMarkdownLink(prNumber) {
+  const owner = import_github.context.repo.owner;
+  const repo = import_github.context.repo.repo;
+  const prUrl = getPullRequestUrl(owner, repo, prNumber);
+  return `[#${prNumber}](${prUrl})`;
 }
 function hasChangelogSection(markdown) {
   return markdown.includes("## Changelog");
@@ -29416,13 +29422,17 @@ async function createPRComment(markdown) {
 var import_github5 = __toESM(require_github());
 
 // src/utils/string.ts
-function transformDescription(description) {
+function transformDescription(description, prNumber) {
   if (!description) {
     return "";
   }
   let temp = description.trim();
   temp = uppercaseFirstLetter(temp);
   temp = replacePRNumberWithLink(temp);
+  if (prNumber) {
+    const prMarkdownLink = getPRMarkdownLink(prNumber);
+    temp = temp += ` (${prMarkdownLink})`;
+  }
   return temp;
 }
 function uppercaseFirstLetter(str) {
@@ -29507,6 +29517,7 @@ function getChangelogFromCommits(commits, rootPackageName) {
   const changelogs = [];
   for (const commit of commits) {
     if (commit.body && hasChangelogSection(commit.body)) {
+      const prNumber = getPRNumberFromCommit(commit);
       const changelogSection = getChangelogSectionFromCommitMessage(
         commit.body
       );
@@ -29514,7 +29525,8 @@ function getChangelogFromCommits(commits, rootPackageName) {
       for (const item of changelogItems) {
         const changelog = createChangelogFromChangelogItem(
           item,
-          rootPackageName
+          rootPackageName,
+          prNumber
         );
         if (!changelog) {
           continue;
@@ -29536,6 +29548,13 @@ function getChangelogFromCommits(commits, rootPackageName) {
     changelogs
   );
   return changelogs;
+}
+function getPRNumberFromCommit(commit) {
+  const prNumberMatch = commit.subject.match(PR_NUMBER_PATTERN);
+  if (prNumberMatch) {
+    return parseInt(prNumberMatch[1]);
+  }
+  return void 0;
 }
 function updateChangelog(existingChangelogContent, newChangelogContent, newVersion) {
   if (!newVersion) {
@@ -29615,7 +29634,7 @@ function getSemverBump(typeParts) {
   }
   return "patch";
 }
-function createChangelogFromChangelogItem(item, rootPackageName) {
+function createChangelogFromChangelogItem(item, rootPackageName, prNumber) {
   const commitType = extractCommitType(item);
   const description = extractDescription(item);
   const typeParts = extractCommitTypeParts(commitType);
@@ -29635,7 +29654,7 @@ function createChangelogFromChangelogItem(item, rootPackageName) {
   }
   const changelog = {
     type: typeParts.type,
-    description: transformDescription(description),
+    description: transformDescription(description, prNumber),
     packages: tempPackageNames,
     isBreakingChange: typeParts.isBreakingChange,
     semverBump,

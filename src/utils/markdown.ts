@@ -4,6 +4,7 @@ import { Changelog, PackageChangelogEntry, PackageInfo } from "../types";
 import { getPackageNameWithoutScope } from "./package";
 import { getDirectoryNameFromPath } from "./path";
 import { getPullRequestUrl } from "./github";
+import { PR_NUMBER_PATTERN } from "./regex";
 
 export function generateMarkdown(
   changedPackageInfos: PackageInfo[],
@@ -191,19 +192,23 @@ export function replacePRNumberWithLink(
     return description;
   }
 
-  const owner = context.repo.owner;
-  const repo = context.repo.repo;
-  const prPattern = /\(#(\d+)\)/;
   let tempDesc = description;
-  const prNumberMatch = tempDesc.match(prPattern);
+  const prNumberMatch = tempDesc.match(PR_NUMBER_PATTERN);
 
   if (prNumberMatch) {
     const prNumber = parseInt(prNumberMatch[1]);
-    const prUrl = getPullRequestUrl(owner, repo, prNumber);
-    tempDesc = tempDesc.replace(prPattern, `([#${prNumber}](${prUrl}))`);
+    const prMarkdownLink = getPRMarkdownLink(prNumber);
+    tempDesc = tempDesc.replace(PR_NUMBER_PATTERN, `(${prMarkdownLink})`);
   }
 
   return tempDesc;
+}
+
+export function getPRMarkdownLink(prNumber: number): string {
+  const owner = context.repo.owner;
+  const repo = context.repo.repo;
+  const prUrl = getPullRequestUrl(owner, repo, prNumber);
+  return `[#${prNumber}](${prUrl})`;
 }
 
 export function hasChangelogSection(markdown: string): boolean  {
