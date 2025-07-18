@@ -29428,10 +29428,12 @@ function transformDescription(description, prNumber) {
   }
   let temp = description.trim();
   temp = uppercaseFirstLetter(temp);
-  temp = replacePRNumberWithLink(temp);
-  if (prNumber) {
+  const prNumberMatch = temp.match(PR_NUMBER_PATTERN);
+  if (prNumberMatch) {
+    temp = replacePRNumberWithLink(temp);
+  } else if (prNumber) {
     const prMarkdownLink = getPRMarkdownLink(prNumber);
-    temp = temp += ` (${prMarkdownLink})`;
+    temp += ` (${prMarkdownLink})`;
   }
   return temp;
 }

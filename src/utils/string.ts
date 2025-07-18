@@ -1,4 +1,5 @@
 import { getPRMarkdownLink, replacePRNumberWithLink } from "./markdown";
+import { PR_NUMBER_PATTERN } from "./regex";
 
 export function transformDescription(description: string, prNumber?: number): string {
   if (!description) {
@@ -11,12 +12,14 @@ export function transformDescription(description: string, prNumber?: number): st
   // uppercase the first letter
   temp = uppercaseFirstLetter(temp);
 
-  // replace PR number
-  temp = replacePRNumberWithLink(temp);
-
-  if (prNumber) {
+  // check if temp has a PR Number in it
+  const prNumberMatch = temp.match(PR_NUMBER_PATTERN);
+  if (prNumberMatch) {
+    // replace PR number
+    temp = replacePRNumberWithLink(temp);
+  } else if (prNumber) {
     const prMarkdownLink = getPRMarkdownLink(prNumber);
-    temp = temp += ` (${prMarkdownLink})`;
+    temp += ` (${prMarkdownLink})`;
   }
 
   return temp;
