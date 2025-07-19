@@ -9,6 +9,15 @@ import {
 import { Changelog, PackageInfo } from "../types";
 import { RELEASE_ID } from "../constants";
 
+vi.mock('@actions/github', () => ({
+  context: {
+    repo: {
+      owner: 'test-owner',
+      repo: 'test-repo',
+    },
+  },
+}));
+
 describe('generateMarkdown', () => {
   it('should generate markdown for changelog', () => {
     const pkgInfos: PackageInfo[] = [
@@ -64,10 +73,14 @@ describe('generateMarkdown', () => {
 
 ## package-a@1.0.0➡️1.0.1
 
+[compare changes](https://github.com/test-owner/test-repo/compare/package-a@1.0.0...package-a@1.0.1)
+
 ### 🏠 Chores
 - Some description
 
 ## package-b@1.0.0➡️1.0.1
+
+[compare changes](https://github.com/test-owner/test-repo/compare/package-b@1.0.0...package-b@1.0.1)
 
 ### 🐛 Bug Fixes
 - Some fix
@@ -107,6 +120,8 @@ describe('generateMarkdown', () => {
     const expectedMarkdown = `# 👉 Changelog
 
 ## 1.0.0➡️1.0.1
+
+[compare changes](https://github.com/test-owner/test-repo/compare/v1.0.0...v1.0.1)
 
 ### 🏠 Chores
 - Some description

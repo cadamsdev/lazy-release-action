@@ -4,6 +4,7 @@ import { Changelog, PackageChangelogEntry, PackageInfo } from "../types";
 import { getPackageNameWithoutScope } from "./package";
 import { getDirectoryNameFromPath } from "./path";
 import { getPullRequestUrl } from "./github";
+import { getTagName } from "./tag";
 
 export function generateMarkdown(
   changedPackageInfos: PackageInfo[],
@@ -38,6 +39,9 @@ export function generateMarkdown(
     }
 
     markdown += '\n\n';
+
+    // add compare changes link
+    markdown += getCompareChangesMarkdownLink(pkg) + '\n\n';
 
     const changelogsWithBreakingChanges = packageChangelogs.filter(
       (changelog) => changelog.isBreakingChange
@@ -98,11 +102,22 @@ export function generateMarkdown(
     }
     markdown += '\n\n';
 
+    // add compare changes link
+    markdown += getCompareChangesMarkdownLink(pkgInfo) + '\n\n';
+
     // if the package is a dependency, we don't have changelogs for it
     markdown += `📦 Updated due to dependency changes\n\n`;
   });
 
   return markdown;
+}
+
+export function getCompareChangesMarkdownLink(pkg: PackageInfo): string {
+  const prevTagName = getTagName(pkg);
+  const newTagName = getTagName(pkg, true);
+  const owner = context.repo.owner;
+  const repo = context.repo.repo;
+  return `[compare changes](https://github.com/${owner}/${repo}/compare/${prevTagName}...${newTagName})`;
 }
 
 export function increaseHeadingLevel(message: string): string {

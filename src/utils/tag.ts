@@ -1,13 +1,14 @@
 import { major } from "semver";
 import { PackageInfo } from "../types";
 
-export function getTagName(pkgInfo: PackageInfo): string {
+export function getTagName(pkgInfo: PackageInfo, newVersion: boolean = false): string {
   let tagName = '';
 
+  const version = newVersion ? pkgInfo.newVersion : pkgInfo.version;
   if (pkgInfo.isRoot) {
-    tagName = `v${pkgInfo.version}`;
+    tagName = `v${version}`;
   } else {
-    tagName = `${pkgInfo.name}@${pkgInfo.version}`;
+    tagName = `${pkgInfo.name}@${version}`;
   }
 
   return tagName;

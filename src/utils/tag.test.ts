@@ -29,6 +29,21 @@ describe('getTagName', () => {
 
     expect(getTagName(pkgInfo)).toEqual('v1.0.0');
   });
+
+  it('should get the tagName with newVersion', () => {
+    const pkgInfo: PackageInfo = {
+      name: 'test-package',
+      version: '1.0.0',
+      newVersion: '1.0.1',
+      isRoot: false,
+      isPrivate: false,
+      path: '',
+      dependencies: [],
+    };
+
+    expect(getTagName(pkgInfo)).toEqual('test-package@1.0.0');
+    expect(getTagName(pkgInfo, true)).toEqual('test-package@1.0.1');
+  });
 });
 
 describe('getMajorTagName', () => {
