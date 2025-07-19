@@ -1,3 +1,13 @@
+## 0.6.0 (2025-07-19)
+
+### 🚀 New Features
+- Added a link in the GitHub release to compare changes ([#50](https://github.com/stellasoftio/lazy-release-action/pull/50))
+- Added input to publish major tag ([#46](https://github.com/stellasoftio/lazy-release-action/pull/46))
+
+### 🐛 Bug Fixes
+- Fix updating dependencies that use workspace:* ([#49](https://github.com/stellasoftio/lazy-release-action/pull/49))
+
+
 ## 0.5.1 (2025-07-15)
 
 ### 🐛 Bug Fixes
