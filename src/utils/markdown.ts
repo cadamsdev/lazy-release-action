@@ -102,6 +102,9 @@ export function generateMarkdown(
     }
     markdown += '\n\n';
 
+    // add compare changes link
+    markdown += getCompareChangesMarkdownLink(pkgInfo) + '\n\n';
+
     // if the package is a dependency, we don't have changelogs for it
     markdown += `📦 Updated due to dependency changes\n\n`;
   });

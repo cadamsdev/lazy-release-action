@@ -29047,6 +29047,7 @@ function generateMarkdown(changedPackageInfos, indirectPackageInfos, changelogs)
       markdown += `\u27A1\uFE0F${pkgInfo.newVersion}`;
     }
     markdown += "\n\n";
+    markdown += getCompareChangesMarkdownLink(pkgInfo) + "\n\n";
     markdown += `\u{1F4E6} Updated due to dependency changes
 
 `;
