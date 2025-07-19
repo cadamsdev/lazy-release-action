@@ -1,9 +1,3 @@
-## 0.6.0 (2025-07-16)
-
-### 🚀 New Features
-- Added input to publish major tag ([#46](https://github.com/stellasoftio/lazy-release-action/pull/46))
-
-
 ## 0.5.1 (2025-07-15)
 
 ### 🐛 Bug Fixes
