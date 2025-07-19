@@ -179,7 +179,7 @@ async function createOrUpdateReleasePR() {
   console.log('Create or update release PR...');
 
   // checkout release branch
-  await createOrCheckoutBranch(RELEASE_BRANCH);
+  await createOrCheckoutBranch();
 
   const commits = await getRecentCommits();
 

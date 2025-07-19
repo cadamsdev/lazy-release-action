@@ -1,5 +1,5 @@
 import { execFileSync, execSync } from 'child_process';
-import { DEFAULT_BRANCH, END_COMMIT, RELEASE_ID } from '../constants';
+import { DEFAULT_BRANCH, END_COMMIT, RELEASE_BRANCH, RELEASE_ID } from '../constants';
 import { exec } from '@actions/exec';
 import { CONVENTIONAL_COMMITS_PATTERN } from '../utils/validation';
 import { hasChangelogSection } from '../utils/markdown';
@@ -24,34 +24,47 @@ export function checkoutBranch(branchName: string) {
   execFileSync('git', ['checkout', branchName], { stdio: 'inherit' });
 }
 
-export function createOrCheckoutBranch(branchName: string) {
+export function createOrCheckoutBranch() {
+  const branchName = RELEASE_BRANCH;
   try {
     execFileSync('git', ['checkout', branchName], { stdio: 'inherit' });
     console.log(`Switched to branch ${branchName}`);
+    // oxlint-disable-next-line no-unused-vars
+  } catch (error) {
+    console.log(`Branch ${branchName} does not exist, creating it.`);
+    execFileSync('git', ['checkout', '-b', branchName], { stdio: 'inherit' });
 
-    // merge default branch into the current branch
-    try {
-      execFileSync('git', ['merge', `origin/${DEFAULT_BRANCH}`], {
+    // Push the new branch to remote
+    execFileSync('git', ['push', '-u', 'origin', branchName], {
+      stdio: 'inherit',
+    });
+    console.log(`Created and pushed new branch ${branchName}`);
+  }
+
+  // merge default branch into the current branch
+  try {
+    execFileSync('git', ['merge', `origin/${DEFAULT_BRANCH}`], {
+      stdio: 'inherit',
+    });
+    console.log(`Merged ${DEFAULT_BRANCH} into ${branchName}`);
+    // oxlint-disable-next-line no-unused-vars
+  } catch (mergeError) {
+    console.log(
+      `Merge conflicts detected, resolving by taking theirs strategy`
+    );
+    // Reset to clean state and merge with theirs strategy
+    execFileSync('git', ['merge', '--abort'], { stdio: 'inherit' });
+    execFileSync(
+      'git',
+      ['merge', '-X', 'theirs', `origin/${DEFAULT_BRANCH}`],
+      {
         stdio: 'inherit',
-      });
-      console.log(`Merged ${DEFAULT_BRANCH} into ${branchName}`);
-      // oxlint-disable-next-line no-unused-vars
-    } catch (mergeError) {
-      console.log(
-        `Merge conflicts detected, resolving by taking theirs strategy`
-      );
-      // Reset to clean state and merge with theirs strategy
-      execFileSync('git', ['merge', '--abort'], { stdio: 'inherit' });
-      execFileSync(
-        'git',
-        ['merge', '-X', 'theirs', `origin/${DEFAULT_BRANCH}`],
-        {
-          stdio: 'inherit',
-        }
-      );
-      console.log(`Resolved merge conflicts by taking theirs strategy`);
-    }
+      }
+    );
+    console.log(`Resolved merge conflicts by taking theirs strategy`);
+  }
 
+  try {
     // Push the updated branch to remote
     execFileSync('git', ['push', 'origin', branchName], { stdio: 'inherit' });
     console.log(`Pushed updated ${branchName} to remote`);
@@ -72,14 +85,7 @@ export function createOrCheckoutBranch(branchName: string) {
     console.log(`Committed and pushed changes to ${branchName}`);
     // oxlint-disable-next-line no-unused-vars
   } catch (error) {
-    console.log(`Branch ${branchName} does not exist, creating it.`);
-    execFileSync('git', ['checkout', '-b', branchName], { stdio: 'inherit' });
 
-    // Push the new branch to remote
-    execFileSync('git', ['push', '-u', 'origin', branchName], {
-      stdio: 'inherit',
-    });
-    console.log(`Created and pushed new branch ${branchName}`);
   }
 }
 
