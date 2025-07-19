@@ -29133,29 +29133,39 @@ function checkoutBranch(branchName) {
   (0, import_child_process2.execFileSync)("git", ["fetch", "origin", branchName], { stdio: "inherit" });
   (0, import_child_process2.execFileSync)("git", ["checkout", branchName], { stdio: "inherit" });
 }
-function createOrCheckoutBranch(branchName) {
+function createOrCheckoutBranch() {
+  const branchName = RELEASE_BRANCH;
   try {
     (0, import_child_process2.execFileSync)("git", ["checkout", branchName], { stdio: "inherit" });
     console.log(`Switched to branch ${branchName}`);
-    try {
-      (0, import_child_process2.execFileSync)("git", ["merge", `origin/${DEFAULT_BRANCH}`], {
+  } catch (error) {
+    console.log(`Branch ${branchName} does not exist, creating it.`);
+    (0, import_child_process2.execFileSync)("git", ["checkout", "-b", branchName], { stdio: "inherit" });
+    (0, import_child_process2.execFileSync)("git", ["push", "-u", "origin", branchName], {
+      stdio: "inherit"
+    });
+    console.log(`Created and pushed new branch ${branchName}`);
+  }
+  try {
+    (0, import_child_process2.execFileSync)("git", ["merge", `origin/${DEFAULT_BRANCH}`], {
+      stdio: "inherit"
+    });
+    console.log(`Merged ${DEFAULT_BRANCH} into ${branchName}`);
+  } catch (mergeError) {
+    console.log(
+      `Merge conflicts detected, resolving by taking theirs strategy`
+    );
+    (0, import_child_process2.execFileSync)("git", ["merge", "--abort"], { stdio: "inherit" });
+    (0, import_child_process2.execFileSync)(
+      "git",
+      ["merge", "-X", "theirs", `origin/${DEFAULT_BRANCH}`],
+      {
         stdio: "inherit"
-      });
-      console.log(`Merged ${DEFAULT_BRANCH} into ${branchName}`);
-    } catch (mergeError) {
-      console.log(
-        `Merge conflicts detected, resolving by taking theirs strategy`
-      );
-      (0, import_child_process2.execFileSync)("git", ["merge", "--abort"], { stdio: "inherit" });
-      (0, import_child_process2.execFileSync)(
-        "git",
-        ["merge", "-X", "theirs", `origin/${DEFAULT_BRANCH}`],
-        {
-          stdio: "inherit"
-        }
-      );
-      console.log(`Resolved merge conflicts by taking theirs strategy`);
-    }
+      }
+    );
+    console.log(`Resolved merge conflicts by taking theirs strategy`);
+  }
+  try {
     (0, import_child_process2.execFileSync)("git", ["push", "origin", branchName], { stdio: "inherit" });
     console.log(`Pushed updated ${branchName} to remote`);
     (0, import_child_process2.execFileSync)("git", ["checkout", `origin/${DEFAULT_BRANCH}`, "--", "."], {
@@ -29170,12 +29180,6 @@ function createOrCheckoutBranch(branchName) {
     (0, import_child_process2.execFileSync)("git", ["push", "origin", branchName], { stdio: "inherit" });
     console.log(`Committed and pushed changes to ${branchName}`);
   } catch (error) {
-    console.log(`Branch ${branchName} does not exist, creating it.`);
-    (0, import_child_process2.execFileSync)("git", ["checkout", "-b", branchName], { stdio: "inherit" });
-    (0, import_child_process2.execFileSync)("git", ["push", "-u", "origin", branchName], {
-      stdio: "inherit"
-    });
-    console.log(`Created and pushed new branch ${branchName}`);
   }
 }
 function commitAndPushChanges() {
@@ -30192,7 +30196,7 @@ async function publish() {
 }
 async function createOrUpdateReleasePR() {
   console.log("Create or update release PR...");
-  await createOrCheckoutBranch(RELEASE_BRANCH);
+  await createOrCheckoutBranch();
   const commits = await getRecentCommits();
   const packagePaths = getPackagePaths();
   const allPkgInfos = getPackageInfos(packagePaths);
