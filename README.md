@@ -16,7 +16,7 @@ If you enjoy this tool, please consider giving it a star ⭐️ on GitHub! Also 
 - [🔧 Customization](#-customization)
   - [Inputs](#inputs)
   - [Output Params](#output-params)
-- [💡 Inspiration](#-inspiration)
+- [💡 Inspiration](#inspiration)
 - [🔗 Links](#-links)
 
 ## How does it work?
