@@ -95,6 +95,13 @@ export function updatePackageJsonFile(
         const depPackageInfo = allPkgInfos.find((pkg) => pkg.name === depName);
         if (depPackageInfo && depPackageInfo.newVersion) {
           const currentVersionSpec = packageJson[field][depName];
+          if (currentVersionSpec === 'workspace:*') {
+            console.log(
+              `Skipping workspace dependency ${depName} in ${pkgInfo.name} as it is already set to 'workspace:*'`
+            );
+            continue;
+          }
+
           const prefix = getVersionPrefix(currentVersionSpec);
           const newVersionSpec = prefix + depPackageInfo.newVersion;
 
@@ -150,6 +157,13 @@ export function updateIndirectPackageJsonFile(
         );
         if (depPackageInfo && depPackageInfo.newVersion) {
           const currentVersionSpec = packageJson[field][depName];
+          if (currentVersionSpec === 'workspace:*') {
+            console.log(
+              `Skipping workspace dependency ${depName} in ${pkgInfo.name} as it is already set to 'workspace:*'`
+            );
+            continue;
+          }
+
           const prefix = getVersionPrefix(currentVersionSpec);
           const newVersionSpec = prefix + depPackageInfo.newVersion;
 
@@ -212,6 +226,13 @@ function updateDependentPackages(
         }
 
         const currentVersionSpec = otherPackageJson[field][depName];
+        if (currentVersionSpec === 'workspace:*') {
+          console.log(
+            `Skipping workspace dependency ${depName} in ${otherPkg.name} as it is already set to 'workspace:*'`
+          );
+          continue;
+        }
+
         const prefix = getVersionPrefix(currentVersionSpec);
         let newPackageVersion = prefix + indirectPkgInfo.newVersion;
         if (indirectPkgInfo.newVersion?.includes('-snapshot')) {
